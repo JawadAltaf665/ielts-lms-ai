@@ -1,0 +1,45 @@
+# Dependabot configuration (PLACEHOLDER)
+# ---------------------------------------------------------------------------
+# This is a placeholder for the Architecture & Planning phase. Ecosystems and
+# directories will be enabled as the frontend, backend, and infrastructure
+# code is scaffolded. Uncomment and adjust entries when applicable.
+# Docs: https://docs.github.com/code-security/dependabot/dependabot-version-updates
+# ---------------------------------------------------------------------------
+
+version: 2
+updates:
+  # GitHub Actions workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "ci"
+
+  # Frontend (npm) — enable once frontend/ is scaffolded
+  # - package-ecosystem: "npm"
+  #   directory: "/frontend"
+  #   schedule:
+  #     interval: "weekly"
+  #   labels:
+  #     - "dependencies"
+  #     - "frontend"
+
+  # Backend (.NET / NuGet) — enable once backend/ is scaffolded
+  # - package-ecosystem: "nuget"
+  #   directory: "/backend"
+  #   schedule:
+  #     interval: "weekly"
+  #   labels:
+  #     - "dependencies"
+  #     - "backend"
+
+  # Docker — enable once docker/ images are defined
+  # - package-ecosystem: "docker"
+  #   directory: "/docker"
+  #   schedule:
+  #     interval: "weekly"
+  #   labels:
+  #     - "dependencies"
+  #     - "docker"

@@ -1,0 +1,23 @@
+# CODEOWNERS (PLACEHOLDER)
+# ---------------------------------------------------------------------------
+# Define code ownership for automatic review requests. Replace the placeholder
+# team/user handles below with real owners before enabling branch protection
+# rules that require code owner review.
+# Docs: https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# ---------------------------------------------------------------------------
+
+# Default owners for everything in the repo
+# *                 @your-org/maintainers
+
+# Documentation
+# /docs/            @your-org/docs
+
+# Frontend
+# /frontend/        @your-org/frontend
+
+# Backend
+# /backend/         @your-org/backend
+
+# Infrastructure & CI
+# /infrastructure/  @your-org/platform
+# /.github/         @your-org/platform

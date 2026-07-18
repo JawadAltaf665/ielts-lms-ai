@@ -1,0 +1,39 @@
+# CodeQL Security Analysis (PLACEHOLDER)
+# ---------------------------------------------------------------------------
+# Non-functional placeholder for the Architecture & Planning phase. Language
+# matrices will be enabled once application code exists (e.g., javascript-typescript,
+# csharp). Do NOT rely on this workflow yet.
+# ---------------------------------------------------------------------------
+
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "27 3 * * 1"
+
+jobs:
+  placeholder:
+    name: Placeholder (no-op)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notice
+        run: echo "CodeQL analysis is a placeholder. Language matrix will be added once code exists."
+
+  # analyze:
+  #   name: Analyze
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     security-events: write
+  #   strategy:
+  #     matrix:
+  #       language: [ "javascript-typescript", "csharp" ]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: github/codeql-action/init@v3
+  #       with:
+  #         languages: ${{ matrix.language }}
+  #     - uses: github/codeql-action/analyze@v3

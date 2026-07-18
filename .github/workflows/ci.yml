@@ -1,0 +1,39 @@
+# CI Workflow (PLACEHOLDER)
+# ---------------------------------------------------------------------------
+# This is a non-functional placeholder for the Architecture & Planning phase.
+# Build, test, and lint jobs will be implemented once the frontend and backend
+# are scaffolded. Do NOT rely on this workflow yet.
+# ---------------------------------------------------------------------------
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  placeholder:
+    name: Placeholder (no-op)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Notice
+        run: echo "CI is a placeholder. Build/test/lint jobs will be added in a later phase."
+
+  # frontend-build:
+  #   name: Frontend Build & Test
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     # setup-node, install, lint, test, build
+
+  # backend-build:
+  #   name: Backend Build & Test
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     # setup-dotnet, restore, build, test

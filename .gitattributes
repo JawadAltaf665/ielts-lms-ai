@@ -1,0 +1,55 @@
+# IELTS LMS AI - .gitattributes
+# Normalize line endings and mark binary/linguist behavior.
+
+# Auto-detect text files and normalize to LF on commit.
+* text=auto eol=lf
+
+# Explicit text files
+*.cs        text diff=csharp
+*.ts        text
+*.tsx       text
+*.js        text
+*.jsx       text
+*.json      text
+*.md        text
+*.yml       text
+*.yaml      text
+*.html      text
+*.css       text
+*.scss      text
+*.sql       text
+*.sh        text eol=lf
+*.csproj    text
+*.props     text
+*.config    text
+
+# Windows-specific scripts keep CRLF
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
+
+# Binary files (never diff/merge as text)
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.svg       text
+*.pdf       binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.eot       binary
+*.mp3       binary
+*.mp4       binary
+*.wav       binary
+*.zip       binary
+
+# Files to exclude from language statistics / archives
+docs/**       linguist-documentation
+*.md          linguist-documentation
+assets/**     linguist-vendored
+tests/**      linguist-detectable=true
+.gitattributes export-ignore
+.gitignore     export-ignore
+.github/**     export-ignore
