@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Stable public contracts / integration event schemas (Backend Architecture §5.6). -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\IELTSLms.SharedKernel\IELTSLms.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

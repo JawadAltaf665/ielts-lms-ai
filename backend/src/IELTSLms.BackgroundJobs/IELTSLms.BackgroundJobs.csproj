@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Hangfire job definitions and schedules. Allowed: Application, Abstractions, Contracts, Common, SharedKernel, Hangfire (Backend Architecture §5.9). -->
+
+  <ItemGroup>
+    <PackageReference Include="Hangfire.AspNetCore" />
+    <PackageReference Include="Hangfire.PostgreSql" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IELTSLms.Application\IELTSLms.Application.csproj" />
+    <ProjectReference Include="..\IELTSLms.Abstractions\IELTSLms.Abstractions.csproj" />
+    <ProjectReference Include="..\IELTSLms.Contracts\IELTSLms.Contracts.csproj" />
+    <ProjectReference Include="..\IELTSLms.Common\IELTSLms.Common.csproj" />
+    <ProjectReference Include="..\IELTSLms.SharedKernel\IELTSLms.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

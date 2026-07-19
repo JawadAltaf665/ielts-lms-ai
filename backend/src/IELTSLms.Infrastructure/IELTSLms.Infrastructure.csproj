@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Adapters for external technology: cache, jobs, telemetry, providers. Allowed: Application, Abstractions, Domain, Contracts, Common, SharedKernel, provider SDKs (Backend Architecture §5.4). -->
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IELTSLms.Application\IELTSLms.Application.csproj" />
+    <ProjectReference Include="..\IELTSLms.Abstractions\IELTSLms.Abstractions.csproj" />
+    <ProjectReference Include="..\IELTSLms.Domain\IELTSLms.Domain.csproj" />
+    <ProjectReference Include="..\IELTSLms.Contracts\IELTSLms.Contracts.csproj" />
+    <ProjectReference Include="..\IELTSLms.Common\IELTSLms.Common.csproj" />
+    <ProjectReference Include="..\IELTSLms.SharedKernel\IELTSLms.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

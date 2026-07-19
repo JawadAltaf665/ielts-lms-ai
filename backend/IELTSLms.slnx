@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/IELTSLms.Abstractions/IELTSLms.Abstractions.csproj" />
+    <Project Path="src/IELTSLms.Api/IELTSLms.Api.csproj" />
+    <Project Path="src/IELTSLms.Application/IELTSLms.Application.csproj" />
+    <Project Path="src/IELTSLms.BackgroundJobs/IELTSLms.BackgroundJobs.csproj" />
+    <Project Path="src/IELTSLms.Common/IELTSLms.Common.csproj" />
+    <Project Path="src/IELTSLms.Contracts/IELTSLms.Contracts.csproj" />
+    <Project Path="src/IELTSLms.Domain/IELTSLms.Domain.csproj" />
+    <Project Path="src/IELTSLms.Infrastructure/IELTSLms.Infrastructure.csproj" />
+    <Project Path="src/IELTSLms.Persistence/IELTSLms.Persistence.csproj" />
+    <Project Path="src/IELTSLms.SharedKernel/IELTSLms.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/IELTSLms.Application.Tests/IELTSLms.Application.Tests.csproj" />
+    <Project Path="tests/IELTSLms.Architecture.Tests/IELTSLms.Architecture.Tests.csproj" />
+    <Project Path="tests/IELTSLms.Domain.Tests/IELTSLms.Domain.Tests.csproj" />
+    <Project Path="tests/IELTSLms.Integration.Tests/IELTSLms.Integration.Tests.csproj" />
+  </Folder>
+</Solution>

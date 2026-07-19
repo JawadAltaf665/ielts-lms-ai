@@ -1,0 +1,25 @@
+# EditorConfig for the .NET backend (IELTSLms solution).
+# Inherits whitespace/charset rules from the repository-root .editorconfig; this file layers
+# .NET analyzer policy on top. Warnings are treated as errors (Directory.Build.props), so any
+# rule left at "warning" fails the build — rules relaxed below are deliberate, documented choices.
+
+[*.cs]
+
+# --- Naming / API-surface rules that don't apply to a C#-only internal backend ---
+
+# CA1716: type/member names vs. language keywords in *other* languages. "Error" is the idiomatic
+# name for the Result-pattern failure type; we have no cross-language consumers.
+dotnet_diagnostic.CA1716.severity = none
+
+# CA1515: public types could be internal. The layered project design exposes public types across
+# project boundaries by design, so this rule produces false positives here.
+dotnet_diagnostic.CA1515.severity = none
+
+# CA1000: static members on generic types. Static factory methods (e.g. PagedList<T>.Create,
+# Result.Success<T>) are an intentional, idiomatic construction pattern in this codebase.
+dotnet_diagnostic.CA1000.severity = none
+
+# --- Style preferences ---
+csharp_style_namespace_declarations = file_scoped:warning
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
+csharp_prefer_braces = true:warning

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Cross-cutting technical helpers, no domain logic (Backend Architecture §5.8). -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\IELTSLms.SharedKernel\IELTSLms.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>
