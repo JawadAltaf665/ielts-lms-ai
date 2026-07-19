@@ -8,10 +8,11 @@ namespace IELTSLms.Domain.Identity;
 /// <see cref="SessionId"/>): rotation chains one token to the next, and presenting an already-used
 /// token triggers family-wide revocation as a breach response (Auth §4.3).
 /// </summary>
-public sealed class RefreshToken : AggregateRoot<RefreshTokenId>, IAuditableEntity
+public sealed class RefreshToken : AggregateRoot<RefreshTokenId>, IAuditableEntity, ITenantScoped
 {
     private RefreshToken(
         RefreshTokenId id,
+        Guid tenantId,
         UserId userId,
         UserSessionId sessionId,
         string tokenHash,
@@ -19,6 +20,7 @@ public sealed class RefreshToken : AggregateRoot<RefreshTokenId>, IAuditableEnti
         DateTimeOffset expiresAtUtc)
         : base(id)
     {
+        TenantId = tenantId;
         UserId = userId;
         SessionId = sessionId;
         TokenHash = tokenHash;
@@ -31,6 +33,9 @@ public sealed class RefreshToken : AggregateRoot<RefreshTokenId>, IAuditableEnti
         // EF Core materialization.
         TokenHash = null!;
     }
+
+    /// <summary>Owning tenant; scopes the token to its tenant for the global query filter (ERD §3).</summary>
+    public Guid TenantId { get; private init; }
 
     /// <summary>The owning user.</summary>
     public UserId UserId { get; private init; }
@@ -77,6 +82,7 @@ public sealed class RefreshToken : AggregateRoot<RefreshTokenId>, IAuditableEnti
     /// <summary>Issues a new refresh token for a session.</summary>
     public static RefreshToken Issue(
         RefreshTokenId id,
+        Guid tenantId,
         UserId userId,
         UserSessionId sessionId,
         string tokenHash,
@@ -90,7 +96,7 @@ public sealed class RefreshToken : AggregateRoot<RefreshTokenId>, IAuditableEnti
             throw new ArgumentOutOfRangeException(nameof(lifetime), "Refresh-token lifetime must be positive.");
         }
 
-        return new RefreshToken(id, userId, sessionId, tokenHash, nowUtc, nowUtc.Add(lifetime));
+        return new RefreshToken(id, tenantId, userId, sessionId, tokenHash, nowUtc, nowUtc.Add(lifetime));
     }
 
     /// <summary>

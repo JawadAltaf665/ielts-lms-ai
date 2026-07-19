@@ -11,7 +11,7 @@ namespace IELTSLms.Domain.Identity;
 /// by <see cref="UserId"/> to keep this aggregate's consistency boundary small (Backend
 /// Architecture §9).
 /// </summary>
-public sealed class User : AggregateRoot<UserId>, IAuditableEntity, ISoftDeletable
+public sealed class User : AggregateRoot<UserId>, IAuditableEntity, ISoftDeletable, ITenantScoped
 {
     private User(
         UserId id,
@@ -39,8 +39,8 @@ public sealed class User : AggregateRoot<UserId>, IAuditableEntity, ISoftDeletab
     }
 
     /// <summary>
-    /// Owning tenant. Tenancy is not enforced until Sprint 3; the column exists now so the schema is
-    /// stable and rows are attributable (Auth §12 groundwork).
+    /// Owning tenant (ERD ENT-003). Set once at registration; the global query filter and FK to the
+    /// tenant root enforce isolation (Multi-Tenant Architecture §6).
     /// </summary>
     public Guid TenantId { get; private init; }
 

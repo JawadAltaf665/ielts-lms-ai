@@ -51,6 +51,7 @@ public sealed partial class ResendVerificationCommandHandler(
         var secureToken = tokenGenerator.Generate();
         var verificationToken = EmailVerificationToken.Issue(
             EmailVerificationTokenId.From(guids.NewGuid()),
+            user.TenantId,
             user.Id,
             secureToken.Hash,
             now,

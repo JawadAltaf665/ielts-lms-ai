@@ -3,6 +3,7 @@ using IELTSLms.Abstractions.Context;
 using IELTSLms.Api.Authentication;
 using IELTSLms.Api.Context;
 using IELTSLms.Api.Middleware;
+using IELTSLms.Api.Tenancy;
 using Microsoft.OpenApi;
 using PersistenceModule = IELTSLms.Persistence.DependencyInjection;
 using InfrastructureModule = IELTSLms.Infrastructure.DependencyInjection;
@@ -24,6 +25,11 @@ internal static class DependencyInjection
     {
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentContext, HttpCurrentContext>();
+
+        // Tenant-resolution strategy chain (ordered by priority in the middleware): the authenticated
+        // JWT claim is authoritative, the X-Tenant-Id header is an advisory pre-auth fallback.
+        services.AddSingleton<ITenantResolutionStrategy, JwtClaimTenantResolutionStrategy>();
+        services.AddSingleton<ITenantResolutionStrategy, HeaderTenantResolutionStrategy>();
 
         // RFC 7807 Problem Details for framework-generated errors (404, 415, ...); the global
         // handler and ResultExtensions cover exceptions and domain failures respectively.

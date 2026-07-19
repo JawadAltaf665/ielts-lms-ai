@@ -1,4 +1,5 @@
 using IELTSLms.Abstractions.Events;
+using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.SharedKernel.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
@@ -17,15 +18,29 @@ internal sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<A
     public ApplicationDbContext CreateDbContext(string[] args)
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseNpgsql("Host=localhost;Database=ielts_lms_design;Username=postgres;Password=postgres")
+            .UseNpgsql("Host=localhost;Database=ielts_lms;Username=postgres;Password=Postgres123")
             .Options;
 
-        return new ApplicationDbContext(options, new NoOpDomainEventDispatcher());
+        return new ApplicationDbContext(options, new NoOpDomainEventDispatcher(), new NoOpTenantContext());
     }
 
     private sealed class NoOpDomainEventDispatcher : IDomainEventDispatcher
     {
         public Task DispatchAsync(IReadOnlyCollection<IDomainEvent> domainEvents, CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Design-time tenant context: no tenant is resolved and the filter is treated as bypassed, so the
+    /// model builds without an ambient request. Migrations describe schema, not data, so this never
+    /// affects a real query.
+    /// </summary>
+    private sealed class NoOpTenantContext : ITenantContext
+    {
+        public Guid? TenantId => null;
+
+        public bool HasTenant => false;
+
+        public bool IsBypassed => true;
     }
 }

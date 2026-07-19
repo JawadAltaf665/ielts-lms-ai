@@ -36,6 +36,8 @@ internal sealed class LoginHistoryConfiguration : IEntityTypeConfiguration<Login
         builder.HasIndex(h => new { h.EmailAttempted, h.OccurredAtUtc })
             .HasDatabaseName("ix_login_history_email_attempted_occurred_at_utc");
 
+        builder.MapTenantScope("login_history");
+
         builder.Ignore(h => h.DomainEvents);
     }
 }

@@ -20,4 +20,8 @@ public static class AuthErrors
     /// <summary>The account is temporarily locked after repeated failed logins.</summary>
     public static Error AccountLocked => Error.Forbidden(
         "AUTH_ACCOUNT_LOCKED", "This account is temporarily locked. Try again later.");
+
+    /// <summary>No tenant was resolved for a request that operates within a tenant (Multi-Tenant Architecture §6.2).</summary>
+    public static Error TenantRequired => Error.Unauthorized(
+        "AUTH_TENANT_REQUIRED", "A tenant could not be determined for this request.");
 }

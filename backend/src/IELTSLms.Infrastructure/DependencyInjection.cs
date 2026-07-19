@@ -2,12 +2,14 @@ using IELTSLms.Abstractions.Caching;
 using IELTSLms.Abstractions.Email;
 using IELTSLms.Abstractions.Events;
 using IELTSLms.Abstractions.Security;
+using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.Abstractions.Time;
 using IELTSLms.Infrastructure.Caching;
 using IELTSLms.Infrastructure.Email;
 using IELTSLms.Infrastructure.Events;
 using IELTSLms.Infrastructure.Observability;
 using IELTSLms.Infrastructure.Security;
+using IELTSLms.Infrastructure.Tenancy;
 using IELTSLms.Infrastructure.Time;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +33,12 @@ public static class DependencyInjection
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IGuidProvider, GuidProvider>();
         services.AddScoped<IDomainEventDispatcher, MediatorDomainEventDispatcher>();
+
+        // One tenant-context instance per request scope; the accessor (write side) and the read-only
+        // view resolve to the same object so resolution middleware and consumers share state.
+        services.AddScoped<TenantContext>();
+        services.AddScoped<ITenantContextAccessor>(sp => sp.GetRequiredService<TenantContext>());
+        services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
 
         AddSecurity(services, configuration);
         AddEmail(services);

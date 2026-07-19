@@ -7,16 +7,18 @@ namespace IELTSLms.Domain.Identity;
 /// the raw value is mailed to the user. Redeeming it revokes existing sessions (handled by the
 /// application/domain on the <see cref="User"/> aggregate).
 /// </summary>
-public sealed class PasswordResetToken : AggregateRoot<PasswordResetTokenId>, IAuditableEntity
+public sealed class PasswordResetToken : AggregateRoot<PasswordResetTokenId>, IAuditableEntity, ITenantScoped
 {
     private PasswordResetToken(
         PasswordResetTokenId id,
+        Guid tenantId,
         UserId userId,
         string tokenHash,
         DateTimeOffset createdAtUtc,
         DateTimeOffset expiresAtUtc)
         : base(id)
     {
+        TenantId = tenantId;
         UserId = userId;
         TokenHash = tokenHash;
         CreatedAtUtc = createdAtUtc;
@@ -28,6 +30,9 @@ public sealed class PasswordResetToken : AggregateRoot<PasswordResetTokenId>, IA
         // EF Core materialization.
         TokenHash = null!;
     }
+
+    /// <summary>Owning tenant; scopes the token to its tenant for the global query filter (ERD §3).</summary>
+    public Guid TenantId { get; private init; }
 
     /// <summary>The user this token can reset.</summary>
     public UserId UserId { get; private init; }
@@ -59,6 +64,7 @@ public sealed class PasswordResetToken : AggregateRoot<PasswordResetTokenId>, IA
     /// <summary>Issues a reset token for a user.</summary>
     public static PasswordResetToken Issue(
         PasswordResetTokenId id,
+        Guid tenantId,
         UserId userId,
         string tokenHash,
         DateTimeOffset nowUtc,
@@ -71,7 +77,7 @@ public sealed class PasswordResetToken : AggregateRoot<PasswordResetTokenId>, IA
             throw new ArgumentOutOfRangeException(nameof(lifetime), "Reset-token lifetime must be positive.");
         }
 
-        return new PasswordResetToken(id, userId, tokenHash, nowUtc, nowUtc.Add(lifetime));
+        return new PasswordResetToken(id, tenantId, userId, tokenHash, nowUtc, nowUtc.Add(lifetime));
     }
 
     /// <summary>Marks the token as redeemed so it cannot be used again.</summary>

@@ -39,6 +39,8 @@ internal sealed class EmailVerificationTokenConfiguration : IEntityTypeConfigura
 
         builder.HasIndex(t => t.UserId).HasDatabaseName("ix_email_verification_tokens_user_id");
 
+        builder.MapTenantScope("email_verification_tokens");
+
         builder.Ignore(t => t.DomainEvents);
         builder.Ignore(t => t.IsConsumed);
     }

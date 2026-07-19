@@ -1,6 +1,7 @@
 using IELTSLms.Api;
 using IELTSLms.Api.Endpoints;
 using IELTSLms.Api.Middleware;
+using IELTSLms.Api.Tenancy;
 using IELTSLms.Application;
 using IELTSLms.BackgroundJobs;
 using IELTSLms.Infrastructure;
@@ -22,7 +23,9 @@ try
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services)
-        .Enrich.FromLogContext());
+        .Enrich.FromLogContext()
+        .Enrich.With(new IELTSLms.Api.Middleware.TenantIdLogEnricher(
+            services.GetRequiredService<IHttpContextAccessor>())));
 
     builder.Services
         .AddApplication()
@@ -55,8 +58,10 @@ try
     // Security response headers on every response (Security Standards §12).
     app.UseMiddleware<SecurityHeadersMiddleware>();
 
-    // Authentication before authorization; tenant resolution is added in a later sprint.
+    // Authentication before authorization. Tenant resolution runs after authentication so the JWT
+    // claim (authoritative source) is available, and before endpoints so the ambient tenant is bound.
     app.UseAuthentication();
+    app.UseMiddleware<TenantResolutionMiddleware>();
     app.UseAuthorization();
 
     var apiVersionSet = app.NewApiVersionSet()
@@ -69,6 +74,7 @@ try
         .WithApiVersionSet(apiVersionSet);
     api.MapVersionEndpoints();
     api.MapAuthEndpoints();
+    api.MapTenantEndpoints();
 
     app.MapHealthChecks("/health/live", new HealthCheckOptions
     {

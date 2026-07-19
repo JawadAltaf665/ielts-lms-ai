@@ -39,6 +39,8 @@ internal sealed class PasswordResetTokenConfiguration : IEntityTypeConfiguration
 
         builder.HasIndex(t => t.UserId).HasDatabaseName("ix_password_reset_tokens_user_id");
 
+        builder.MapTenantScope("password_reset_tokens");
+
         builder.Ignore(t => t.DomainEvents);
         builder.Ignore(t => t.IsConsumed);
     }

@@ -51,6 +51,7 @@ public sealed partial class ForgotPasswordCommandHandler(
         var secureToken = tokenGenerator.Generate();
         var resetToken = PasswordResetToken.Issue(
             PasswordResetTokenId.From(guids.NewGuid()),
+            user.TenantId,
             user.Id,
             secureToken.Hash,
             now,

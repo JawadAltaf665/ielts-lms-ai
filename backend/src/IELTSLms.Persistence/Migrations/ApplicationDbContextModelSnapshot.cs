@@ -40,6 +40,10 @@ namespace IELTSLms.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_at_utc");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<string>("TokenHash")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -62,6 +66,9 @@ namespace IELTSLms.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_email_verification_tokens");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_email_verification_tokens_tenant_id");
 
                     b.HasIndex("TokenHash")
                         .IsUnique()
@@ -100,6 +107,10 @@ namespace IELTSLms.Persistence.Migrations
                         .HasColumnType("character varying(32)")
                         .HasColumnName("outcome");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<string>("UserAgent")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)")
@@ -111,6 +122,9 @@ namespace IELTSLms.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_login_history");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_login_history_tenant_id");
 
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_login_history_user_id");
@@ -139,6 +153,10 @@ namespace IELTSLms.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_at_utc");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<string>("TokenHash")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -161,6 +179,9 @@ namespace IELTSLms.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_password_reset_tokens");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_password_reset_tokens_tenant_id");
 
                     b.HasIndex("TokenHash")
                         .IsUnique()
@@ -203,6 +224,10 @@ namespace IELTSLms.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("session_id");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<string>("TokenHash")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -232,6 +257,9 @@ namespace IELTSLms.Persistence.Migrations
 
                     b.HasIndex("SessionId")
                         .HasDatabaseName("ix_refresh_tokens_session_id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_refresh_tokens_tenant_id");
 
                     b.HasIndex("TokenHash")
                         .IsUnique()
@@ -363,6 +391,10 @@ namespace IELTSLms.Persistence.Migrations
                         .HasColumnType("character varying(256)")
                         .HasColumnName("revoked_reason");
 
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
                     b.Property<DateTimeOffset?>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at_utc");
@@ -385,10 +417,104 @@ namespace IELTSLms.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_user_sessions");
 
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_user_sessions_tenant_id");
+
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_user_sessions_user_id");
 
                     b.ToTable("user_sessions", (string)null);
+                });
+
+            modelBuilder.Entity("IELTSLms.Domain.Tenancy.Tenant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("code");
+
+                    b.Property<string>("ContactEmail")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("contact_email");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("DefaultLocale")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("default_locale");
+
+                    b.Property<string>("DefaultTimeZone")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("default_time_zone");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("PrimaryDomain")
+                        .HasMaxLength(253)
+                        .HasColumnType("character varying(253)")
+                        .HasColumnName("primary_domain");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(63)
+                        .HasColumnType("character varying(63)")
+                        .HasColumnName("slug");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tenants");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_tenants_code");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("ix_tenants_slug");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_tenants_status");
+
+                    b.ToTable("tenants", (string)null);
                 });
 #pragma warning restore 612, 618
         }

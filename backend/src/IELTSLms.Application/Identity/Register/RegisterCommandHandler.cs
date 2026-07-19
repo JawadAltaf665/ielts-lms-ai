@@ -1,6 +1,7 @@
 using IELTSLms.Abstractions.Email;
 using IELTSLms.Abstractions.Persistence;
 using IELTSLms.Abstractions.Security;
+using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.Abstractions.Time;
 using IELTSLms.Application.Abstractions.Messaging;
 using IELTSLms.Domain.Identity;
@@ -26,6 +27,7 @@ public sealed partial class RegisterCommandHandler(
     IUnitOfWork unitOfWork,
     IClock clock,
     IGuidProvider guids,
+    ITenantContext tenantContext,
     IOptions<AuthOptions> options,
     ILogger<RegisterCommandHandler> logger)
     : ICommandHandler<RegisterCommand>
@@ -34,6 +36,13 @@ public sealed partial class RegisterCommandHandler(
 
     public async Task<Result> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
+        // Registration creates the tenant-owned account, so the tenant must already be resolved
+        // (from the X-Tenant-Id header pre-auth). Fail closed rather than guessing a tenant.
+        if (tenantContext.TenantId is not { } tenantId)
+        {
+            return Result.Failure(AuthErrors.TenantRequired);
+        }
+
         var emailResult = Email.Create(request.Email);
         if (emailResult.IsFailure)
         {
@@ -53,12 +62,13 @@ public sealed partial class RegisterCommandHandler(
 
         var passwordHash = PasswordHash.FromHashed(passwordHasher.Hash(request.Password));
         var userId = UserId.From(guids.NewGuid());
-        var user = User.Register(userId, IdentityDefaults.TenantId, email, passwordHash, request.DisplayName, now);
+        var user = User.Register(userId, tenantId, email, passwordHash, request.DisplayName, now);
         users.Add(user);
 
         var secureToken = tokenGenerator.Generate();
         var verificationToken = EmailVerificationToken.Issue(
             EmailVerificationTokenId.From(guids.NewGuid()),
+            tenantId,
             userId,
             secureToken.Hash,
             now,

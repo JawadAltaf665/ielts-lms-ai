@@ -53,6 +53,8 @@ internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refre
         // Family revocation loads every token for a session (Auth §4.3).
         builder.HasIndex(t => t.SessionId).HasDatabaseName("ix_refresh_tokens_session_id");
 
+        builder.MapTenantScope("refresh_tokens");
+
         builder.Ignore(t => t.DomainEvents);
         builder.Ignore(t => t.IsUsed);
         builder.Ignore(t => t.IsRevoked);

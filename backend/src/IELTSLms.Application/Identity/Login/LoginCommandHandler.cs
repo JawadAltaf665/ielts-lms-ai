@@ -1,5 +1,6 @@
 using IELTSLms.Abstractions.Persistence;
 using IELTSLms.Abstractions.Security;
+using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.Abstractions.Time;
 using IELTSLms.Application.Abstractions.Messaging;
 using IELTSLms.Domain.Identity;
@@ -23,6 +24,7 @@ public sealed partial class LoginCommandHandler(
     IPasswordHasher passwordHasher,
     ISecureTokenGenerator tokenGenerator,
     IAccessTokenService accessTokenService,
+    ITenantContext tenantContext,
     IUnitOfWork unitOfWork,
     IClock clock,
     IGuidProvider guids,
@@ -35,6 +37,14 @@ public sealed partial class LoginCommandHandler(
     public async Task<Result<AuthTokensResult>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         var now = clock.UtcNow;
+
+        // Login operates within a tenant: the account lookup is tenant-scoped and every attempt is
+        // recorded against the tenant. Without one resolved (X-Tenant-Id pre-auth) we can't proceed.
+        if (tenantContext.TenantId is not { } tenantId)
+        {
+            return Result.Failure<AuthTokensResult>(AuthErrors.TenantRequired);
+        }
+
         var normalizedEmail = Email.Create(request.Email) is { IsSuccess: true } e ? e.Value.Value : request.Email.Trim().ToLowerInvariant();
 
         var user = await users.GetByEmailAsync(normalizedEmail, cancellationToken).ConfigureAwait(false);
@@ -43,7 +53,7 @@ public sealed partial class LoginCommandHandler(
         {
             // Spend comparable time hashing so a missing account is indistinguishable by timing.
             passwordHasher.Verify(request.Password, DummyHash);
-            await RecordAttemptAsync(null, normalizedEmail, LoginOutcome.InvalidCredentials, request, now, cancellationToken)
+            await RecordAttemptAsync(tenantId, null, normalizedEmail, LoginOutcome.InvalidCredentials, request, now, cancellationToken)
                 .ConfigureAwait(false);
             return Result.Failure<AuthTokensResult>(AuthErrors.InvalidCredentials);
         }
@@ -52,7 +62,7 @@ public sealed partial class LoginCommandHandler(
         if (canAuthenticate.IsFailure)
         {
             var outcome = MapOutcome(canAuthenticate.Error.Code);
-            await RecordAttemptAsync(user.Id, normalizedEmail, outcome, request, now, cancellationToken).ConfigureAwait(false);
+            await RecordAttemptAsync(tenantId, user.Id, normalizedEmail, outcome, request, now, cancellationToken).ConfigureAwait(false);
 
             // Locked accounts get the explicit lockout error; other non-credential blocks stay generic.
             return canAuthenticate.Error.Code == "AUTH_ACCOUNT_LOCKED"
@@ -64,7 +74,7 @@ public sealed partial class LoginCommandHandler(
         if (!verification.IsMatch)
         {
             user.RegisterFailedLogin(_options.MaxFailedLoginAttempts, _options.LockoutDuration, now);
-            await RecordAttemptAsync(user.Id, normalizedEmail, LoginOutcome.InvalidCredentials, request, now, cancellationToken)
+            await RecordAttemptAsync(tenantId, user.Id, normalizedEmail, LoginOutcome.InvalidCredentials, request, now, cancellationToken)
                 .ConfigureAwait(false);
             await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return Result.Failure<AuthTokensResult>(AuthErrors.InvalidCredentials);
@@ -78,6 +88,7 @@ public sealed partial class LoginCommandHandler(
 
         var session = UserSession.Start(
             UserSessionId.From(guids.NewGuid()),
+            user.TenantId,
             user.Id,
             request.UserAgent,
             request.IpAddress,
@@ -90,6 +101,7 @@ public sealed partial class LoginCommandHandler(
         var refreshRaw = tokenGenerator.Generate();
         var refreshToken = RefreshToken.Issue(
             RefreshTokenId.From(guids.NewGuid()),
+            user.TenantId,
             user.Id,
             session.Id,
             refreshRaw.Hash,
@@ -98,7 +110,7 @@ public sealed partial class LoginCommandHandler(
         refreshTokens.Add(refreshToken);
 
         user.RegisterSuccessfulLogin(session.Id, now);
-        await RecordAttemptAsync(user.Id, normalizedEmail, LoginOutcome.Succeeded, request, now, cancellationToken)
+        await RecordAttemptAsync(tenantId, user.Id, normalizedEmail, LoginOutcome.Succeeded, request, now, cancellationToken)
             .ConfigureAwait(false);
 
         var accessToken = accessTokenService.CreateToken(new AccessTokenRequest(
@@ -121,6 +133,7 @@ public sealed partial class LoginCommandHandler(
     }
 
     private Task RecordAttemptAsync(
+        Guid tenantId,
         UserId? userId,
         string email,
         LoginOutcome outcome,
@@ -130,6 +143,7 @@ public sealed partial class LoginCommandHandler(
     {
         loginHistory.Add(LoginHistory.Record(
             LoginHistoryId.From(guids.NewGuid()),
+            tenantId,
             userId,
             email,
             outcome,

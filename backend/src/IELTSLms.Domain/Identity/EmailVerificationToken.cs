@@ -6,16 +6,18 @@ namespace IELTSLms.Domain.Identity;
 /// A time-boxed, single-use token proving control of an email address (Auth §5). Only the hash of
 /// the token is stored; the raw value is mailed to the user and never persisted.
 /// </summary>
-public sealed class EmailVerificationToken : AggregateRoot<EmailVerificationTokenId>, IAuditableEntity
+public sealed class EmailVerificationToken : AggregateRoot<EmailVerificationTokenId>, IAuditableEntity, ITenantScoped
 {
     private EmailVerificationToken(
         EmailVerificationTokenId id,
+        Guid tenantId,
         UserId userId,
         string tokenHash,
         DateTimeOffset createdAtUtc,
         DateTimeOffset expiresAtUtc)
         : base(id)
     {
+        TenantId = tenantId;
         UserId = userId;
         TokenHash = tokenHash;
         CreatedAtUtc = createdAtUtc;
@@ -27,6 +29,9 @@ public sealed class EmailVerificationToken : AggregateRoot<EmailVerificationToke
         // EF Core materialization.
         TokenHash = null!;
     }
+
+    /// <summary>Owning tenant; scopes the token to its tenant for the global query filter (ERD §3).</summary>
+    public Guid TenantId { get; private init; }
 
     /// <summary>The user this token verifies.</summary>
     public UserId UserId { get; private init; }
@@ -58,6 +63,7 @@ public sealed class EmailVerificationToken : AggregateRoot<EmailVerificationToke
     /// <summary>Issues a verification token for a user.</summary>
     public static EmailVerificationToken Issue(
         EmailVerificationTokenId id,
+        Guid tenantId,
         UserId userId,
         string tokenHash,
         DateTimeOffset nowUtc,
@@ -70,7 +76,7 @@ public sealed class EmailVerificationToken : AggregateRoot<EmailVerificationToke
             throw new ArgumentOutOfRangeException(nameof(lifetime), "Verification-token lifetime must be positive.");
         }
 
-        return new EmailVerificationToken(id, userId, tokenHash, nowUtc, nowUtc.Add(lifetime));
+        return new EmailVerificationToken(id, tenantId, userId, tokenHash, nowUtc, nowUtc.Add(lifetime));
     }
 
     /// <summary>Marks the token as redeemed so it cannot be used again.</summary>

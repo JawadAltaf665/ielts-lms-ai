@@ -76,6 +76,7 @@ public sealed partial class RefreshTokenCommandHandler(
         var newRaw = tokenGenerator.Generate();
         var replacement = RefreshToken.Issue(
             RefreshTokenId.From(guids.NewGuid()),
+            user.TenantId,
             user.Id,
             session.Id,
             newRaw.Hash,

@@ -20,8 +20,6 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasConversion(id => id.Value, value => UserId.From(value))
             .ValueGeneratedNever();
 
-        builder.Property(u => u.TenantId).IsRequired();
-
         // Email value object -> single normalized column; unique per tenant (Sprint 2 resolution).
         builder.Property(u => u.Email)
             .HasConversion(email => email.Value, value => Email.FromTrusted(value))
@@ -54,8 +52,13 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .IsUnique()
             .HasDatabaseName("ix_users_tenant_id_email");
 
-        // Soft-deleted accounts are filtered out of normal queries (Development Standards §15).
-        builder.HasQueryFilter(u => !u.IsDeleted);
+        // Global soft-delete and tenant query filters are applied centrally in ApplicationDbContext
+        // (EF Core allows a single filter per entity), so none is declared here.
+
+        // Owning tenant. The composite (tenant_id, email) unique index above already gives tenant
+        // locality, so no standalone tenant index is added. The FK constraint to tenants (RESTRICT) is
+        // declared in the migration — see MapTenantScope remarks for why it is not modelled in EF.
+        builder.Property(u => u.TenantId).IsRequired();
 
         builder.Ignore(u => u.DomainEvents);
         builder.Ignore(u => u.IsEmailVerified);

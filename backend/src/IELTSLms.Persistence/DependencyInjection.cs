@@ -1,5 +1,6 @@
 using IELTSLms.Abstractions.Persistence;
 using IELTSLms.Persistence.Repositories;
+using IELTSLms.Persistence.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,11 +38,14 @@ public static class DependencyInjection
 
         AddRepositories(services);
 
+        services.AddHostedService<SystemTenantSeeder>();
+
         return services;
     }
 
     private static void AddRepositories(IServiceCollection services)
     {
+        services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IUserSessionRepository, UserSessionRepository>();

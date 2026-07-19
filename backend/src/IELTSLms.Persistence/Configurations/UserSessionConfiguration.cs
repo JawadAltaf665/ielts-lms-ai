@@ -41,6 +41,8 @@ internal sealed class UserSessionConfiguration : IEntityTypeConfiguration<UserSe
         // Listing and revoking a user's active sessions (Auth §4.2).
         builder.HasIndex(s => s.UserId).HasDatabaseName("ix_user_sessions_user_id");
 
+        builder.MapTenantScope("user_sessions");
+
         builder.Ignore(s => s.DomainEvents);
         builder.Ignore(s => s.IsRevoked);
     }

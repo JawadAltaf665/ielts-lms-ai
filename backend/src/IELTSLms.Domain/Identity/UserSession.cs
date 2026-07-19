@@ -8,10 +8,11 @@ namespace IELTSLms.Domain.Identity;
 /// refresh-token family. Sessions slide — each refresh extends <see cref="ExpiresAtUtc"/> up to
 /// <see cref="AbsoluteExpiresAtUtc"/> (Auth §4.1).
 /// </summary>
-public sealed class UserSession : AggregateRoot<UserSessionId>, IAuditableEntity
+public sealed class UserSession : AggregateRoot<UserSessionId>, IAuditableEntity, ITenantScoped
 {
     private UserSession(
         UserSessionId id,
+        Guid tenantId,
         UserId userId,
         string? deviceLabel,
         string? ipAddress,
@@ -21,6 +22,7 @@ public sealed class UserSession : AggregateRoot<UserSessionId>, IAuditableEntity
         DateTimeOffset absoluteExpiresAtUtc)
         : base(id)
     {
+        TenantId = tenantId;
         UserId = userId;
         DeviceLabel = deviceLabel;
         IpAddress = ipAddress;
@@ -35,6 +37,9 @@ public sealed class UserSession : AggregateRoot<UserSessionId>, IAuditableEntity
     {
         // EF Core materialization.
     }
+
+    /// <summary>Owning tenant; scopes the session to its tenant for the global query filter (ERD §3).</summary>
+    public Guid TenantId { get; private init; }
 
     /// <summary>The owning user.</summary>
     public UserId UserId { get; private init; }
@@ -82,6 +87,7 @@ public sealed class UserSession : AggregateRoot<UserSessionId>, IAuditableEntity
     /// <summary>Opens a new device session with a sliding and an absolute expiry window.</summary>
     public static UserSession Start(
         UserSessionId id,
+        Guid tenantId,
         UserId userId,
         string? deviceLabel,
         string? ipAddress,
@@ -103,6 +109,7 @@ public sealed class UserSession : AggregateRoot<UserSessionId>, IAuditableEntity
 
         return new UserSession(
             id,
+            tenantId,
             userId,
             deviceLabel,
             ipAddress,
