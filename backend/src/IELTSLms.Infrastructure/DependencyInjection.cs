@@ -1,9 +1,13 @@
 using IELTSLms.Abstractions.Caching;
+using IELTSLms.Abstractions.Email;
 using IELTSLms.Abstractions.Events;
+using IELTSLms.Abstractions.Security;
 using IELTSLms.Abstractions.Time;
 using IELTSLms.Infrastructure.Caching;
+using IELTSLms.Infrastructure.Email;
 using IELTSLms.Infrastructure.Events;
 using IELTSLms.Infrastructure.Observability;
+using IELTSLms.Infrastructure.Security;
 using IELTSLms.Infrastructure.Time;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,10 +32,45 @@ public static class DependencyInjection
         services.AddSingleton<IGuidProvider, GuidProvider>();
         services.AddScoped<IDomainEventDispatcher, MediatorDomainEventDispatcher>();
 
+        AddSecurity(services, configuration);
+        AddEmail(services);
         AddCaching(services, configuration);
         services.AddObservability(configuration);
 
         return services;
+    }
+
+    private static void AddSecurity(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection(JwtOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddOptions<Argon2Options>()
+            .Bind(configuration.GetSection(Argon2Options.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddOptions<PasswordPolicyOptions>()
+            .Bind(configuration.GetSection(PasswordPolicyOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        // One shared key for signing (here) and validation (API bearer middleware).
+        services.AddSingleton<JwtSigningKeyProvider>();
+
+        services.AddSingleton<IPasswordHasher, Argon2PasswordHasher>();
+        services.AddSingleton<IPasswordPolicy, ConfigurablePasswordPolicy>();
+        services.AddSingleton<ISecureTokenGenerator, SecureTokenGenerator>();
+        services.AddScoped<IAccessTokenService, JwtAccessTokenService>();
+    }
+
+    private static void AddEmail(IServiceCollection services)
+    {
+        // Transport is interface-only this sprint: a logging sender stands in for SMTP/SendGrid.
+        services.AddSingleton<IEmailTemplateRenderer, IdentityEmailTemplateRenderer>();
+        services.AddSingleton<IEmailSender, LoggingEmailSender>();
     }
 
     private static void AddCaching(IServiceCollection services, IConfiguration configuration)

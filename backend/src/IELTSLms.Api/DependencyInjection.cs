@@ -1,7 +1,9 @@
 using Asp.Versioning;
 using IELTSLms.Abstractions.Context;
+using IELTSLms.Api.Authentication;
 using IELTSLms.Api.Context;
 using IELTSLms.Api.Middleware;
+using Microsoft.OpenApi;
 using PersistenceModule = IELTSLms.Persistence.DependencyInjection;
 using InfrastructureModule = IELTSLms.Infrastructure.DependencyInjection;
 
@@ -28,6 +30,7 @@ internal static class DependencyInjection
         services.AddProblemDetails();
         services.AddExceptionHandler<GlobalExceptionHandler>();
 
+        services.AddJwtAuthentication(configuration);
         services.AddApiVersioningSupport();
         services.AddSwagger();
         services.AddHealthChecksSupport(configuration);
@@ -62,6 +65,22 @@ internal static class DependencyInjection
                 Title = "IELTS LMS AI API",
                 Version = "v1",
                 Description = "Backend foundation for IELTS LMS AI.",
+            });
+
+            // JWT bearer so protected endpoints can be exercised from Swagger UI.
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header,
+                Description = "Enter the JWT access token (without the 'Bearer' prefix).",
+            });
+
+            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("Bearer", document)] = [],
             });
         });
     }

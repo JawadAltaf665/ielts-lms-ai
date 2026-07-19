@@ -52,7 +52,12 @@ try
 
     app.UseHttpsRedirection();
 
-    // Authentication and tenant resolution middleware are added in a later sprint.
+    // Security response headers on every response (Security Standards §12).
+    app.UseMiddleware<SecurityHeadersMiddleware>();
+
+    // Authentication before authorization; tenant resolution is added in a later sprint.
+    app.UseAuthentication();
+    app.UseAuthorization();
 
     var apiVersionSet = app.NewApiVersionSet()
         .HasApiVersion(new Asp.Versioning.ApiVersion(1, 0))
@@ -63,6 +68,7 @@ try
         .MapGroup("/api/v{version:apiVersion}")
         .WithApiVersionSet(apiVersionSet);
     api.MapVersionEndpoints();
+    api.MapAuthEndpoints();
 
     app.MapHealthChecks("/health/live", new HealthCheckOptions
     {

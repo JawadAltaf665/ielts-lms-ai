@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using IELTSLms.Abstractions.Context;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace IELTSLms.Api.Context;
 
@@ -13,10 +14,10 @@ internal sealed class HttpCurrentContext(IHttpContextAccessor httpContextAccesso
     private ClaimsPrincipal? User => httpContextAccessor.HttpContext?.User;
 
     public Guid? UserId =>
-        Guid.TryParse(User?.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
+        Guid.TryParse(User?.FindFirstValue(JwtRegisteredClaimNames.Sub), out var id) ? id : null;
 
     public Guid? TenantId =>
-        Guid.TryParse(User?.FindFirstValue("tenant_id"), out var tenantId) ? tenantId : null;
+        Guid.TryParse(User?.FindFirstValue("tenantId"), out var tenantId) ? tenantId : null;
 
     public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
 }

@@ -20,7 +20,12 @@ public static class ResultExtensions
             throw new InvalidOperationException("A successful result cannot be converted to a problem response.");
         }
 
-        var error = result.Error;
+        return result.Error.ToProblem(httpContext);
+    }
+
+    /// <summary>Builds a problem-details <see cref="IResult"/> directly from an <see cref="Error"/>.</summary>
+    public static IResult ToProblem(this Error error, HttpContext httpContext)
+    {
         var statusCode = ToStatusCode(error.Type);
         var (type, title) = ProblemTypes.ForErrorType(error.Type);
 
