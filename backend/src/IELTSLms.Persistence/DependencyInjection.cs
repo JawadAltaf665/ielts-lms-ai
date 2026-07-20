@@ -1,7 +1,11 @@
+using IELTSLms.Abstractions.Audit;
 using IELTSLms.Abstractions.Persistence;
+using IELTSLms.Persistence.Audit;
+using IELTSLms.Persistence.Interceptors;
 using IELTSLms.Persistence.Repositories;
 using IELTSLms.Persistence.Seeding;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -25,16 +29,29 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException(
                 $"Connection string '{ConnectionStringName}' was not found in configuration.");
 
-        services.AddDbContext<ApplicationDbContext>(options =>
+        // Register interceptors as scoped services (they depend on scoped context services)
+        services.AddScoped<AuditableEntityInterceptor>();
+        services.AddScoped<SoftDeleteInterceptor>();
+        services.AddScoped<AuditLogInterceptor>();
+
+        services.AddDbContext<ApplicationDbContext>((sp, options) =>
         {
             options.UseNpgsql(connectionString, npgsql =>
             {
                 npgsql.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
                 npgsql.EnableRetryOnFailure();
             });
+
+            options.AddInterceptors(
+                sp.GetRequiredService<AuditableEntityInterceptor>(),
+                sp.GetRequiredService<SoftDeleteInterceptor>());
         });
 
         services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
+
+        // Audit infrastructure
+        services.AddScoped<IAuditLogWriter, EfAuditLogWriter>();
+        services.AddScoped<IActivityLogger, EfActivityLogger>();
 
         AddRepositories(services);
 

@@ -21,9 +21,16 @@ public static class DependencyInjection
         {
             configuration.RegisterServicesFromAssembly(assembly);
 
-            // Order matters: logging wraps the whole pipeline, validation runs before the handler.
+            // Pipeline execution order (outermost → innermost):
+            configuration.AddOpenBehavior(typeof(CancellationPipelineBehavior<,>));
+            configuration.AddOpenBehavior(typeof(CorrelationPipelineBehavior<,>));
             configuration.AddOpenBehavior(typeof(LoggingPipelineBehavior<,>));
+            configuration.AddOpenBehavior(typeof(PerformancePipelineBehavior<,>));
+            configuration.AddOpenBehavior(typeof(ExceptionPipelineBehavior<,>));
+            configuration.AddOpenBehavior(typeof(AuthorizationPipelineBehavior<,>));
             configuration.AddOpenBehavior(typeof(ValidationPipelineBehavior<,>));
+            configuration.AddOpenBehavior(typeof(TransactionPipelineBehavior<,>));
+            configuration.AddOpenBehavior(typeof(AuditPipelineBehavior<,>));
         });
 
         services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);

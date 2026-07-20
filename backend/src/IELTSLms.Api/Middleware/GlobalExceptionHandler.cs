@@ -1,14 +1,15 @@
 using IELTSLms.Api.Constants;
+using IELTSLms.Application.Exceptions;
+using IELTSLms.SharedKernel.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IELTSLms.Api.Middleware;
 
 /// <summary>
-/// Last-resort handler for unhandled exceptions. Converts them into an RFC 7807
-/// <c>application/problem+json</c> response with a generic message — never a stack trace, secret,
-/// or any cross-tenant detail — while logging the full exception server-side with the correlation
-/// id (API Design Standards §9, Security Standards §NFR-SEC).
+/// Last-resort handler for unhandled exceptions. Maps typed exceptions to appropriate HTTP status
+/// codes with RFC 7807 <c>application/problem+json</c> responses. Never exposes stack traces,
+/// secrets, or cross-tenant details (API Design Standards §9, Security Standards §NFR-SEC).
 /// </summary>
 public sealed partial class GlobalExceptionHandler(
     IProblemDetailsService problemDetailsService,
@@ -30,20 +31,22 @@ public sealed partial class GlobalExceptionHandler(
             httpContext.Request.Path,
             exception);
 
-        httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        var (statusCode, code, detail) = MapException(exception);
 
-        var (type, title) = ProblemTypes.ForErrorType(SharedKernel.Results.ErrorType.Failure);
+        httpContext.Response.StatusCode = statusCode;
+
+        var (type, title) = ProblemTypes.ForStatusCode(statusCode);
 
         var problemDetails = new ProblemDetails
         {
             Type = type,
             Title = title,
-            Status = StatusCodes.Status500InternalServerError,
-            Detail = "An unexpected error occurred while processing your request.",
+            Status = statusCode,
+            Detail = detail,
             Instance = httpContext.Request.Path,
         };
 
-        problemDetails.Extensions["code"] = "SERVER_UNEXPECTED";
+        problemDetails.Extensions["code"] = code;
         if (correlationId is not null)
         {
             problemDetails.Extensions["correlationId"] = correlationId;
@@ -56,6 +59,20 @@ public sealed partial class GlobalExceptionHandler(
             Exception = exception,
         }).ConfigureAwait(false);
     }
+
+    private static (int StatusCode, string Code, string Detail) MapException(Exception exception) =>
+        exception switch
+        {
+            NotFoundException nf => (StatusCodes.Status404NotFound, nf.Code, nf.Message),
+            ForbiddenException fb => (StatusCodes.Status403Forbidden, fb.Code, fb.Message),
+            UnauthorizedException ua => (StatusCodes.Status401Unauthorized, ua.Code, ua.Message),
+            ConflictException cf => (StatusCodes.Status409Conflict, cf.Code, cf.Message),
+            ConcurrencyConflictException cc => (StatusCodes.Status409Conflict, cc.Code, cc.Message),
+            BusinessRuleException br => (StatusCodes.Status422UnprocessableEntity, br.Code, br.Message),
+            DomainException de => (StatusCodes.Status422UnprocessableEntity, de.Code, de.Message),
+            OperationCanceledException => (StatusCodes.Status499ClientClosedRequest, "CLIENT_CLOSED", "The request was cancelled."),
+            _ => (StatusCodes.Status500InternalServerError, "SERVER_UNEXPECTED", "An unexpected error occurred while processing your request."),
+        };
 
     /// <summary>High-performance, source-generated log messages for this handler (CA1848).</summary>
     private static partial class Log

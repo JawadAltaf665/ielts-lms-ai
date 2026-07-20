@@ -1,14 +1,22 @@
+using IELTSLms.Abstractions.Audit;
 using IELTSLms.Abstractions.Caching;
+using IELTSLms.Abstractions.Context;
 using IELTSLms.Abstractions.Email;
+using IELTSLms.Abstractions.Environment;
 using IELTSLms.Abstractions.Events;
 using IELTSLms.Abstractions.Security;
+using IELTSLms.Abstractions.Serialization;
 using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.Abstractions.Time;
 using IELTSLms.Infrastructure.Caching;
+using IELTSLms.Infrastructure.Configuration;
+using IELTSLms.Infrastructure.Context;
 using IELTSLms.Infrastructure.Email;
+using IELTSLms.Infrastructure.Environment;
 using IELTSLms.Infrastructure.Events;
 using IELTSLms.Infrastructure.Observability;
 using IELTSLms.Infrastructure.Security;
+using IELTSLms.Infrastructure.Serialization;
 using IELTSLms.Infrastructure.Tenancy;
 using IELTSLms.Infrastructure.Time;
 using Microsoft.Extensions.Configuration;
@@ -39,6 +47,24 @@ public static class DependencyInjection
         services.AddScoped<TenantContext>();
         services.AddScoped<ITenantContextAccessor>(sp => sp.GetRequiredService<TenantContext>());
         services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
+
+        // Context services
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<ICurrentTenantService>(sp =>
+        {
+            var tc = sp.GetRequiredService<ITenantContext>();
+            return new CurrentTenantServiceAdapter(tc);
+        });
+        services.AddScoped<ICorrelationIdProvider, CorrelationIdAccessor>();
+        services.AddScoped<IRequestContext, RequestContextAccessor>();
+
+        // Utilities
+        services.AddSingleton<IJsonSerializer, SystemTextJsonSerializer>();
+        services.AddSingleton<IEnvironmentService, EnvironmentService>();
+
+        // Configuration
+        services.AddValidatedOptions<LoggingOptions>(configuration, LoggingOptions.SectionName);
+        services.AddValidatedOptions<AuditOptions>(configuration, AuditOptions.SectionName);
 
         AddSecurity(services, configuration);
         AddEmail(services);

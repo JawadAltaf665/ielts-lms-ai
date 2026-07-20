@@ -3,6 +3,7 @@ using System.Reflection;
 using IELTSLms.Abstractions.Events;
 using IELTSLms.Abstractions.Persistence;
 using IELTSLms.Abstractions.Tenancy;
+using IELTSLms.Application.Exceptions;
 using IELTSLms.SharedKernel.Domain;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,13 +14,6 @@ namespace IELTSLms.Persistence;
 /// discovered from this assembly, and domain events raised by aggregates are dispatched inside the
 /// same transaction as the save (Backend Architecture §5.5 / §9).
 /// </summary>
-/// <remarks>
-/// Cross-cutting persistence concerns live here rather than in per-entity configurations: the
-/// mandatory tenant global query filter for every <see cref="ITenantScoped"/> entity
-/// (Multi-Tenant Architecture §6), the soft-delete filter for every <see cref="ISoftDeletable"/>
-/// entity, and stamping <c>TenantId</c> on inserts of tenant-scoped rows so application code never
-/// has to set it by hand.
-/// </remarks>
 public sealed class ApplicationDbContext(
     DbContextOptions<ApplicationDbContext> options,
     IDomainEventDispatcher domainEventDispatcher,
@@ -40,12 +34,39 @@ public sealed class ApplicationDbContext(
 
         var domainEvents = aggregates.SelectMany(a => a.DomainEvents).ToArray();
 
-        var result = await base.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-        if (domainEvents.Length > 0)
+        // Dispatch pre-commit events before persisting
+        var preCommitEvents = domainEvents.Where(e => e is IPreCommitDomainEvent).ToArray();
+        if (preCommitEvents.Length > 0)
         {
-            await domainEventDispatcher.DispatchAsync(domainEvents, cancellationToken).ConfigureAwait(false);
+            await domainEventDispatcher.DispatchAsync(preCommitEvents, cancellationToken).ConfigureAwait(false);
+        }
 
+        int result;
+        try
+        {
+            result = await base.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            var entry = ex.Entries.Count > 0 ? ex.Entries[0] : null;
+            var entityName = entry?.Metadata.ClrType.Name ?? "Unknown";
+            var entityId = entry?.Property("Id")?.CurrentValue;
+            throw new ConcurrencyConflictException(entityName, entityId);
+        }
+
+        // Dispatch post-commit events (default behavior for unmarked events)
+        var postCommitEvents = domainEvents.Where(e => e is not IPreCommitDomainEvent).ToArray();
+        if (postCommitEvents.Length > 0)
+        {
+            await domainEventDispatcher.DispatchAsync(postCommitEvents, cancellationToken).ConfigureAwait(false);
+
+            foreach (var aggregate in aggregates)
+            {
+                aggregate.ClearDomainEvents();
+            }
+        }
+        else if (aggregates.Length > 0)
+        {
             foreach (var aggregate in aggregates)
             {
                 aggregate.ClearDomainEvents();
@@ -67,12 +88,7 @@ public sealed class ApplicationDbContext(
     }
 
     /// <summary>
-    /// Applies the tenant and soft-delete global query filters to every applicable entity. Combining
-    /// both here (EF Core allows only one filter per entity) keeps the isolation invariant in one
-    /// place instead of scattered across configurations. The tenant predicate reads the ambient
-    /// <see cref="ITenantContext"/> at query time and honours an explicit, audited bypass; when no
-    /// tenant is resolved the filter matches nothing, so a missing tenant fails closed rather than
-    /// leaking every tenant's rows (Multi-Tenant Architecture §6.2).
+    /// Applies the tenant and soft-delete global query filters to every applicable entity.
     /// </summary>
     private void ApplyGlobalQueryFilters(ModelBuilder modelBuilder)
     {
@@ -88,50 +104,46 @@ public sealed class ApplicationDbContext(
             }
 
             var parameter = Expression.Parameter(clrType, "e");
-            Expression? predicate = null;
+            Expression? filter = null;
 
             if (isTenantScoped)
             {
-                // e => this.TenantContextProperty.IsBypassed
-                //      || e.TenantId == this.TenantContextProperty.TenantId
-                // The filter must read the value off *this* DbContext instance so EF Core re-evaluates
-                // it per query instead of baking the first tenant into the cached model. The accessor
-                // property is private, so bind it via an explicit PropertyInfo rather than by name
-                // (Expression.Property(_, string) only finds public members).
-                var tenantProperty = Expression.Property(parameter, nameof(ITenantScoped.TenantId));
-                var contextConstant = Expression.Constant(this);
-                var accessor = Expression.Property(contextConstant, TenantContextPropertyInfo);
-                var currentTenant = Expression.Property(accessor, nameof(ITenantContext.TenantId));
-                var isBypassed = Expression.Property(accessor, nameof(ITenantContext.IsBypassed));
+                // e.TenantId == TenantContextProperty.TenantId || TenantContextProperty.BypassTenantFilter
+                var tenantIdProperty = Expression.Property(parameter, nameof(ITenantScoped.TenantId));
+                var contextProperty = Expression.Property(
+                    Expression.Constant(this),
+                    TenantContextPropertyInfo);
+                var contextTenantId = Expression.Property(contextProperty, nameof(ITenantContext.TenantId));
 
-                // Guid == Guid? comparison: lift the left side to nullable.
-                var tenantMatches = Expression.Equal(
-                    Expression.Convert(tenantProperty, typeof(Guid?)),
-                    currentTenant);
+                // Coalesce nullable tenant id for comparison
+                var coalesce = Expression.Coalesce(contextTenantId, Expression.Constant(Guid.Empty));
+                var tenantMatch = Expression.Equal(tenantIdProperty, coalesce);
 
-                predicate = Expression.OrElse(isBypassed, tenantMatches);
+                // Bypass
+                var bypass = Expression.Property(contextProperty, nameof(ITenantContext.IsBypassed));
+                filter = Expression.OrElse(bypass, tenantMatch);
             }
 
             if (isSoftDeletable)
             {
-                // e => !e.IsDeleted
-                var notDeleted = Expression.Not(
-                    Expression.Property(parameter, nameof(ISoftDeletable.IsDeleted)));
+                var isDeletedProperty = Expression.Property(parameter, nameof(ISoftDeletable.IsDeleted));
+                var notDeleted = Expression.Equal(isDeletedProperty, Expression.Constant(false));
 
-                predicate = predicate is null
-                    ? notDeleted
-                    : Expression.AndAlso(predicate, notDeleted);
+                filter = filter is not null
+                    ? Expression.AndAlso(filter, notDeleted)
+                    : notDeleted;
             }
 
-            var filter = Expression.Lambda(predicate!, parameter);
-            modelBuilder.Entity(clrType).HasQueryFilter(filter);
+            if (filter is not null)
+            {
+                var lambda = Expression.Lambda(filter, parameter);
+                modelBuilder.Entity(clrType).HasQueryFilter(lambda);
+            }
         }
     }
 
     /// <summary>
-    /// Exposes the ambient tenant context to query-filter expressions built in
-    /// <see cref="ApplyGlobalQueryFilters"/>. The filter reads this at query time so each query sees
-    /// the tenant resolved for the current request.
+    /// Exposes the tenant context as a CLR property so the EF Core filter expression can bind to it.
     /// </summary>
     private ITenantContext TenantContextProperty => tenantContext;
 
@@ -143,9 +155,7 @@ public sealed class ApplicationDbContext(
 
     /// <summary>
     /// Stamps <c>TenantId</c> on newly-added <see cref="ITenantScoped"/> entities that have not set it
-    /// yet, using the ambient tenant. Entities that already carry a tenant (e.g. set explicitly by a
-    /// handler, or a seeded system row) are left untouched. Inserting a tenant-scoped row with no
-    /// ambient tenant and no explicit tenant is a programming error and fails loudly.
+    /// yet, using the ambient tenant.
     /// </summary>
     private void StampTenantOnNewEntities()
     {

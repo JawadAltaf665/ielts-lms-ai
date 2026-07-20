@@ -36,10 +36,12 @@ try
 
     var app = builder.Build();
 
-    // --- Middleware pipeline (Backend Architecture §7): exception → correlation → ... → routing ---
+    // --- Middleware pipeline (Backend Architecture §7): exception → correlation → context → ... → routing ---
     app.UseExceptionHandler();
 
     app.UseMiddleware<CorrelationIdMiddleware>();
+    app.UseMiddleware<RequestContextMiddleware>();
+    app.UseMiddleware<PerformanceMiddleware>();
 
     // Emit RFC 7807 problem responses for framework-generated status codes (e.g. 404 with no
     // matching endpoint, 405) that never reach the exception handler.
