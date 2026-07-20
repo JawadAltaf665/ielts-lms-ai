@@ -15,18 +15,21 @@ using IELTSLms.Infrastructure.Email;
 using IELTSLms.Infrastructure.Environment;
 using IELTSLms.Infrastructure.Events;
 using IELTSLms.Infrastructure.Observability;
+using IELTSLms.Infrastructure.Performance;
+using IELTSLms.Infrastructure.Resilience;
 using IELTSLms.Infrastructure.Security;
 using IELTSLms.Infrastructure.Serialization;
 using IELTSLms.Infrastructure.Tenancy;
 using IELTSLms.Infrastructure.Time;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace IELTSLms.Infrastructure;
 
 /// <summary>
 /// Composition helpers for the infrastructure layer: technology adapters (clock, ids, cache,
-/// domain-event dispatch) and cross-cutting observability.
+/// domain-event dispatch), cross-cutting observability, resilience, performance, and CORS.
 /// </summary>
 public static class DependencyInjection
 {
@@ -36,14 +39,14 @@ public static class DependencyInjection
     /// <summary>Registers infrastructure-layer services into the container.</summary>
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IHostEnvironment environment)
     {
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IGuidProvider, GuidProvider>();
         services.AddScoped<IDomainEventDispatcher, MediatorDomainEventDispatcher>();
 
-        // One tenant-context instance per request scope; the accessor (write side) and the read-only
-        // view resolve to the same object so resolution middleware and consumers share state.
+        // One tenant-context instance per request scope.
         services.AddScoped<TenantContext>();
         services.AddScoped<ITenantContextAccessor>(sp => sp.GetRequiredService<TenantContext>());
         services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
@@ -65,11 +68,19 @@ public static class DependencyInjection
         // Configuration
         services.AddValidatedOptions<LoggingOptions>(configuration, LoggingOptions.SectionName);
         services.AddValidatedOptions<AuditOptions>(configuration, AuditOptions.SectionName);
+        services.AddValidatedOptions<CacheOptions>(configuration, CacheOptions.SectionName);
+        services.AddValidatedOptions<PerformanceOptions>(configuration, PerformanceOptions.SectionName);
 
         AddSecurity(services, configuration);
         AddEmail(services);
         AddCaching(services, configuration);
         services.AddObservability(configuration);
+        services.AddResiliencePolicies(configuration);
+        services.AddPerformanceInfrastructure(configuration);
+        services.AddApiProtection(configuration, environment);
+
+        // Startup validation (hosted service — runs before first request)
+        services.AddHostedService<StartupConfigurationValidator>();
 
         return services;
     }
@@ -91,9 +102,7 @@ public static class DependencyInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
-        // One shared key for signing (here) and validation (API bearer middleware).
         services.AddSingleton<JwtSigningKeyProvider>();
-
         services.AddSingleton<IPasswordHasher, Argon2PasswordHasher>();
         services.AddSingleton<IPasswordPolicy, ConfigurablePasswordPolicy>();
         services.AddSingleton<ISecureTokenGenerator, SecureTokenGenerator>();
@@ -102,7 +111,6 @@ public static class DependencyInjection
 
     private static void AddEmail(IServiceCollection services)
     {
-        // Transport is interface-only this sprint: a logging sender stands in for SMTP/SendGrid.
         services.AddSingleton<IEmailTemplateRenderer, IdentityEmailTemplateRenderer>();
         services.AddSingleton<IEmailSender, LoggingEmailSender>();
     }
@@ -113,8 +121,6 @@ public static class DependencyInjection
 
         if (string.IsNullOrWhiteSpace(redisConnectionString))
         {
-            // No Redis configured (local dev / tests): fall back to an in-process distributed cache
-            // so ICacheService still resolves and behaves identically from the caller's view.
             services.AddDistributedMemoryCache();
         }
         else
@@ -122,7 +128,9 @@ public static class DependencyInjection
             services.AddStackExchangeRedisCache(options =>
             {
                 options.Configuration = redisConnectionString;
-                options.InstanceName = "ielts-lms:";
+                options.InstanceName = configuration
+                    .GetSection(CacheOptions.SectionName)
+                    .Get<CacheOptions>()?.InstancePrefix ?? "ielts-lms:";
             });
         }
 

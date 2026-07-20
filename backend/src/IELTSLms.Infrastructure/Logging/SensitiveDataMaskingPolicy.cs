@@ -6,7 +6,7 @@ namespace IELTSLms.Infrastructure.Logging;
 /// <summary>
 /// Serilog destructuring policy that replaces sensitive property values with "***REDACTED***".
 /// </summary>
-internal sealed class SensitiveDataMaskingPolicy : IDestructuringPolicy
+public sealed class SensitiveDataMaskingPolicy : IDestructuringPolicy
 {
     private static readonly HashSet<string> SensitiveKeys = new(StringComparer.OrdinalIgnoreCase)
     {

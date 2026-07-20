@@ -1,8 +1,9 @@
 namespace IELTSLms.Abstractions.Caching;
 
 /// <summary>
-/// Application-facing cache port. Keys must be tenant-scoped by the caller so cached data never
-/// leaks across tenants (Backend Architecture §11). Implemented by the infrastructure layer.
+/// Application-facing cache port. The implementation handles serialization, key namespacing,
+/// and tenant/user scoping. Callers use <see cref="CacheKeys"/> helpers to build properly
+/// namespaced keys (Backend Architecture §11).
 /// </summary>
 public interface ICacheService
 {
@@ -10,18 +11,25 @@ public interface ICacheService
     Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
         where T : class;
 
-    /// <summary>Stores a value with an optional absolute expiration.</summary>
-    Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
+    /// <summary>Stores a value with configurable expiration.</summary>
+    Task SetAsync<T>(
+        string key,
+        T value,
+        CacheEntryOptions? options = null,
+        CancellationToken cancellationToken = default)
         where T : class;
 
     /// <summary>Fetches from cache or produces and stores the value on a miss.</summary>
     Task<T> GetOrCreateAsync<T>(
         string key,
         Func<CancellationToken, Task<T>> factory,
-        TimeSpan? expiration = null,
+        CacheEntryOptions? options = null,
         CancellationToken cancellationToken = default)
         where T : class;
 
     /// <summary>Removes a cached value if present.</summary>
     Task RemoveAsync(string key, CancellationToken cancellationToken = default);
+
+    /// <summary>Removes all keys matching a prefix (namespace invalidation).</summary>
+    Task RemoveByPrefixAsync(string prefix, CancellationToken cancellationToken = default);
 }

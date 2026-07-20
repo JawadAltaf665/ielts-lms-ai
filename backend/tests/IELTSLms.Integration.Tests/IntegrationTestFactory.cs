@@ -26,6 +26,8 @@ public sealed class IntegrationTestFactory : WebApplicationFactory<Program>
                 ["ConnectionStrings:Database"] = "Host=localhost;Database=ielts_lms_test;Username=postgres;Password=postgres",
                 ["ConnectionStrings:Hangfire"] = "Host=localhost;Database=ielts_lms_test;Username=postgres;Password=postgres",
                 ["ConnectionStrings:Redis"] = string.Empty,
+                ["Serilog:MinimumLevel:Default"] = "Information",
+                ["Observability:ServiceName"] = "ielts-lms-api-test",
             });
         });
 

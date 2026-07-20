@@ -43,13 +43,14 @@
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.10" />
   </ItemGroup>
 
-  <ItemGroup Label="Infrastructure (Cache, Jobs)">
+  <ItemGroup Label="Infrastructure (Cache, Jobs, Resilience)">
     <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.10" />
     <PackageVersion Include="StackExchange.Redis" Version="3.0.17" />
     <PackageVersion Include="Hangfire.AspNetCore" Version="1.8.24" />
     <PackageVersion Include="Hangfire.PostgreSql" Version="1.21.1" />
     <!-- Transitive pin: Hangfire.PostgreSql pulls a vulnerable Newtonsoft.Json 11.0.1 (GHSA-5crp-9r3c-p9vr); force a safe version. -->
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.1.0" />
   </ItemGroup>
 
   <ItemGroup Label="Logging (Serilog)">

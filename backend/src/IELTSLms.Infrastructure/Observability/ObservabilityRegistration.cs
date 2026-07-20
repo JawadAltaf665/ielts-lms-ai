@@ -8,8 +8,8 @@ namespace IELTSLms.Infrastructure.Observability;
 
 /// <summary>
 /// Wires OpenTelemetry tracing and metrics for the service. Instrumentation covers ASP.NET Core,
-/// outbound HTTP, and the runtime; traces/metrics export via OTLP when an endpoint is configured
-/// (Observability §2 / §4).
+/// outbound HTTP, runtime, EF Core, and custom application activity sources. Traces/metrics export
+/// via OTLP when an endpoint is configured (Observability §2 / §4).
 /// </summary>
 internal static class ObservabilityRegistration
 {
@@ -29,12 +29,23 @@ internal static class ObservabilityRegistration
 
         services.AddOpenTelemetry()
             .ConfigureResource(resource => resource
-                .AddService(options.ServiceName, serviceVersion: options.ServiceVersion))
+                .AddService(
+                    options.ServiceName,
+                    serviceVersion: options.ServiceVersion)
+                .AddAttributes(new Dictionary<string, object>
+                {
+                    ["deployment.environment"] = options.Environment ?? "development",
+                }))
             .WithTracing(tracing =>
             {
                 tracing
-                    .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation();
+                    .AddSource(Telemetry.ActivitySourceNames)
+                    .AddAspNetCoreInstrumentation(o =>
+                    {
+                        o.RecordException = true;
+                        o.Filter = ctx => !ctx.Request.Path.StartsWithSegments("/health");
+                    })
+                    .AddHttpClientInstrumentation(o => o.RecordException = true);
 
                 if (!string.IsNullOrWhiteSpace(options.OtlpEndpoint))
                 {
@@ -44,6 +55,7 @@ internal static class ObservabilityRegistration
             .WithMetrics(metrics =>
             {
                 metrics
+                    .AddMeter(Telemetry.MeterNames)
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddRuntimeInstrumentation();

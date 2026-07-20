@@ -4,6 +4,9 @@ using IELTSLms.Api.Authentication;
 using IELTSLms.Api.Context;
 using IELTSLms.Api.Middleware;
 using IELTSLms.Api.Tenancy;
+using IELTSLms.Infrastructure.HealthChecks;
+using IELTSLms.Infrastructure.RateLimiting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi;
 using PersistenceModule = IELTSLms.Persistence.DependencyInjection;
 using InfrastructureModule = IELTSLms.Infrastructure.DependencyInjection;
@@ -12,27 +15,29 @@ namespace IELTSLms.Api;
 
 /// <summary>
 /// Composition helpers for presentation-layer concerns: Problem Details, current-context adapter,
-/// API versioning, Swagger/OpenAPI, and health checks.
+/// API versioning, Swagger/OpenAPI, health checks, and rate limiting.
 /// </summary>
 internal static class DependencyInjection
 {
     /// <summary>Health-check tag identifying readiness probes (dependency checks).</summary>
     public const string ReadinessTag = "ready";
 
+    /// <summary>Health-check tag identifying startup probes.</summary>
+    public const string StartupTag = "startup";
+
     public static IServiceCollection AddPresentation(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IHostEnvironment environment)
     {
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentContext, HttpCurrentContext>();
 
-        // Tenant-resolution strategy chain (ordered by priority in the middleware): the authenticated
-        // JWT claim is authoritative, the X-Tenant-Id header is an advisory pre-auth fallback.
+        // Tenant-resolution strategy chain.
         services.AddSingleton<ITenantResolutionStrategy, JwtClaimTenantResolutionStrategy>();
         services.AddSingleton<ITenantResolutionStrategy, HeaderTenantResolutionStrategy>();
 
-        // RFC 7807 Problem Details for framework-generated errors (404, 415, ...); the global
-        // handler and ResultExtensions cover exceptions and domain failures respectively.
+        // RFC 7807 Problem Details for framework-generated errors.
         services.AddProblemDetails();
         services.AddExceptionHandler<GlobalExceptionHandler>();
 
@@ -40,6 +45,7 @@ internal static class DependencyInjection
         services.AddApiVersioningSupport();
         services.AddSwagger();
         services.AddHealthChecksSupport(configuration);
+        services.AddRateLimitingPolicies(configuration, environment);
 
         return services;
     }
@@ -73,7 +79,6 @@ internal static class DependencyInjection
                 Description = "Backend foundation for IELTS LMS AI.",
             });
 
-            // JWT bearer so protected endpoints can be exercised from Swagger UI.
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Name = "Authorization",
@@ -112,5 +117,12 @@ internal static class DependencyInjection
                 name: "redis",
                 tags: [ReadinessTag]);
         }
+
+        // Custom health checks
+        healthChecks
+            .AddCheck<ApplicationHealthCheck>("application", tags: [StartupTag])
+            .AddCheck<DiskSpaceHealthCheck>("disk-space", tags: [ReadinessTag])
+            .AddCheck<MemoryHealthCheck>("memory", tags: [ReadinessTag])
+            .AddCheck<ConfigurationHealthCheck>("configuration", tags: [StartupTag]);
     }
 }

@@ -17,6 +17,9 @@ public sealed class ObservabilityOptions
     /// <summary>Service version reported on all telemetry.</summary>
     public string ServiceVersion { get; set; } = "1.0.0";
 
+    /// <summary>Deployment environment (development, staging, production).</summary>
+    public string? Environment { get; set; }
+
     /// <summary>OTLP collector endpoint. When empty, exporting is disabled (e.g. local dev).</summary>
     public string? OtlpEndpoint { get; set; }
 }
