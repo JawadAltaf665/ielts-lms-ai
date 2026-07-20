@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Leaf project: no references to any other IELTSLms project (Backend Architecture §5.7). -->
+
+</Project>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Architecture tests: enforce the dependency/reference rules from Backend Architecture §5 (fails build on violation). -->
+
+  <ItemGroup>
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\IELTSLms.Abstractions\IELTSLms.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\IELTSLms.Api\IELTSLms.Api.csproj" />
+    <ProjectReference Include="..\..\src\IELTSLms.Application\IELTSLms.Application.csproj" />
+    <ProjectReference Include="..\..\src\IELTSLms.BackgroundJobs\IELTSLms.BackgroundJobs.csproj" />
+    <ProjectReference Include="..\..\src\IELTSLms.Common\IELTSLms.Common.csproj" />
+    <ProjectReference Include="..\..\src\IELTSLms.Contracts\IELTSLms.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\IELTSLms.Domain\IELTSLms.Domain.csproj" />
+    <ProjectReference Include="..\..\src\IELTSLms.Infrastructure\IELTSLms.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\IELTSLms.Persistence\IELTSLms.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\IELTSLms.SharedKernel\IELTSLms.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

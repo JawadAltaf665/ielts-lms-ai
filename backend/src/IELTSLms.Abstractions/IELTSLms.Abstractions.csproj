@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Shared port interfaces used by Application, implemented by Infrastructure; may reference Domain
+       aggregates in repository ports (Backend Architecture §5.3). -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\IELTSLms.Domain\IELTSLms.Domain.csproj" />
+    <ProjectReference Include="..\IELTSLms.SharedKernel\IELTSLms.SharedKernel.csproj" />
+    <ProjectReference Include="..\IELTSLms.Contracts\IELTSLms.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

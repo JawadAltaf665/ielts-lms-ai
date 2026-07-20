@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Integration tests: API + persistence + adapters (WebApplicationFactory). -->
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\IELTSLms.Api\IELTSLms.Api.csproj" />
+    <ProjectReference Include="..\..\src\IELTSLms.Persistence\IELTSLms.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\IELTSLms.Infrastructure\IELTSLms.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\IELTSLms.Application\IELTSLms.Application.csproj" />
+  </ItemGroup>
+
+</Project>

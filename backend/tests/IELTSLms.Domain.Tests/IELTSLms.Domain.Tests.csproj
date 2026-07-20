@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Unit tests: domain rules and primitives, no DB/web. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\IELTSLms.Domain\IELTSLms.Domain.csproj" />
+    <ProjectReference Include="..\..\src\IELTSLms.SharedKernel\IELTSLms.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

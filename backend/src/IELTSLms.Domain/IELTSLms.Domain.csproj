@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Domain: aggregates, VOs, domain events, rules. References SharedKernel only (Backend Architecture §5.1). -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\IELTSLms.SharedKernel\IELTSLms.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>
