@@ -69,5 +69,12 @@ public static class DependencyInjection
         services.AddScoped<IEmailVerificationTokenRepository, EmailVerificationTokenRepository>();
         services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
         services.AddScoped<ILoginHistoryRepository, LoginHistoryRepository>();
+        
+        // Phase 4 - Identity & Tenancy
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IPermissionRepository, PermissionRepository>();
+        services.AddScoped<IUserInvitationRepository, UserInvitationRepository>();
+        services.AddScoped<IKnownDeviceRepository, KnownDeviceRepository>();
+        services.AddScoped<IOrganizationRepository, OrganizationRepository>();
     }
 }
