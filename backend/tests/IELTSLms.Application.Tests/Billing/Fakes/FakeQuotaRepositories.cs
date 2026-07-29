@@ -84,4 +84,7 @@ internal sealed class FakeUsageRecordRepository : IUsageRecordRepository
 
     public Task<IReadOnlyList<UsageRecord>> ListEndingBeforeAsync(DateTimeOffset before, CancellationToken cancellationToken = default) =>
         Task.FromResult<IReadOnlyList<UsageRecord>>(_records.Where(u => u.PeriodEnd < before).ToArray());
+
+    public Task<IReadOnlyList<UsageRecord>> ListByPeriodAsync(DateTimeOffset periodStart, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<UsageRecord>>(_records.Where(u => u.PeriodStart == periodStart).ToArray());
 }

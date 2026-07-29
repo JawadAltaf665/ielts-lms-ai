@@ -42,4 +42,30 @@ public static class BillingErrors
 
     public static readonly Error SubscriptionRequired = Error.Custom(
         "BUSINESS_SUBSCRIPTION_REQUIRED", "An active subscription is required for this action.", ErrorType.Forbidden);
+
+    // ADR-032 additions (Phase 5 Sprint 2 — Billing Operations).
+
+    public static readonly Error InvoiceNotFound = Error.NotFound(
+        "BILLING_INVOICE_NOT_FOUND", "The requested invoice does not exist.");
+
+    public static readonly Error PaymentNotFound = Error.NotFound(
+        "BILLING_PAYMENT_NOT_FOUND", "The requested payment does not exist.");
+
+    public static readonly Error PaymentNotRetryable = Error.Conflict(
+        "BILLING_PAYMENT_NOT_RETRYABLE", "Only a failed payment can be retried.");
+
+    public static readonly Error CouponNotFound = Error.NotFound(
+        "BILLING_COUPON_NOT_FOUND", "No coupon exists with this code.");
+
+    public static readonly Error RefundExceedsPayment = Error.Validation(
+        "BILLING_REFUND_EXCEEDS_PAYMENT", "The refund amount exceeds the payment's remaining refundable balance.");
+
+    public static readonly Error PaymentNotRefundable = Error.Conflict(
+        "BILLING_PAYMENT_NOT_REFUNDABLE", "Only a succeeded payment can be refunded.");
+
+    public static readonly Error PaymentMethodNotFound = Error.NotFound(
+        "BILLING_PAYMENT_METHOD_NOT_FOUND", "The requested payment method does not exist.");
+
+    public static readonly Error CustomerNotFound = Error.NotFound(
+        "BILLING_CUSTOMER_NOT_FOUND", "The tenant has no billing customer yet.");
 }

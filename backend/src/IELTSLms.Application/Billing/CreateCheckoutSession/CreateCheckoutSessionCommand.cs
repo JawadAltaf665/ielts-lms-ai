@@ -10,6 +10,7 @@ namespace IELTSLms.Application.Billing.CreateCheckoutSession;
 /// <param name="PriceId">The specific price (interval/currency) being purchased.</param>
 /// <param name="SuccessUrl">Where Stripe redirects on successful checkout.</param>
 /// <param name="CancelUrl">Where Stripe redirects if checkout is abandoned.</param>
+/// <param name="CouponCode">Optional coupon code to apply (13 §7, ADR-032).</param>
 public sealed record CreateCheckoutSessionCommand(
     Guid TenantId,
     string Email,
@@ -17,6 +18,7 @@ public sealed record CreateCheckoutSessionCommand(
     Guid PlanId,
     Guid PriceId,
     string SuccessUrl,
-    string CancelUrl) : ICommand<CheckoutSessionResponse>;
+    string CancelUrl,
+    string? CouponCode = null) : ICommand<CheckoutSessionResponse>;
 
 public sealed record CheckoutSessionResponse(string Url);

@@ -15,6 +15,8 @@ public sealed class CreateCheckoutSessionCommandHandler(
     IBillingCustomerRepository billingCustomers,
     ISubscriptionRepository subscriptions,
     ISubscriptionItemRepository subscriptionItems,
+    ICouponRepository coupons,
+    ICouponRedemptionRepository couponRedemptions,
     IPaymentGateway paymentGateway,
     IUnitOfWork unitOfWork,
     IClock clock,
@@ -73,6 +75,22 @@ public sealed class CreateCheckoutSessionCommandHandler(
             billingCustomers.Add(billingCustomer);
         }
 
+        Coupon? coupon = null;
+        if (!string.IsNullOrWhiteSpace(request.CouponCode))
+        {
+            coupon = await coupons.GetByCodeAsync(request.CouponCode.Trim().ToUpperInvariant(), cancellationToken).ConfigureAwait(false);
+            if (coupon is null)
+            {
+                return Result.Failure<CheckoutSessionResponse>(BillingErrors.CouponNotFound);
+            }
+
+            var eligibility = coupon.CheckEligibility(request.TenantId, now);
+            if (eligibility.IsFailure)
+            {
+                return Result.Failure<CheckoutSessionResponse>(eligibility.Error);
+            }
+        }
+
         await EnsureStripeCatalogSyncedAsync(plan, price, cancellationToken).ConfigureAwait(false);
 
         var stripeCustomerId = await paymentGateway
@@ -91,6 +109,18 @@ public sealed class CreateCheckoutSessionCommandHandler(
             subscriptionItems.Add(itemResult.Value);
         }
 
+        string? providerCouponId = null;
+        if (coupon is not null)
+        {
+            providerCouponId = await paymentGateway.SyncCouponAsync(coupon, cancellationToken).ConfigureAwait(false);
+            coupon.AttachStripeCoupon(providerCouponId, now);
+            coupon.RecordRedemption(now);
+
+            var redemption = CouponRedemption.Create(
+                CouponRedemptionId.From(guids.NewGuid()), request.TenantId, coupon.Id, subscription.Id, now);
+            couponRedemptions.Add(redemption);
+        }
+
         var checkoutUrl = await paymentGateway.CreateCheckoutSessionAsync(
             new CreateCheckoutSessionRequest(
                 stripeCustomerId,
@@ -102,7 +132,8 @@ public sealed class CreateCheckoutSessionCommandHandler(
                 {
                     ["subscription_id"] = subscription.Id.Value.ToString(),
                     ["tenant_id"] = request.TenantId.ToString(),
-                }),
+                },
+                providerCouponId),
             cancellationToken).ConfigureAwait(false);
 
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

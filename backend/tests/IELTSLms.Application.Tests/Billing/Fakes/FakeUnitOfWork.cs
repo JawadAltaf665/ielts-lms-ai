@@ -11,4 +11,8 @@ internal sealed class FakeUnitOfWork : IUnitOfWork
         SaveChangesCallCount++;
         return Task.FromResult(1);
     }
+
+    public void DiscardChanges()
+    {
+    }
 }

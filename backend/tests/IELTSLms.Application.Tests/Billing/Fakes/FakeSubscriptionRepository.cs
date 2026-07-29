@@ -40,4 +40,14 @@ internal sealed class FakeSubscriptionRepository : ISubscriptionRepository
 
     public Task<IReadOnlyList<Subscription>> ListLinkedToProviderAsync(CancellationToken cancellationToken = default) =>
         Task.FromResult<IReadOnlyList<Subscription>>(_subscriptions.Where(s => s.StripeSubscriptionId is not null).ToArray());
+
+    public Task<IReadOnlyList<Subscription>> ListAllNonExpiredAsync(CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<Subscription>>(_subscriptions.Where(s => s.Status != SubscriptionStatus.Expired).ToArray());
+
+    public Task<IReadOnlyList<Subscription>> ListChurnedBetweenAsync(
+        DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<Subscription>>(_subscriptions
+            .Where(s => s.Status is SubscriptionStatus.Cancelled or SubscriptionStatus.Expired
+                && s.UpdatedAtUtc >= from && s.UpdatedAtUtc < to)
+            .ToArray());
 }
