@@ -869,6 +869,160 @@ Entities are grouped by domain. Each entity defines: **Purpose, Description, Pri
 - **Retention:** Retain for reconciliation. **Archiving:** Archive expired.
 - **Data Type:** Reference/Transactional.
 
+#### 6.5.1 Stripe-Native Billing Extension (ADR-031)
+
+The entities below extend §6.5 per [ADR-031](./28_ADR_Architecture_Decision_Records.md#adr-031--stripe-native-billing-entity-model):
+`SubscriptionPlans` (ENT-039) becomes the catalog root spanning `Product` → `Plan` → `Price` (a
+plan's price/interval no longer lives inline on one row); `Subscriptions` (ENT-040) gains a line-item
+child (`SubscriptionItem`); `Invoices` (ENT-041) gains a line-item child (`InvoiceLine`). Numbered
+ENT-039A.. to avoid renumbering ENT-044+.
+
+#### ENT-039A — Products
+- **Purpose:** Sellable catalog item, mirrors a Stripe Product.
+- **Primary Key:** `ProductId`. **Foreign Keys:** None (global).
+- **Tenant Isolation:** Global catalog.
+- **Relationships:** 1..* Plans.
+- **Business Rules:** `StripeProductId` synced on create/update; Active/Archived lifecycle.
+- **Soft Delete:** Yes (archive). **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** internal code, active. **Unique Constraints:** internal product code, `StripeProductId`.
+- **Data Type:** Reference/Master Data.
+
+#### ENT-039B — Plans
+- **Purpose:** Internal commercial tier (Free/Starter/Premium/Institute/Enterprise).
+- **Primary Key:** `PlanId`. **Foreign Keys:** `ProductId`.
+- **Tenant Isolation:** Global catalog.
+- **Relationships:** *..1 Product; 1..* Prices; 1..* PlanFeatures; 1..* PlanQuotas; 1..* Subscriptions (via ENT-040's `PlanId`).
+- **Business Rules:** `DisplayOrder` encodes upgrade (higher order) vs. downgrade (lower order) direction; `TrialEligible`/`TrialDays`; Active/Inactive lifecycle.
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** code, `DisplayOrder`, active. **Unique Constraints:** plan code.
+- **Check Constraints:** `TrialDays >= 0`.
+- **Data Type:** Reference/Master Data.
+
+#### ENT-039C — Prices
+- **Purpose:** A specific monetary offer for a Plan, mirrors a Stripe Price.
+- **Primary Key:** `PriceId`. **Foreign Keys:** `PlanId`.
+- **Tenant Isolation:** Global catalog.
+- **Relationships:** *..1 Plan; 1..* SubscriptionItems; 0..* InvoiceLines.
+- **Business Rules:** `Interval` ∈ {Monthly, Yearly}; `UnitAmount` in minor units; `StripePriceId` synced.
+- **Soft Delete:** Yes (deactivate, Stripe prices are immutable once used). **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`PlanId`, `Interval`, `Currency`). **Unique Constraints:** `StripePriceId`.
+- **Check Constraints:** `UnitAmount >= 0`; `Interval` ∈ enumeration; `Currency` ISO-4217.
+- **Data Type:** Reference/Master Data.
+
+#### ENT-039D — FeatureGroups
+- **Purpose:** Grouping for related features (display/organization only).
+- **Primary Key:** `FeatureGroupId`. **Tenant Isolation:** Global catalog.
+- **Relationships:** 1..* Features.
+- **Audit Fields:** Yes. **Unique Constraints:** group code.
+- **Data Type:** Reference/Master Data.
+
+#### ENT-039E — Features
+- **Purpose:** A gateable platform capability (AI Tutor, Writing Evaluation, Mock Exams, ...).
+- **Primary Key:** `FeatureId`. **Foreign Keys:** `FeatureGroupId` (nullable).
+- **Tenant Isolation:** Global catalog.
+- **Relationships:** *..1 FeatureGroup; 1..* PlanFeatures; 1..* TenantFeatures.
+- **Audit Fields:** Yes. **Unique Constraints:** feature code.
+- **Data Type:** Reference/Master Data.
+
+#### ENT-039F — PlanFeatures
+- **Purpose:** Grants a Feature to a Plan (the entitlement matrix).
+- **Primary Key:** `PlanFeatureId`. **Foreign Keys:** `PlanId`, `FeatureId`.
+- **Tenant Isolation:** Global catalog.
+- **Business Rules:** `IsEnabled` flag; a Feature absent from a Plan's PlanFeatures is denied by default.
+- **Unique Constraints:** (`PlanId`, `FeatureId`).
+- **Data Type:** Reference/Master Data.
+
+#### ENT-039G — TenantFeatures
+- **Purpose:** Tenant-specific override/grant of a Feature (beyond or below plan defaults).
+- **Primary Key:** `TenantFeatureId`. **Foreign Keys:** `TenantId`, `FeatureId`.
+- **Tenant Isolation:** `TenantId` required.
+- **Business Rules:** Overrides `PlanFeature` for that tenant; optional `ExpiresAtUtc` for time-boxed grants; entitlement resolution = TenantFeature override ?? PlanFeature ?? deny.
+- **Audit Fields:** Yes. **Unique Constraints:** (`TenantId`, `FeatureId`).
+- **Data Type:** Transactional/Configuration.
+
+#### ENT-039H — QuotaDefinitions
+- **Purpose:** Catalog of meterable resources (AI Requests, Daily Practice, Storage, Students, ...).
+- **Primary Key:** `QuotaDefinitionId`. **Tenant Isolation:** Global catalog.
+- **Business Rules:** `Unit` (count/bytes/...); `ResetCycle` ∈ {Daily, Monthly, Never}.
+- **Unique Constraints:** quota code.
+- **Data Type:** Reference/Master Data.
+
+#### ENT-039I — PlanQuotas
+- **Purpose:** Default limit for a QuotaDefinition on a Plan.
+- **Primary Key:** `PlanQuotaId`. **Foreign Keys:** `PlanId`, `QuotaDefinitionId`.
+- **Tenant Isolation:** Global catalog.
+- **Business Rules:** `Limit` (`-1` = unlimited).
+- **Unique Constraints:** (`PlanId`, `QuotaDefinitionId`).
+- **Check Constraints:** `Limit >= -1`.
+- **Data Type:** Reference/Master Data.
+
+#### ENT-039J — TenantQuotas
+- **Purpose:** Tenant-specific override of a quota limit (beyond plan default).
+- **Primary Key:** `TenantQuotaId`. **Foreign Keys:** `TenantId`, `QuotaDefinitionId`.
+- **Tenant Isolation:** `TenantId` required.
+- **Business Rules:** Resolution = TenantQuota override ?? PlanQuota ?? 0.
+- **Audit Fields:** Yes. **Unique Constraints:** (`TenantId`, `QuotaDefinitionId`).
+- **Data Type:** Transactional/Configuration.
+
+#### ENT-039K — UsageRecords
+- **Purpose:** Metered consumption counter for a tenant/quota/period.
+- **Primary Key:** `UsageRecordId`. **Foreign Keys:** `TenantId`, `QuotaDefinitionId`.
+- **Tenant Isolation:** `TenantId` required.
+- **Business Rules:** One row per (`TenantId`, `QuotaDefinitionId`, `PeriodStart`); `Consumed` incremented atomically; reset by the [Quota reset background job](./15_Backend_Architecture.md#background-jobs) per `ResetCycle`.
+- **Audit Fields:** Yes (append/update, no soft delete — historical periods retained).
+- **Indexes:** (`TenantId`, `QuotaDefinitionId`, `PeriodStart`).
+- **Unique Constraints:** (`TenantId`, `QuotaDefinitionId`, `PeriodStart`).
+- **Check Constraints:** `Consumed >= 0`.
+- **Retention:** Retain for usage analytics ([13 §15](./13_Subscription_Billing.md#15-revenue-analytics--reporting)).
+- **Data Type:** Transactional.
+
+#### ENT-039L — BillingCustomers
+- **Purpose:** Tenant's billing identity, mirrors a Stripe Customer. Owns an embedded `BillingAddress` value object (no independent lifecycle, not a separate entity).
+- **Primary Key:** `BillingCustomerId`. **Foreign Keys:** `TenantId`.
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** 1..1 Tenant; 1..* PaymentMethods; 1..* Subscriptions.
+- **Business Rules:** `StripeCustomerId` synced on first checkout/creation; no raw card data stored.
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Unique Constraints:** `TenantId` (one billing customer per tenant); `StripeCustomerId`.
+- **Data Type:** Transactional/Master.
+
+#### ENT-039M — PaymentMethods
+- **Purpose:** A reusable tokenized payment method, mirrors a Stripe PaymentMethod.
+- **Primary Key:** `PaymentMethodId`. **Foreign Keys:** `TenantId`, `BillingCustomerId`.
+- **Tenant Isolation:** `TenantId` required.
+- **Business Rules:** Provider token only (`StripePaymentMethodId`); `Brand`/`Last4`/`ExpMonth`/`ExpYear` display-only, never raw PAN ([Security §NFR-SEC](./05_Non_Functional_Requirements.md)); `IsDefault` at most one per customer.
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`BillingCustomerId`). **Unique Constraints:** `StripePaymentMethodId`.
+- **Data Type:** Transactional.
+
+#### ENT-039N — SubscriptionItems
+- **Purpose:** Line item of a Subscription (ENT-040), supports seat-based quantity.
+- **Primary Key:** `SubscriptionItemId`. **Foreign Keys:** `SubscriptionId`, `PriceId`.
+- **Tenant Isolation:** Inherits `TenantId` via Subscription.
+- **Business Rules:** `Quantity >= 1`; `StripeSubscriptionItemId` synced.
+- **Audit Fields:** Yes. **Unique Constraints:** `StripeSubscriptionItemId`.
+- **Check Constraints:** `Quantity >= 1`.
+- **Data Type:** Transactional.
+
+#### ENT-039O — InvoiceLines
+- **Purpose:** Line item of an Invoice (ENT-041).
+- **Primary Key:** `InvoiceLineId`. **Foreign Keys:** `InvoiceId`, `PriceId` (nullable, e.g. proration/adjustment lines).
+- **Tenant Isolation:** Inherits `TenantId` via Invoice.
+- **Business Rules:** Immutable once the parent Invoice is issued (ENT-041 rule); `Amount = UnitAmount * Quantity`.
+- **Audit Fields:** Yes (no soft delete — financial record).
+- **Check Constraints:** `Quantity >= 1`; amounts ≥ 0.
+- **Data Type:** Transactional (financial).
+
+#### ENT-039P — ProcessedWebhookEvents
+- **Purpose:** Idempotency ledger for inbound Stripe webhook events (distinct from the domain-event outbox).
+- **Primary Key:** `ProcessedWebhookEventId` (= Stripe event id).
+- **Tenant Isolation:** None (provider-level event, may span tenants).
+- **Business Rules:** Insert-before-process; a duplicate event id is a no-op ([13 §11](./13_Subscription_Billing.md#11-webhook-architecture--event-model)).
+- **Audit Fields:** `ProcessedAtUtc` only (append-only, no soft delete).
+- **Unique Constraints:** event id.
+- **Retention:** Short rolling window (dedup only, not an audit trail).
+- **Data Type:** Transactional (technical).
+
 ---
 
 ### 6.6 Notifications & Communications
