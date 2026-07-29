@@ -13,4 +13,7 @@ public interface IUsageRecordRepository : IRepository<UsageRecord, UsageRecordId
 
     /// <summary>All usage records whose period has ended before <paramref name="before"/>, for the quota-reset job.</summary>
     Task<IReadOnlyList<UsageRecord>> ListEndingBeforeAsync(DateTimeOffset before, CancellationToken cancellationToken = default);
+
+    /// <summary>All usage records for a period, across every tenant, for billing analytics (ADR-032). Requires an active tenant-filter bypass.</summary>
+    Task<IReadOnlyList<UsageRecord>> ListByPeriodAsync(DateTimeOffset periodStart, CancellationToken cancellationToken = default);
 }

@@ -3,6 +3,7 @@ using IELTSLms.Domain.Billing;
 using Microsoft.Extensions.Options;
 using Stripe;
 using Stripe.Checkout;
+using DomainCoupon = IELTSLms.Domain.Billing.Coupon;
 
 namespace IELTSLms.Infrastructure.Billing;
 
@@ -67,6 +68,12 @@ public sealed class StripePaymentGateway : IPaymentGateway
                 CancelUrl = request.CancelUrl,
                 SubscriptionData = request.TrialPeriodDays > 0
                     ? new SessionSubscriptionDataOptions { TrialPeriodDays = request.TrialPeriodDays }
+                    : null,
+                Discounts = request.ProviderCouponId is not null
+                    ? [new SessionDiscountOptions { Coupon = request.ProviderCouponId }]
+                    : null,
+                AutomaticTax = request.EnableAutomaticTax
+                    ? new SessionAutomaticTaxOptions { Enabled = true }
                     : null,
                 Metadata = new Dictionary<string, string>(request.Metadata),
             },
@@ -156,5 +163,106 @@ public sealed class StripePaymentGateway : IPaymentGateway
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
         return price.Id;
+    }
+
+    // ADR-032 additions (Phase 5 Sprint 2 — Billing Operations).
+
+    public async Task<string> CreateBillingPortalSessionAsync(
+        string providerCustomerId, string returnUrl, CancellationToken cancellationToken = default)
+    {
+        var service = new Stripe.BillingPortal.SessionService(_client.Value);
+        var session = await service.CreateAsync(
+            new Stripe.BillingPortal.SessionCreateOptions { Customer = providerCustomerId, ReturnUrl = returnUrl },
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        return session.Url;
+    }
+
+    public async Task<string> CreateSetupIntentAsync(string providerCustomerId, CancellationToken cancellationToken = default)
+    {
+        var service = new SetupIntentService(_client.Value);
+        var setupIntent = await service.CreateAsync(
+            new SetupIntentCreateOptions { Customer = providerCustomerId, PaymentMethodTypes = ["card"] },
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        return setupIntent.ClientSecret;
+    }
+
+    public async Task DetachPaymentMethodAsync(string providerPaymentMethodId, CancellationToken cancellationToken = default)
+    {
+        var service = new PaymentMethodService(_client.Value);
+        await service.DetachAsync(providerPaymentMethodId, cancellationToken: cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task SetDefaultPaymentMethodAsync(
+        string providerCustomerId, string providerPaymentMethodId, CancellationToken cancellationToken = default)
+    {
+        var service = new CustomerService(_client.Value);
+        await service.UpdateAsync(
+            providerCustomerId,
+            new CustomerUpdateOptions
+            {
+                InvoiceSettings = new CustomerInvoiceSettingsOptions { DefaultPaymentMethod = providerPaymentMethodId },
+            },
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task ChangeSubscriptionPriceAsync(
+        string providerSubscriptionId, string providerPriceId, CancellationToken cancellationToken = default)
+    {
+        var service = new SubscriptionService(_client.Value);
+        var subscription = await service.GetAsync(providerSubscriptionId, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var existingItemId = subscription.Items.Data[0].Id;
+
+        await service.UpdateAsync(
+            providerSubscriptionId,
+            new SubscriptionUpdateOptions
+            {
+                Items = [new SubscriptionItemOptions { Id = existingItemId, Price = providerPriceId }],
+                ProrationBehavior = "create_prorations",
+            },
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<string> CreateRefundAsync(
+        string providerPaymentIntentId, long amountMinorUnits, CancellationToken cancellationToken = default)
+    {
+        var service = new RefundService(_client.Value);
+        var refund = await service.CreateAsync(
+            new RefundCreateOptions { PaymentIntent = providerPaymentIntentId, Amount = amountMinorUnits },
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        return refund.Id;
+    }
+
+    public async Task<string> SyncCouponAsync(DomainCoupon coupon, CancellationToken cancellationToken = default)
+    {
+        var service = new CouponService(_client.Value);
+
+        if (coupon.StripeCouponId is not null)
+        {
+            return coupon.StripeCouponId;
+        }
+
+        var created = await service.CreateAsync(
+            new CouponCreateOptions
+            {
+                Name = coupon.Name,
+                Duration = "once",
+                PercentOff = coupon.DiscountType is CouponDiscountType.Percentage
+                    ? coupon.Value / (decimal)DomainCoupon.BasisPointsPerPercent
+                    : null,
+                AmountOff = coupon.DiscountType is CouponDiscountType.Fixed ? coupon.Value : null,
+                Currency = coupon.DiscountType is CouponDiscountType.Fixed ? coupon.Currency?.ToLowerInvariant() : null,
+            },
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        return created.Id;
+    }
+
+    public async Task RetryInvoicePaymentAsync(string providerInvoiceId, CancellationToken cancellationToken = default)
+    {
+        var service = new InvoiceService(_client.Value);
+        await service.PayAsync(providerInvoiceId, cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 }

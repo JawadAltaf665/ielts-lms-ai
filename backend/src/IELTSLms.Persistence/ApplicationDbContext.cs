@@ -21,6 +21,9 @@ public sealed class ApplicationDbContext(
     : DbContext(options), IUnitOfWork
 {
     /// <inheritdoc />
+    public void DiscardChanges() => ChangeTracker.Clear();
+
+    /// <inheritdoc />
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         StampTenantOnNewEntities();

@@ -21,4 +21,14 @@ public interface ISubscriptionRepository : IRepository<Subscription, Subscriptio
 
     /// <summary>Non-terminal subscriptions still linked to a Stripe subscription, for the reconciliation job.</summary>
     Task<IReadOnlyList<Subscription>> ListLinkedToProviderAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// All non-expired subscriptions across every tenant, for financial/analytics reporting
+    /// (ADR-032). Callers must already hold an <c>ITenantContextAccessor.BypassTenantFilter()</c>
+    /// scope — this method does not bypass tenant isolation itself.
+    /// </summary>
+    Task<IReadOnlyList<Subscription>> ListAllNonExpiredAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Subscriptions that became Cancelled/Expired within the window, for churn reporting (ADR-032).</summary>
+    Task<IReadOnlyList<Subscription>> ListChurnedBetweenAsync(DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken = default);
 }
