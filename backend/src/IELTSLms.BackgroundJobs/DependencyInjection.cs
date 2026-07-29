@@ -67,6 +67,9 @@ public static class DependencyInjection
         services.AddScoped<QuotaResetSweepJob>();
         services.AddScoped<StripeReconciliationJob>();
 
+        // Phase 5 Sprint 2 - Billing Operations (ADR-032)
+        services.AddScoped<DeadLetterWebhookRetryJob>();
+
         return services;
     }
 }

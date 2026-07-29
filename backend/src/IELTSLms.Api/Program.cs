@@ -175,6 +175,8 @@ try
             "billing-quota-reset-sweep", job => job.ExecuteAsync(CancellationToken.None), "0 0 * * *");
         recurringJobs.AddOrUpdate<StripeReconciliationJob>(
             "billing-stripe-reconciliation", job => job.ExecuteAsync(CancellationToken.None), "0 */6 * * *");
+        recurringJobs.AddOrUpdate<DeadLetterWebhookRetryJob>(
+            "billing-dead-letter-webhook-retry", job => job.ExecuteAsync(CancellationToken.None), "*/15 * * * *");
     }
 
     // Graceful shutdown: wait for in-flight requests to complete.
