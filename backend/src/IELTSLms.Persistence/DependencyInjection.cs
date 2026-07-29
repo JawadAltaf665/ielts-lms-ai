@@ -1,8 +1,10 @@
 using IELTSLms.Abstractions.Audit;
 using IELTSLms.Abstractions.Persistence;
+using IELTSLms.Abstractions.Persistence.Billing;
 using IELTSLms.Persistence.Audit;
 using IELTSLms.Persistence.Interceptors;
 using IELTSLms.Persistence.Repositories;
+using IELTSLms.Persistence.Repositories.Billing;
 using IELTSLms.Persistence.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -76,5 +78,26 @@ public static class DependencyInjection
         services.AddScoped<IUserInvitationRepository, UserInvitationRepository>();
         services.AddScoped<IKnownDeviceRepository, KnownDeviceRepository>();
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+
+        // Phase 5 - Subscription & Billing
+        services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IPlanRepository, PlanRepository>();
+        services.AddScoped<IPriceRepository, PriceRepository>();
+        services.AddScoped<IFeatureGroupRepository, FeatureGroupRepository>();
+        services.AddScoped<IFeatureRepository, FeatureRepository>();
+        services.AddScoped<IPlanFeatureRepository, PlanFeatureRepository>();
+        services.AddScoped<ITenantFeatureRepository, TenantFeatureRepository>();
+        services.AddScoped<IQuotaDefinitionRepository, QuotaDefinitionRepository>();
+        services.AddScoped<IPlanQuotaRepository, PlanQuotaRepository>();
+        services.AddScoped<ITenantQuotaRepository, TenantQuotaRepository>();
+        services.AddScoped<IUsageRecordRepository, UsageRecordRepository>();
+        services.AddScoped<IBillingCustomerRepository, BillingCustomerRepository>();
+        services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
+        services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+        services.AddScoped<ISubscriptionItemRepository, SubscriptionItemRepository>();
+        services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+        services.AddScoped<IInvoiceLineRepository, InvoiceLineRepository>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IProcessedWebhookEventRepository, ProcessedWebhookEventRepository>();
     }
 }
