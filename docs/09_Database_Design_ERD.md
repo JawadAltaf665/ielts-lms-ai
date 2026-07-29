@@ -1023,6 +1023,56 @@ ENT-039A.. to avoid renumbering ENT-044+.
 - **Retention:** Short rolling window (dedup only, not an audit trail).
 - **Data Type:** Transactional (technical).
 
+#### 6.5.2 Billing Operations Extension (ADR-032)
+
+The entities below extend §6.5.1 for Phase 5 Sprint 2 (invoice/payment operations, coupons, refunds,
+webhook dead-lettering). `Coupons` (ENT-043) gains a redemption-tracking child; `Subscriptions`
+(ENT-040) gains a `Paused` lifecycle state (13 §4 extended per ADR-032).
+
+#### ENT-039Q — CreditNotes
+- **Purpose:** Non-cash correction applied against an issued Invoice (ENT-041), per
+  [13 §8.1](./13_Subscription_Billing.md#8-invoices-payments--refunds) ("corrections via credit notes").
+- **Primary Key:** `CreditNoteId`. **Foreign Keys:** `TenantId`, `InvoiceId`.
+- **Tenant Isolation:** `TenantId` required.
+- **Business Rules:** `AmountMinorUnits <= Invoice.TotalMinorUnits`; immutable once issued.
+- **Soft Delete:** No (financial record; void via status). **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`TenantId`, `InvoiceId`).
+- **Check Constraints:** `AmountMinorUnits >= 0`.
+- **Data Type:** Transactional (financial).
+
+#### ENT-039R — CouponRedemptions
+- **Purpose:** Records a Coupon (ENT-043) applied to a Subscription (ENT-040) — the "Discount"
+  instance ([13 §7](./13_Subscription_Billing.md#7-coupons-discounts--campaigns)).
+- **Primary Key:** `CouponRedemptionId`. **Foreign Keys:** `TenantId`, `CouponId`, `SubscriptionId`.
+- **Tenant Isolation:** `TenantId` required.
+- **Business Rules:** At most one active redemption per subscription (stacking disallowed by default,
+  13 §7); enforces the coupon's `MaxRedemptions` cap at command-time.
+- **Audit Fields:** Yes. **Unique Constraints:** (`SubscriptionId`) while active.
+- **Data Type:** Transactional.
+
+#### ENT-039S — Refunds
+- **Purpose:** A full or partial reversal of a Payment (ENT-042), with reason and provider reference.
+- **Primary Key:** `RefundId`. **Foreign Keys:** `TenantId`, `PaymentId`.
+- **Tenant Isolation:** `TenantId` required.
+- **Business Rules:** Sum of a Payment's Refunds `<= Payment.AmountMinorUnits`; `StripeRefundId`
+  synced; triggers entitlement re-evaluation per policy, not automatically.
+- **Soft Delete:** No (financial record). **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`TenantId`, `PaymentId`).
+- **Check Constraints:** `AmountMinorUnits >= 0`; status ∈ {Pending, Succeeded, Failed}.
+- **Data Type:** Transactional (financial).
+
+#### ENT-039T — FailedWebhookEvents
+- **Purpose:** Dead-letter ledger for Stripe webhook events whose processing threw, distinct from the
+  idempotency ledger (ENT-039P) — lets ops inspect and replay failures
+  ([13 §11](./13_Subscription_Billing.md#11-webhook-architecture--event-model): retry/dead-letter).
+- **Primary Key:** `FailedWebhookEventId` (= Stripe event id).
+- **Tenant Isolation:** None (provider-level event, may span tenants).
+- **Business Rules:** Retried up to a capped attempt count by a background sweep; removed once
+  successfully reprocessed.
+- **Audit Fields:** `FailedAtUtc`, `RetryCount`, `LastError` (append/update, no soft delete).
+- **Retention:** Until successfully reprocessed or manually resolved.
+- **Data Type:** Transactional (technical).
+
 ---
 
 ### 6.6 Notifications & Communications
