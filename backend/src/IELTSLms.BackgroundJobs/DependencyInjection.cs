@@ -1,6 +1,7 @@
 using Hangfire;
 using Hangfire.PostgreSql;
 using IELTSLms.Abstractions.Jobs;
+using IELTSLms.BackgroundJobs.Billing;
 using IELTSLms.BackgroundJobs.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -57,6 +58,14 @@ public static class DependencyInjection
 
         services.AddSingleton<IBackgroundJobService, HangfireBackgroundJobService>();
         services.AddSingleton<IRecurringJobService, HangfireRecurringJobService>();
+
+        // Phase 5 - Subscription & Billing recurring jobs (Hangfire resolves these per-execution).
+        services.AddScoped<TrialExpirationSweepJob>();
+        services.AddScoped<SubscriptionExpirationSweepJob>();
+        services.AddScoped<PastDueSuspensionSweepJob>();
+        services.AddScoped<RenewalReminderJob>();
+        services.AddScoped<QuotaResetSweepJob>();
+        services.AddScoped<StripeReconciliationJob>();
 
         return services;
     }
