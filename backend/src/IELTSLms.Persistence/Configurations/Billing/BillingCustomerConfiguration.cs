@@ -19,6 +19,7 @@ internal sealed class BillingCustomerConfiguration : IEntityTypeConfiguration<Bi
         builder.Property(c => c.Name).HasMaxLength(256);
         builder.Property(c => c.Phone).HasMaxLength(32);
         builder.Property(c => c.StripeCustomerId).HasMaxLength(128);
+        builder.Property(c => c.TaxExempt).IsRequired();
 
         builder.OwnsOne(c => c.Address, address =>
         {

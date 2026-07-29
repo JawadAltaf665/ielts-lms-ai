@@ -33,6 +33,7 @@ internal sealed class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         builder.Property(i => i.IssuedAtUtc);
         builder.Property(i => i.DueAtUtc);
         builder.Property(i => i.PaidAtUtc);
+        builder.Property(i => i.HostedInvoiceUrl).HasMaxLength(500);
 
         builder.Property(i => i.CreatedAtUtc).IsRequired();
         builder.Property(i => i.UpdatedAtUtc);

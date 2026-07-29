@@ -20,4 +20,7 @@ internal sealed class UsageRecordRepository(ApplicationDbContext dbContext)
 
     public async Task<IReadOnlyList<UsageRecord>> ListEndingBeforeAsync(DateTimeOffset before, CancellationToken cancellationToken = default) =>
         await Set.Where(u => u.PeriodEnd < before).ToListAsync(cancellationToken).ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<UsageRecord>> ListByPeriodAsync(DateTimeOffset periodStart, CancellationToken cancellationToken = default) =>
+        await Set.Where(u => u.PeriodStart == periodStart).ToListAsync(cancellationToken).ConfigureAwait(false);
 }

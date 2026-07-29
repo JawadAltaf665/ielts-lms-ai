@@ -16,4 +16,11 @@ internal sealed class PaymentRepository(ApplicationDbContext dbContext)
             .OrderByDescending(p => p.CreatedAtUtc)
             .Skip(skip).Take(take)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+    public async Task<int> CountByTenantAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+        await Set.CountAsync(p => p.TenantId == tenantId, cancellationToken).ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<Payment>> ListBetweenAsync(
+        DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken = default) =>
+        await Set.Where(p => p.CreatedAtUtc >= from && p.CreatedAtUtc < to).ToListAsync(cancellationToken).ConfigureAwait(false);
 }

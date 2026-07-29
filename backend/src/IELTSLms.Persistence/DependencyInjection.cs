@@ -99,5 +99,12 @@ public static class DependencyInjection
         services.AddScoped<IInvoiceLineRepository, InvoiceLineRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
         services.AddScoped<IProcessedWebhookEventRepository, ProcessedWebhookEventRepository>();
+
+        // Phase 5 Sprint 2 - Billing Operations (ADR-032)
+        services.AddScoped<ICreditNoteRepository, CreditNoteRepository>();
+        services.AddScoped<ICouponRepository, CouponRepository>();
+        services.AddScoped<ICouponRedemptionRepository, CouponRedemptionRepository>();
+        services.AddScoped<IRefundRepository, RefundRepository>();
+        services.AddScoped<IFailedWebhookEventRepository, FailedWebhookEventRepository>();
     }
 }

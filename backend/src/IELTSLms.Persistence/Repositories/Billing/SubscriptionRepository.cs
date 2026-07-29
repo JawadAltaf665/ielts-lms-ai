@@ -34,4 +34,14 @@ internal sealed class SubscriptionRepository(ApplicationDbContext dbContext)
                 s.StripeSubscriptionId != null
                 && (s.Status == SubscriptionStatus.Trial || s.Status == SubscriptionStatus.Active || s.Status == SubscriptionStatus.PastDue))
             .ToListAsync(cancellationToken).ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<Subscription>> ListAllNonExpiredAsync(CancellationToken cancellationToken = default) =>
+        await Set.Where(s => s.Status != SubscriptionStatus.Expired).ToListAsync(cancellationToken).ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<Subscription>> ListChurnedBetweenAsync(
+        DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken = default) =>
+        await Set.Where(s =>
+                (s.Status == SubscriptionStatus.Cancelled || s.Status == SubscriptionStatus.Expired)
+                && s.UpdatedAtUtc != null && s.UpdatedAtUtc >= from && s.UpdatedAtUtc < to)
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 }
