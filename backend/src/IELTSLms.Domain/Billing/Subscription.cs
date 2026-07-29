@@ -148,6 +148,36 @@ public sealed class Subscription : TenantAuditableEntity<SubscriptionId>
     }
 
     /// <summary>
+    /// Active → Paused (ADR-032): a voluntary, tenant-initiated pause — distinct from
+    /// <see cref="Suspend"/>, which is involuntary (non-payment). No event: not in the sprint's
+    /// named event list, same treatment as MarkPastDue/Suspend.
+    /// </summary>
+    public Result Pause(DateTimeOffset nowUtc)
+    {
+        if (Status is not SubscriptionStatus.Active)
+        {
+            return InvalidTransition("Only an active subscription can be paused.");
+        }
+
+        Status = SubscriptionStatus.Paused;
+        UpdatedAtUtc = nowUtc;
+        return Result.Success();
+    }
+
+    /// <summary>Paused → Active (ADR-032), reversing a voluntary pause.</summary>
+    public Result Unpause(DateTimeOffset nowUtc)
+    {
+        if (Status is not SubscriptionStatus.Paused)
+        {
+            return InvalidTransition("Only a paused subscription can be unpaused.");
+        }
+
+        Status = SubscriptionStatus.Active;
+        UpdatedAtUtc = nowUtc;
+        return Result.Success();
+    }
+
+    /// <summary>
     /// Trial/Active/PastDue → Cancelled. Access continues until the current period ends (13 §4).
     /// Raises <see cref="SubscriptionCancelledDomainEvent"/>.
     /// </summary>

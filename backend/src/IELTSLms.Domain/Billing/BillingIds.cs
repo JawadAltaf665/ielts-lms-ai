@@ -129,3 +129,33 @@ public readonly record struct PaymentId(Guid Value)
     public static PaymentId From(Guid value) => new(value);
     public override string ToString() => Value.ToString();
 }
+
+// ADR-032 additions (Phase 5 Sprint 2 — Billing Operations).
+
+/// <summary>Strongly-typed identifier for a <see cref="CreditNote"/>.</summary>
+public readonly record struct CreditNoteId(Guid Value)
+{
+    public static CreditNoteId From(Guid value) => new(value);
+    public override string ToString() => Value.ToString();
+}
+
+/// <summary>Strongly-typed identifier for a <see cref="Coupon"/>.</summary>
+public readonly record struct CouponId(Guid Value)
+{
+    public static CouponId From(Guid value) => new(value);
+    public override string ToString() => Value.ToString();
+}
+
+/// <summary>Strongly-typed identifier for a <see cref="CouponRedemption"/>.</summary>
+public readonly record struct CouponRedemptionId(Guid Value)
+{
+    public static CouponRedemptionId From(Guid value) => new(value);
+    public override string ToString() => Value.ToString();
+}
+
+/// <summary>Strongly-typed identifier for a <see cref="Refund"/>.</summary>
+public readonly record struct RefundId(Guid Value)
+{
+    public static RefundId From(Guid value) => new(value);
+    public override string ToString() => Value.ToString();
+}

@@ -31,6 +31,9 @@ public sealed class BillingCustomer : TenantAuditableEntity<BillingCustomerId>
     /// <summary>Owned value object — see ADR-031 for why this isn't its own aggregate.</summary>
     public BillingAddress? Address { get; private set; }
 
+    /// <summary>Whether this customer is exempt from tax calculation (13 §9, ADR-032).</summary>
+    public bool TaxExempt { get; private set; }
+
     public static Result<BillingCustomer> Create(BillingCustomerId id, Guid tenantId, string email, string? name, DateTimeOffset nowUtc)
     {
         if (string.IsNullOrWhiteSpace(email))
@@ -60,5 +63,11 @@ public sealed class BillingCustomer : TenantAuditableEntity<BillingCustomerId>
         Address = address;
         UpdatedAtUtc = nowUtc;
         return Result.Success();
+    }
+
+    public void SetTaxExemption(bool taxExempt, DateTimeOffset nowUtc)
+    {
+        TaxExempt = taxExempt;
+        UpdatedAtUtc = nowUtc;
     }
 }

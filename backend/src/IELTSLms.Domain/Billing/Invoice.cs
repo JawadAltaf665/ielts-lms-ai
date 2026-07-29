@@ -50,6 +50,9 @@ public sealed class Invoice : TenantAuditableEntity<InvoiceId>
 
     public DateTimeOffset? PaidAtUtc { get; private set; }
 
+    /// <summary>Stripe's hosted invoice page/PDF — "download" reuses this rather than a first-party generator (ADR-032).</summary>
+    public string? HostedInvoiceUrl { get; private set; }
+
     public static Invoice CreateDraft(
         InvoiceId id, Guid tenantId, SubscriptionId subscriptionId, BillingCustomerId billingCustomerId,
         string number, string currency, DateTimeOffset nowUtc)
@@ -84,6 +87,12 @@ public sealed class Invoice : TenantAuditableEntity<InvoiceId>
     public void AttachStripeInvoice(string stripeInvoiceId, DateTimeOffset nowUtc)
     {
         StripeInvoiceId = stripeInvoiceId;
+        UpdatedAtUtc = nowUtc;
+    }
+
+    public void SetHostedInvoiceUrl(string? hostedInvoiceUrl, DateTimeOffset nowUtc)
+    {
+        HostedInvoiceUrl = hostedInvoiceUrl;
         UpdatedAtUtc = nowUtc;
     }
 
