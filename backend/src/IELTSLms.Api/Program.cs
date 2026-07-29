@@ -1,4 +1,5 @@
 using Hangfire;
+using IELTSLms.Abstractions.Jobs;
 using IELTSLms.Api;
 using IELTSLms.Api.Endpoints;
 using IELTSLms.Api.HealthChecks;
@@ -6,6 +7,7 @@ using IELTSLms.Api.Middleware;
 using IELTSLms.Api.Tenancy;
 using IELTSLms.Application;
 using IELTSLms.BackgroundJobs;
+using IELTSLms.BackgroundJobs.Billing;
 using IELTSLms.Infrastructure;
 using IELTSLms.Infrastructure.Performance;
 using IELTSLms.Persistence;
@@ -127,6 +129,8 @@ try
     api.MapVersionEndpoints();
     api.MapAuthEndpoints();
     api.MapTenantEndpoints();
+    api.MapBillingEndpoints();
+    api.MapWebhookEndpoints();
 
     // Health endpoints.
     app.MapHealthChecks("/health/live", new HealthCheckOptions
@@ -150,6 +154,29 @@ try
     if (app.Environment.IsDevelopment())
     {
         app.MapHangfireDashboard("/hangfire");
+    }
+
+    // Billing recurring jobs (Phase 5 Sprint 1 — 13 §12). Skipped under "Testing": AddOrUpdate writes
+    // to Hangfire's PostgreSQL storage eagerly (unlike the Hangfire server, which IntegrationTestFactory
+    // already strips via RemoveAll<IHostedService>()), so registering here would make every
+    // WebApplicationFactory-based test require a real Postgres instance just to boot the host.
+    if (!app.Environment.IsEnvironment("Testing"))
+    {
+        var recurringJobs = app.Services.GetRequiredService<IRecurringJobService>();
+        recurringJobs.AddOrUpdate<TrialExpirationSweepJob>(
+            "billing-trial-expiration-sweep", job => job.ExecuteAsync(CancellationToken.None), "0 * * * *");
+        recurringJobs.AddOrUpdate<SubscriptionExpirationSweepJob>(
+            "billing-subscription-expiration-sweep", job => job.ExecuteAsync(CancellationToken.None), "15 * * * *");
+        recurringJobs.AddOrUpdate<PastDueSuspensionSweepJob>(
+            "billing-past-due-suspension-sweep", job => job.ExecuteAsync(CancellationToken.None), "0 3 * * *");
+        recurringJobs.AddOrUpdate<RenewalReminderJob>(
+            "billing-renewal-reminder", job => job.ExecuteAsync(CancellationToken.None), "0 9 * * *");
+        recurringJobs.AddOrUpdate<QuotaResetSweepJob>(
+            "billing-quota-reset-sweep", job => job.ExecuteAsync(CancellationToken.None), "0 0 * * *");
+        recurringJobs.AddOrUpdate<StripeReconciliationJob>(
+            "billing-stripe-reconciliation", job => job.ExecuteAsync(CancellationToken.None), "0 */6 * * *");
+        recurringJobs.AddOrUpdate<DeadLetterWebhookRetryJob>(
+            "billing-dead-letter-webhook-retry", job => job.ExecuteAsync(CancellationToken.None), "*/15 * * * *");
     }
 
     // Graceful shutdown: wait for in-flight requests to complete.

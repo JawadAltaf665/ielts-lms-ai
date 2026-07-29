@@ -1,6 +1,8 @@
 using System.Reflection;
 using FluentValidation;
+using IELTSLms.Abstractions.Billing;
 using IELTSLms.Application.Abstractions.Behaviors;
+using IELTSLms.Application.Billing.Services;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -34,6 +36,9 @@ public static class DependencyInjection
         });
 
         services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);
+
+        services.AddScoped<IEntitlementService, EntitlementService>();
+        services.AddScoped<IQuotaService, QuotaService>();
 
         return services;
     }

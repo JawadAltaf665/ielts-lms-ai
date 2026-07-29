@@ -195,6 +195,8 @@ This mirrors the documentation approval flow in [Architecture Index §18](./27_A
 | **ADR-028** | Activity Logging | Accepted | [25](./25_Monitoring_Observability.md) |
 | **ADR-029** | AI Gateway | Accepted | [17](./17_AI_Architecture.md) |
 | **ADR-030** | Future Microservices | Accepted | [14](./14_Clean_Architecture.md), [15](./15_Backend_Architecture.md) |
+| **ADR-031** | Stripe-Native Billing Entity Model | Accepted | [09](./09_Database_Design_ERD.md), [13](./13_Subscription_Billing.md) |
+| **ADR-032** | Billing Operations Model & Stripe-Portal-First UX | Accepted | [09](./09_Database_Design_ERD.md), [13](./13_Subscription_Billing.md) |
 
 ---
 
@@ -235,6 +237,9 @@ graph TD
     A001 --> A023[ADR-023 API Versioning]
     A001 --> A024[ADR-024 Subscription]
     A002 --> A025[ADR-025 Feature Flags]
+    A024 --> A031[ADR-031 Stripe-Native Billing Model]
+    A007 --> A031
+    A031 --> A032[ADR-032 Billing Operations Model]
 ```
 
 ---
@@ -995,6 +1000,161 @@ Each record uses a consistent structure: **Decision ID, Title, Status, Date, Con
 
 ---
 
+### ADR-031 — Stripe-Native Billing Entity Model
+
+| Field | Value |
+| --- | --- |
+| **Status** | Accepted |
+| **Date** | 2026-07-28 |
+| **Supersedes** | Extends (does not replace) the commerce entities in [09 §6.5](./09_Database_Design_ERD.md#65-commerce-subscriptions--billing) |
+
+**Context.** Phase 5 Sprint 1 implements the commercial foundation described by ADR-024: plan
+catalog, Stripe checkout/subscription sync, feature entitlements, and usage quotas. The existing
+[09 §6.5](./09_Database_Design_ERD.md#65-commerce-subscriptions--billing) ERD models this coarsely —
+a single `SubscriptionPlans` catalog entity carrying price/interval/entitlements inline, plus
+`Subscriptions`, `Invoices`, `Payments`, `Coupons`. [13](./13_Subscription_Billing.md) is deliberately
+implementation-independent and does not resolve the entity shape either.
+
+**Problem Statement.** A coarse `SubscriptionPlans` entity cannot represent Stripe's own object model
+(Products own many Prices; Customers and PaymentMethods are reusable and independent of any one
+Subscription; Subscriptions and Invoices are line-itemized) without lossy overloading of one table.
+Sprint 1 also needs first-class, queryable feature entitlements and metered quotas per tenant — not
+buried as opaque JSON on a plan row — so other bounded contexts can cheaply answer "does this tenant
+have feature X" / "how much quota does this tenant have left" without parsing configuration blobs.
+
+**Decision.** Extend [09 §6.5](./09_Database_Design_ERD.md#65-commerce-subscriptions--billing) with a
+Stripe-native, normalized entity set, additive to the existing ENT-039..043 entities:
+- **Catalog (global):** `Product` → `Plan` (Free/Starter/Premium/Institute/Enterprise;
+  `DisplayOrder` encodes the upgrade/downgrade path) → `Price` (currency, interval, minor-unit
+  amount).
+- **Entitlements:** `FeatureGroup`, `Feature`, `PlanFeature` (plan grants), `TenantFeature`
+  (tenant-scoped override).
+- **Quotas:** `QuotaDefinition`, `PlanQuota`, `TenantQuota` (override), `UsageRecord` (metered
+  counter per tenant per period).
+- **Commerce (tenant-scoped):** `BillingCustomer` (Stripe customer mirror; billing address is an
+  **owned value object** on `BillingCustomer`, not an independent aggregate — it has no lifecycle of
+  its own), `PaymentMethod`, `Subscription` (state machine), `SubscriptionItem`, `Invoice`,
+  `InvoiceLine`, `Payment`.
+- **Webhook idempotency:** `ProcessedWebhookEvent` — deduplicates inbound Stripe events; distinct
+  from the domain-event outbox.
+
+`Coupons` (ENT-043) is **not** implemented in Sprint 1 — the sprint's explicit scope (product
+catalog, plans, pricing, Stripe integration, checkout, subscription lifecycle, entitlements, quotas)
+never mentions coupons/discounts. It remains ERD-defined and accepted for a future sprint.
+
+Domain events raised by the new `Subscription` aggregate continue to dispatch via the existing
+**direct in-process MediatR publish** from `ApplicationDbContext.SaveChangesAsync`
+(`MediatorDomainEventDispatcher`), the same mechanism `Tenancy` already uses — **not** the
+`outbox_messages` table. The outbox table exists in Persistence but no module publishes through it
+yet; wiring a real outbox poller is a cross-cutting change to every module's save pipeline, not a
+Billing-specific one, and is deliberately deferred rather than bolted on for one context.
+
+**Alternatives Considered.** (a) Keep the single coarse `SubscriptionPlans` entity and store
+Stripe product/price data and entitlements as JSON columns; (b) model entitlements/quotas as
+free-form tenant configuration instead of dedicated tables; (c) wire the outbox table for Billing
+only, ahead of the rest of the platform.
+
+**Pros.** Matches Stripe's actual object graph (simplifies sync logic and avoids translation
+lossiness), makes entitlements/quotas queryable and indexable for other bounded contexts, keeps
+`BillingAddress` unburdened by unneeded aggregate ceremony (owned type, not a root).
+**Cons.** More tables and EF configurations than the original 5-entity sketch; two parallel
+"catalog" and "override" tables per concern (Plan→PlanFeature vs. TenantFeature) to reason about.
+**Consequences.** [09 §6.5](./09_Database_Design_ERD.md#65-commerce-subscriptions--billing) is
+appended (not renumbered) with the new entities; [commercial/billing.md](./commercial/billing.md) now
+points to this ADR instead of being a placeholder. Other modules that need feature/quota checks
+depend on the new `IEntitlementService`/`IQuotaService` ports, not on Billing's persistence directly.
+**Risks.** Schema growth if every future billing nuance gets its own table (RISK-FIN-01 adjacent);
+outbox deferral means Billing's domain events are only visible in-process until a platform-wide
+outbox processor exists — acceptable for Sprint 1 since nothing outside the process currently
+consumes these events.
+**Future Review.** When Coupons are scheduled, when a second payment provider is added (the
+`IPaymentGateway` port is the extraction seam), or when an outbox processor is built platform-wide.
+**Related Documents.** [09](./09_Database_Design_ERD.md), [13](./13_Subscription_Billing.md),
+[commercial/billing.md](./commercial/billing.md).
+**Future Evolution.** Coupons entity implementation; multi-provider `IPaymentGateway` adapters
+(PayPal/Paddle/Razorpay per [13 §10](./13_Subscription_Billing.md#10-payment-providers--anti-corruption-layer)); outbox-backed event delivery.
+
+---
+
+### ADR-032 — Billing Operations Model & Stripe-Portal-First UX
+
+| Field | Value |
+| --- | --- |
+| **Status** | Accepted |
+| **Date** | 2026-07-29 |
+| **Supersedes** | Extends ADR-031 |
+
+**Context.** Phase 5 Sprint 2 operationalizes the ADR-031 subscription foundation: invoice/payment
+self-service, coupons, refunds, tax, dunning notifications, subscription upgrade/downgrade/pause, a
+production-hardened webhook pipeline, and financial reporting. As with ADR-031, several asks aren't
+representable in the current docs.
+
+**Problem Statement.** `CreditNote` is referenced only in prose
+([13 §8.1](./13_Subscription_Billing.md#8-invoices-payments--refunds), "corrections via credit
+notes"), never as an ERD entity. `Coupon` exists (ENT-043) but has no redemption-tracking entity for
+"one active discount per subscription" ([13 §7](./13_Subscription_Billing.md#7-coupons-discounts--campaigns)).
+Refunds were modeled in ADR-031 as `Payment.Status = Refunded`, which cannot represent partial
+refunds or refund history. The subscription lifecycle diagram
+([13 §4](./13_Subscription_Billing.md#4-subscription-lifecycle)) has no `Paused` state, but the
+sprint asks for pause/resume as a distinct operation from cancel/resume. Sprint 2 also names
+`UsageSummary`/`BillingUsage` entities that would duplicate ADR-031's `UsageRecord`, which is already
+a monthly, tenant/quota-scoped rollup.
+
+**Decision.**
+- **New entities**, additive to [09 §6.5.1](./09_Database_Design_ERD.md#651-stripe-native-billing-extension-adr-031):
+  `CreditNote`, `Coupon` (global catalog, mirrors a Stripe Coupon), `CouponRedemption` (tenant-scoped;
+  the "Discount" instance — a coupon applied to a subscription), `Refund` (tenant-scoped, supports
+  partial refunds and history), `FailedWebhookEvent` (dead-letter ledger, parallel to ADR-031's
+  `ProcessedWebhookEvent`).
+- **`Subscription` gains a `Paused` state** with `Pause`/`Unpause` transitions (legal only to/from
+  `Active`), extending — not replacing — the ADR-031 state machine.
+- **No `UsageSummary`/`BillingUsage` entities** — `UsageRecord` already is that rollup; Sprint 2's
+  usage-billing asks are served by query handlers over it.
+- **Billing Portal is the primary self-service surface.** Stripe's hosted portal covers plan changes,
+  payment-method management, invoice download, and cancel/resume — exactly Sprint 2 §4. The
+  programmatic `ChangePlanCommand` this sprint adds is an immediate-apply-with-Stripe-proration
+  operation for both upgrade and downgrade, not a scheduled-at-period-end queue: [13 §6](./13_Subscription_Billing.md#6-plan-changes--proration)'s
+  default (downgrade takes effect at period end) is fully available to tenants through the Portal;
+  building a first-party scheduling engine (Stripe Subscription Schedules) is deferred as a separate
+  effort, not silently dropped.
+- **No new "usage aggregation" / "revenue aggregation" / "analytics refresh" background jobs.**
+  Financial reports are computed on demand by query handlers over existing Subscription/Invoice/
+  Payment/UsageRecord data; a caching or materialized-view job is deferred until real load justifies
+  it (same reasoning ADR-031 applied to the quota-reset job).
+- **Billing notifications are direct `IEmailSender` calls at each trigger point**, not a domain-event-
+  driven notification layer. `DomainEventNotification<T>` (the MediatR envelope for domain events)
+  lives in `IELTSLms.Infrastructure.Events`, which `Application` handlers cannot reference
+  (Architecture.Tests enforces this). Building the event-driven path implied by "notify on every
+  lifecycle event" would mean relocating that shared type — a platform-wide change outside Billing's
+  scope — so this sprint keeps notifications as direct calls, matching ADR-031's `RenewalReminderJob`
+  precedent.
+- **Invoice "download" reuses Stripe's own hosted invoice URL/PDF**, captured onto `Invoice` from the
+  webhook payload, rather than a first-party PDF generator.
+
+**Alternatives Considered.** (a) A first-party PDF invoice generator; (b) a Stripe Subscription
+Schedules–backed scheduled-downgrade engine; (c) relocating `DomainEventNotification<T>` to
+`Abstractions` now to unblock event-driven notifications platform-wide.
+
+**Pros.** Reuses Stripe's compliant hosted surfaces (portal, invoice PDFs) instead of rebuilding them;
+keeps the change scoped to Billing; `Refund`/`CreditNote`/`Coupon` as first-class entities give real
+audit/history instead of overloading `Payment.Status`.
+**Cons.** Scheduled (as opposed to immediate) downgrade isn't available through the first-party API,
+only through the Portal, until a schedules engine is built; notification logic is scattered across
+handlers rather than centralized.
+**Consequences.** [09 §6.5.1](./09_Database_Design_ERD.md#651-stripe-native-billing-extension-adr-031)
+gains ENT-039Q..U. Other bounded contexts wanting event-driven side effects on billing state changes
+still have no supported pattern — tracked as a future platform concern, not a Billing one.
+**Risks.** Scattered notification call sites could drift out of sync with actual lifecycle coverage
+over time (RISK-FIN-01 adjacent — same class as ADR-031's).
+**Future Review.** When `DomainEventNotification<T>` is relocated platform-wide, or when a real
+scheduled-downgrade requirement emerges.
+**Related Documents.** [09](./09_Database_Design_ERD.md), [13](./13_Subscription_Billing.md),
+[ADR-031](#adr-031--stripe-native-billing-entity-model).
+**Future Evolution.** Scheduled downgrade via Stripe Subscription Schedules; platform-wide
+domain-event-driven notification dispatch; cached/materialized financial reports.
+
+---
+
 ## 11. Decision-to-Document Traceability
 
 | ADR | Enables / Constrains | Introduces Risk(s) |
@@ -1014,6 +1174,8 @@ Each record uses a consistent structure: **Decision ID, Title, Status, Date, Con
 | ADR-024 | ADR-014, 025 | RISK-FIN-01, RISK-SUB-01 |
 | ADR-029 | ADR-030 | RISK-AI-01, RISK-OPS-03, RISK-FIN-02 |
 | ADR-030 | — | RISK-ARC-04, RISK-FUT-01 |
+| ADR-031 | Extends ADR-024 | RISK-FIN-01 |
+| ADR-032 | Extends ADR-031 | RISK-FIN-01 |
 
 > Full risk definitions live in the [Risk Register (29)](./29_Risk_Register.md); the [Related ADR](./29_Risk_Register.md) column there links back to these records.
 
@@ -1024,6 +1186,8 @@ Each record uses a consistent structure: **Decision ID, Title, Status, Date, Con
 | Version | Date | Change | Author |
 | --- | --- | --- | --- |
 | **1.0** | 2026-07-18 | Initial ADR log capturing ADR-001…ADR-030 as the accepted 01–27 baseline; lifecycle, statuses, workflows, dependency diagram, and traceability. | Chief Enterprise Architect / Enterprise Governance Architect |
+| **1.1** | 2026-07-28 | Added ADR-031 (Stripe-Native Billing Entity Model) for Phase 5 Sprint 1; extends [09 §6.5](./09_Database_Design_ERD.md#65-commerce-subscriptions--billing) with the normalized commerce/entitlement/quota entity set. | Backend Engineering |
+| **1.2** | 2026-07-29 | Added ADR-032 (Billing Operations Model & Stripe-Portal-First UX) for Phase 5 Sprint 2; extends [09 §6.5.1](./09_Database_Design_ERD.md#651-stripe-native-billing-extension-adr-031) with CreditNote/Coupon/CouponRedemption/Refund/FailedWebhookEvent and a Paused subscription state. | Backend Engineering |
 
 ---
 
