@@ -1,4 +1,5 @@
 using IELTSLms.Abstractions.Audit;
+using IELTSLms.Abstractions.Billing;
 using IELTSLms.Abstractions.Caching;
 using IELTSLms.Abstractions.Context;
 using IELTSLms.Abstractions.Email;
@@ -8,6 +9,7 @@ using IELTSLms.Abstractions.Security;
 using IELTSLms.Abstractions.Serialization;
 using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.Abstractions.Time;
+using IELTSLms.Infrastructure.Billing;
 using IELTSLms.Infrastructure.Caching;
 using IELTSLms.Infrastructure.Configuration;
 using IELTSLms.Infrastructure.Context;
@@ -73,6 +75,7 @@ public static class DependencyInjection
 
         AddSecurity(services, configuration);
         AddEmail(services);
+        AddBilling(services, configuration);
         AddCaching(services, configuration);
         services.AddObservability(configuration);
         services.AddResiliencePolicies(configuration);
@@ -113,6 +116,16 @@ public static class DependencyInjection
     {
         services.AddSingleton<IEmailTemplateRenderer, IdentityEmailTemplateRenderer>();
         services.AddSingleton<IEmailSender, LoggingEmailSender>();
+    }
+
+    private static void AddBilling(IServiceCollection services, IConfiguration configuration)
+    {
+        // Not ValidateOnStart (ADR-031 / StripeOptions doc comment): a blank Stripe key must not
+        // prevent the whole API from starting in local dev or CI.
+        services.AddOptions<StripeOptions>().Bind(configuration.GetSection(StripeOptions.SectionName));
+
+        services.AddSingleton<IPaymentGateway, StripePaymentGateway>();
+        services.AddSingleton<IStripeWebhookVerifier, StripeWebhookVerifier>();
     }
 
     private static void AddCaching(IServiceCollection services, IConfiguration configuration)

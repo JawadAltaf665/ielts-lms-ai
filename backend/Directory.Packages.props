@@ -79,6 +79,11 @@
     <PackageVersion Include="AspNetCore.HealthChecks.Redis" Version="9.0.0" />
   </ItemGroup>
 
+  <ItemGroup Label="Payments (Stripe)">
+    <!-- Provider SDK for the Billing anti-corruption layer (ADR-031); referenced by Infrastructure only. -->
+    <PackageVersion Include="Stripe.net" Version="47.4.0" />
+  </ItemGroup>
+
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />
