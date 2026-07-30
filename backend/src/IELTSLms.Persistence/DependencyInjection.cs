@@ -3,12 +3,14 @@ using IELTSLms.Abstractions.Persistence;
 using IELTSLms.Abstractions.Persistence.Billing;
 using IELTSLms.Abstractions.Persistence.Grammar;
 using IELTSLms.Abstractions.Persistence.Learning;
+using IELTSLms.Abstractions.Persistence.Vocabulary;
 using IELTSLms.Persistence.Audit;
 using IELTSLms.Persistence.Interceptors;
 using IELTSLms.Persistence.Repositories;
 using IELTSLms.Persistence.Repositories.Billing;
 using IELTSLms.Persistence.Repositories.Grammar;
 using IELTSLms.Persistence.Repositories.Learning;
+using IELTSLms.Persistence.Repositories.Vocabulary;
 using IELTSLms.Persistence.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -118,5 +120,9 @@ public static class DependencyInjection
         services.AddScoped<IGrammarAttemptRepository, GrammarAttemptRepository>();
         services.AddScoped<IGrammarProgressRepository, GrammarProgressRepository>();
         services.AddScoped<IProgressTrackingRepository, ProgressTrackingRepository>();
+
+        // Phase 6 Sprint 2 - Vocabulary
+        services.AddScoped<IVocabularyWordRepository, VocabularyWordRepository>();
+        services.AddScoped<IVocabularyProgressRepository, VocabularyProgressRepository>();
     }
 }

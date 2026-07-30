@@ -3605,6 +3605,223 @@ namespace IELTSLms.Persistence.Migrations
                     b.ToTable("tenants", (string)null);
                 });
 
+            modelBuilder.Entity("IELTSLms.Domain.Vocabulary.VocabularyProgress", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<decimal>("EaseFactor")
+                        .HasColumnType("numeric(4,2)")
+                        .HasColumnName("ease_factor");
+
+                    b.Property<int>("IntervalDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("interval_days");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<int?>("LastGrade")
+                        .HasColumnType("integer")
+                        .HasColumnName("last_grade");
+
+                    b.Property<DateTimeOffset?>("NextReviewAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_review_at_utc");
+
+                    b.Property<int>("RepetitionCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("repetition_count");
+
+                    b.Property<DateTimeOffset?>("RestoredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("restored_at_utc");
+
+                    b.Property<Guid?>("RestoredBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restored_by");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<Guid>("VocabularyWordId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("vocabulary_word_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_vocabulary_progress");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_vocabulary_progress_tenant_id");
+
+                    b.HasIndex("TenantId", "UserId", "NextReviewAtUtc")
+                        .HasDatabaseName("ix_vocabulary_progress_tenant_user_next_review");
+
+                    b.HasIndex("TenantId", "UserId", "VocabularyWordId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_vocabulary_progress_tenant_user_word_unique");
+
+                    b.ToTable("vocabulary_progress", (string)null);
+                });
+
+            modelBuilder.Entity("IELTSLms.Domain.Vocabulary.VocabularyWord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("CategoryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("category_id");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<string>("DifficultyLevel")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("difficulty_level");
+
+                    b.Property<string>("ExamplesJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("examples_json");
+
+                    b.Property<string>("FrequencyBand")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("frequency_band");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("Meaning")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("meaning");
+
+                    b.Property<DateTimeOffset?>("RestoredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("restored_at_utc");
+
+                    b.Property<Guid?>("RestoredBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restored_by");
+
+                    b.Property<string>("Sense")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("sense");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Topic")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("topic");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<string>("Word")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("word");
+
+                    b.HasKey("Id")
+                        .HasName("pk_vocabulary_words");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_vocabulary_words_tenant_id");
+
+                    b.HasIndex("Topic")
+                        .HasDatabaseName("ix_vocabulary_words_topic");
+
+                    b.HasIndex("Word")
+                        .HasDatabaseName("ix_vocabulary_words_word");
+
+                    b.HasIndex("Word", "Sense")
+                        .IsUnique()
+                        .HasDatabaseName("ix_vocabulary_words_global_word_sense_unique")
+                        .HasFilter("\"tenant_id\" IS NULL");
+
+                    b.HasIndex("TenantId", "Word", "Sense")
+                        .IsUnique()
+                        .HasDatabaseName("ix_vocabulary_words_tenant_word_sense_unique")
+                        .HasFilter("\"tenant_id\" IS NOT NULL");
+
+                    b.ToTable("vocabulary_words", (string)null);
+                });
+
             modelBuilder.Entity("IELTSLms.Persistence.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
