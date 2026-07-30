@@ -3,6 +3,7 @@ using FluentValidation;
 using IELTSLms.Abstractions.Billing;
 using IELTSLms.Application.Abstractions.Behaviors;
 using IELTSLms.Application.Billing.Services;
+using IELTSLms.Application.Learning;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -39,6 +40,7 @@ public static class DependencyInjection
 
         services.AddScoped<IEntitlementService, EntitlementService>();
         services.AddScoped<IQuotaService, QuotaService>();
+        services.AddScoped<IProgressTrackingService, ProgressTrackingService>();
 
         return services;
     }
