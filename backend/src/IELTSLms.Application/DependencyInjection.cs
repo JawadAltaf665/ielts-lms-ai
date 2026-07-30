@@ -2,6 +2,7 @@ using System.Reflection;
 using FluentValidation;
 using IELTSLms.Abstractions.Billing;
 using IELTSLms.Application.Abstractions.Behaviors;
+using IELTSLms.Application.AI.Jobs;
 using IELTSLms.Application.Billing.Services;
 using IELTSLms.Application.Learning;
 using MediatR;
@@ -41,6 +42,9 @@ public static class DependencyInjection
         services.AddScoped<IEntitlementService, EntitlementService>();
         services.AddScoped<IQuotaService, QuotaService>();
         services.AddScoped<IProgressTrackingService, ProgressTrackingService>();
+
+        // Phase 6 Sprint 3 - AI Gateway: enqueued via IBackgroundJobService, not a MediatR handler.
+        services.AddScoped<GrammarCoachingJob>();
 
         return services;
     }

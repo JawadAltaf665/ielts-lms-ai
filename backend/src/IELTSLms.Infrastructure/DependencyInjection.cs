@@ -1,3 +1,4 @@
+using IELTSLms.Abstractions.AI;
 using IELTSLms.Abstractions.Audit;
 using IELTSLms.Abstractions.Billing;
 using IELTSLms.Abstractions.Caching;
@@ -9,6 +10,8 @@ using IELTSLms.Abstractions.Security;
 using IELTSLms.Abstractions.Serialization;
 using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.Abstractions.Time;
+using IELTSLms.Infrastructure.AI;
+using IELTSLms.Infrastructure.AI.Claude;
 using IELTSLms.Infrastructure.Billing;
 using IELTSLms.Infrastructure.Caching;
 using IELTSLms.Infrastructure.Configuration;
@@ -26,6 +29,8 @@ using IELTSLms.Infrastructure.Time;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Http.Resilience;
+using Microsoft.Extensions.Options;
 
 namespace IELTSLms.Infrastructure;
 
@@ -77,6 +82,7 @@ public static class DependencyInjection
         AddEmail(services);
         AddBilling(services, configuration);
         AddCaching(services, configuration);
+        AddAi(services, configuration);
         services.AddObservability(configuration);
         services.AddResiliencePolicies(configuration);
         services.AddPerformanceInfrastructure(configuration);
@@ -126,6 +132,27 @@ public static class DependencyInjection
 
         services.AddSingleton<IPaymentGateway, StripePaymentGateway>();
         services.AddSingleton<IStripeWebhookVerifier, StripeWebhookVerifier>();
+    }
+
+    private static void AddAi(IServiceCollection services, IConfiguration configuration)
+    {
+        // Not ValidateOnStart (mirrors StripeOptions/AddBilling above): a blank Claude API key must not
+        // prevent the whole API from starting in local dev or CI.
+        services.AddOptions<ClaudeOptions>().Bind(configuration.GetSection(ClaudeOptions.SectionName));
+
+        services.AddHttpClient<IAiChatProvider, ClaudeChatProvider>((sp, client) =>
+            {
+                var claudeOptions = sp.GetRequiredService<IOptions<ClaudeOptions>>().Value;
+                client.BaseAddress = new Uri(claudeOptions.BaseUrl);
+            })
+            .AddResilienceHandler("ai-claude", (builder, context) =>
+            {
+                var resilienceOptions = ResilienceRegistration.ReadOptions(
+                    context.ServiceProvider.GetRequiredService<IConfiguration>());
+                ResilienceRegistration.ConfigureHttpPipeline(builder, resilienceOptions);
+            });
+
+        services.AddScoped<IAiGateway, AiGateway>();
     }
 
     private static void AddCaching(IServiceCollection services, IConfiguration configuration)
