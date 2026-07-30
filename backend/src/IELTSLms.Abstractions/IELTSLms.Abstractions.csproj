@@ -4,6 +4,10 @@
        aggregates in repository ports (Backend Architecture §5.3). -->
 
   <ItemGroup>
+    <PackageReference Include="MediatR" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\IELTSLms.Domain\IELTSLms.Domain.csproj" />
     <ProjectReference Include="..\IELTSLms.SharedKernel\IELTSLms.SharedKernel.csproj" />
     <ProjectReference Include="..\IELTSLms.Contracts\IELTSLms.Contracts.csproj" />
