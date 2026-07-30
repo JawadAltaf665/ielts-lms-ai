@@ -23,4 +23,10 @@ public enum ErrorType
 
     /// <summary>Authenticated but not permitted → 403.</summary>
     Forbidden = 5,
+
+    /// <summary>Caller exceeded a rate limit or quota → 429.</summary>
+    RateLimited = 6,
+
+    /// <summary>An upstream dependency is unavailable (outage, circuit-open) → 503.</summary>
+    ServiceUnavailable = 7,
 }

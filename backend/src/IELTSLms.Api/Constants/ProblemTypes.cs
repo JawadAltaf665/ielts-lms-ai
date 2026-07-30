@@ -18,6 +18,8 @@ internal static class ProblemTypes
         ErrorType.Conflict => (BaseUri + "conflict", "Conflict"),
         ErrorType.Unauthorized => (BaseUri + "unauthorized", "Authentication required"),
         ErrorType.Forbidden => (BaseUri + "forbidden", "Forbidden"),
+        ErrorType.RateLimited => (BaseUri + "rate-limit", "Too many requests"),
+        ErrorType.ServiceUnavailable => (BaseUri + "service-unavailable", "Service unavailable"),
         _ => (BaseUri + "server-error", "An unexpected error occurred"),
     };
 

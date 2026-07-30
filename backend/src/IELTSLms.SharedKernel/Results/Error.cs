@@ -43,6 +43,10 @@ public record Error
 
     public static Error Forbidden(string code, string message) => new(code, message, ErrorType.Forbidden);
 
+    public static Error RateLimited(string code, string message) => new(code, message, ErrorType.RateLimited);
+
+    public static Error ServiceUnavailable(string code, string message) => new(code, message, ErrorType.ServiceUnavailable);
+
     public static Error Failure(string code, string message) => new(code, message, ErrorType.Failure);
 
     public static Error Custom(string code, string message, ErrorType type) => new(code, message, type);
