@@ -214,6 +214,14 @@ Reading and Listening establish the **objective auto-scoring** engine; Writing a
 | M6.3 Async evaluation | Queue-backed evaluation with status ([NFR-PERF](./05_Non_Functional_Requirements.md#2-performance-perf)) | No blocking synchronous AI calls | M6.1, M2.4 |
 | M6.4 Agentic orchestration | Orchestrator + specialized agents ([18](./18_Agentic_AI_Architecture.md)) | Multi-step tutoring/eval flow runs governed | M6.3 |
 
+> **Note:** `Implementation-prompts/Phase 6/Sprint-3-Shared-AI-Grammar-Service.md` pulled **M6.1** (provider
+> abstraction, AI Gateway routing/caching/safety) and the quota/entitlement half of **M6.2** forward early,
+> delivered alongside the Grammar Coach capability and a reusable async operation-resource endpoint (a
+> de facto first slice of M6.3, scoped to one capability). This was intentional — Grammar (Sprint 1) needed
+> AI coaching hooks before Writing/Speaking (M5.2/M5.3) reach this phase — so M6.1/M6.2 should be treated as
+> largely satisfied ahead of schedule rather than still pending; remaining M6.2 work is broader cost/PII
+> governance beyond the single Grammar Coach capability, and M6.3 remains open for capabilities beyond it.
+
 ---
 
 ## 12. Phase 7 — Portals, Analytics & Engagement

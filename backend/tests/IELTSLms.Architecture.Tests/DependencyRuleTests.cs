@@ -1,3 +1,4 @@
+using IELTSLms.Abstractions.AI;
 using NetArchTest.Rules;
 
 namespace IELTSLms.Architecture.Tests;
@@ -120,6 +121,37 @@ public sealed class DependencyRuleTests
             .GetResult();
 
         AssertNoViolations(result);
+    }
+
+    [Fact]
+    public void Only_infrastructure_may_implement_the_ai_chat_provider_port()
+    {
+        // AI Architecture §2/§3 (ACL pattern): "no feature calls a provider directly" — Application
+        // depends on IAiChatProvider (Abstractions/AI), but only Infrastructure/AI may implement it
+        // (the Claude adapter). No new NuGet SDK was added for this sprint (a hand-rolled HttpClient
+        // call replaces one), so the meaningful guard is on the port's implementers, not a package name.
+        var applicationResult = Types.InAssembly(Layers.Application)
+            .That()
+            .ImplementInterface(typeof(IAiChatProvider))
+            .GetTypes();
+
+        Assert.Empty(applicationResult);
+
+        var domainResult = Types.InAssembly(Layers.Domain)
+            .That()
+            .ImplementInterface(typeof(IAiChatProvider))
+            .GetTypes();
+
+        Assert.Empty(domainResult);
+
+        var infrastructureResult = Types.InAssembly(Layers.Infrastructure)
+            .That()
+            .ImplementInterface(typeof(IAiChatProvider))
+            .Should()
+            .ResideInNamespace("IELTSLms.Infrastructure.AI.Claude")
+            .GetResult();
+
+        AssertNoViolations(infrastructureResult);
     }
 
     [Fact]
