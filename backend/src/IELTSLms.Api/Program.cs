@@ -6,6 +6,7 @@ using IELTSLms.Api.HealthChecks;
 using IELTSLms.Api.Middleware;
 using IELTSLms.Api.Tenancy;
 using IELTSLms.Application;
+using IELTSLms.Application.Vocabulary;
 using IELTSLms.BackgroundJobs;
 using IELTSLms.BackgroundJobs.Billing;
 using IELTSLms.Infrastructure;
@@ -57,6 +58,13 @@ try
         .AddPersistence(builder.Configuration)
         .AddBackgroundJobs(builder.Configuration)
         .AddPresentation(builder.Configuration, builder.Environment);
+
+    // VocabularyOptions lives in Application; bind it here where configuration is available
+    // (mirrors AuthOptions binding in AuthenticationRegistration).
+    builder.Services.AddOptions<VocabularyOptions>()
+        .Bind(builder.Configuration.GetSection(VocabularyOptions.SectionName))
+        .ValidateDataAnnotations()
+        .ValidateOnStart();
 
     var app = builder.Build();
 
@@ -131,6 +139,7 @@ try
     api.MapTenantEndpoints();
     api.MapBillingEndpoints();
     api.MapGrammarEndpoints();
+    api.MapVocabularyEndpoints();
     api.MapWebhookEndpoints();
 
     // Health endpoints.
