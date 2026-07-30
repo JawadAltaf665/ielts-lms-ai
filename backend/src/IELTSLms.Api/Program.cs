@@ -130,6 +130,7 @@ try
     api.MapAuthEndpoints();
     api.MapTenantEndpoints();
     api.MapBillingEndpoints();
+    api.MapGrammarEndpoints();
     api.MapWebhookEndpoints();
 
     // Health endpoints.
