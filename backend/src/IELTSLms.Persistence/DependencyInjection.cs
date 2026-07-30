@@ -1,5 +1,6 @@
 using IELTSLms.Abstractions.Audit;
 using IELTSLms.Abstractions.Persistence;
+using IELTSLms.Abstractions.Persistence.AI;
 using IELTSLms.Abstractions.Persistence.Billing;
 using IELTSLms.Abstractions.Persistence.Grammar;
 using IELTSLms.Abstractions.Persistence.Learning;
@@ -7,6 +8,7 @@ using IELTSLms.Abstractions.Persistence.Vocabulary;
 using IELTSLms.Persistence.Audit;
 using IELTSLms.Persistence.Interceptors;
 using IELTSLms.Persistence.Repositories;
+using IELTSLms.Persistence.Repositories.AI;
 using IELTSLms.Persistence.Repositories.Billing;
 using IELTSLms.Persistence.Repositories.Grammar;
 using IELTSLms.Persistence.Repositories.Learning;
@@ -64,6 +66,7 @@ public static class DependencyInjection
         AddRepositories(services);
 
         services.AddHostedService<SystemTenantSeeder>();
+        services.AddHostedService<AiCatalogSeeder>();
 
         return services;
     }
@@ -124,5 +127,11 @@ public static class DependencyInjection
         // Phase 6 Sprint 2 - Vocabulary
         services.AddScoped<IVocabularyWordRepository, VocabularyWordRepository>();
         services.AddScoped<IVocabularyProgressRepository, VocabularyProgressRepository>();
+
+        // Phase 6 Sprint 3 - AI Gateway
+        services.AddScoped<IAiProviderRepository, AiProviderRepository>();
+        services.AddScoped<IAiPromptRepository, AiPromptRepository>();
+        services.AddScoped<IAiResponseRepository, AiResponseRepository>();
+        services.AddScoped<IAiOperationRepository, AiOperationRepository>();
     }
 }
