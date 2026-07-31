@@ -28,6 +28,7 @@ public sealed class IntegrationTestFactory : WebApplicationFactory<Program>
                 ["ConnectionStrings:Redis"] = string.Empty,
                 ["Serilog:MinimumLevel:Default"] = "Information",
                 ["Observability:ServiceName"] = "ielts-lms-api-test",
+                ["Storage:SigningKey"] = "integration-test-signing-key",
             });
         });
 
