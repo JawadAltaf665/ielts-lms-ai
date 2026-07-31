@@ -4,6 +4,7 @@ using IELTSLms.Abstractions.Persistence.AI;
 using IELTSLms.Abstractions.Persistence.Billing;
 using IELTSLms.Abstractions.Persistence.Grammar;
 using IELTSLms.Abstractions.Persistence.Learning;
+using IELTSLms.Abstractions.Persistence.Reading;
 using IELTSLms.Abstractions.Persistence.Vocabulary;
 using IELTSLms.Persistence.Audit;
 using IELTSLms.Persistence.Interceptors;
@@ -12,6 +13,7 @@ using IELTSLms.Persistence.Repositories.AI;
 using IELTSLms.Persistence.Repositories.Billing;
 using IELTSLms.Persistence.Repositories.Grammar;
 using IELTSLms.Persistence.Repositories.Learning;
+using IELTSLms.Persistence.Repositories.Reading;
 using IELTSLms.Persistence.Repositories.Vocabulary;
 using IELTSLms.Persistence.Seeding;
 using Microsoft.EntityFrameworkCore;
@@ -133,5 +135,10 @@ public static class DependencyInjection
         services.AddScoped<IAiPromptRepository, AiPromptRepository>();
         services.AddScoped<IAiResponseRepository, AiResponseRepository>();
         services.AddScoped<IAiOperationRepository, AiOperationRepository>();
+
+        // Phase 6 Sprint 4 - Reading
+        services.AddScoped<IReadingPassageRepository, ReadingPassageRepository>();
+        services.AddScoped<IReadingQuestionRepository, ReadingQuestionRepository>();
+        services.AddScoped<IReadingAttemptRepository, ReadingAttemptRepository>();
     }
 }
