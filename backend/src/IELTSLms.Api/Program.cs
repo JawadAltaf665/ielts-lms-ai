@@ -141,6 +141,7 @@ try
     api.MapGrammarEndpoints();
     api.MapVocabularyEndpoints();
     api.MapAiEndpoints();
+    api.MapReadingEndpoints();
     api.MapWebhookEndpoints();
 
     // Health endpoints.
