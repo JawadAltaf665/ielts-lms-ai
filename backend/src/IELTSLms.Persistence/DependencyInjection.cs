@@ -2,8 +2,10 @@ using IELTSLms.Abstractions.Audit;
 using IELTSLms.Abstractions.Persistence;
 using IELTSLms.Abstractions.Persistence.AI;
 using IELTSLms.Abstractions.Persistence.Billing;
+using IELTSLms.Abstractions.Persistence.Files;
 using IELTSLms.Abstractions.Persistence.Grammar;
 using IELTSLms.Abstractions.Persistence.Learning;
+using IELTSLms.Abstractions.Persistence.Listening;
 using IELTSLms.Abstractions.Persistence.Reading;
 using IELTSLms.Abstractions.Persistence.Vocabulary;
 using IELTSLms.Persistence.Audit;
@@ -11,8 +13,10 @@ using IELTSLms.Persistence.Interceptors;
 using IELTSLms.Persistence.Repositories;
 using IELTSLms.Persistence.Repositories.AI;
 using IELTSLms.Persistence.Repositories.Billing;
+using IELTSLms.Persistence.Repositories.Files;
 using IELTSLms.Persistence.Repositories.Grammar;
 using IELTSLms.Persistence.Repositories.Learning;
+using IELTSLms.Persistence.Repositories.Listening;
 using IELTSLms.Persistence.Repositories.Reading;
 using IELTSLms.Persistence.Repositories.Vocabulary;
 using IELTSLms.Persistence.Seeding;
@@ -140,5 +144,11 @@ public static class DependencyInjection
         services.AddScoped<IReadingPassageRepository, ReadingPassageRepository>();
         services.AddScoped<IReadingQuestionRepository, ReadingQuestionRepository>();
         services.AddScoped<IReadingAttemptRepository, ReadingAttemptRepository>();
+
+        // Phase 6 Sprint 5 - Listening
+        services.AddScoped<IFileAssetRepository, FileAssetRepository>();
+        services.AddScoped<IListeningAudioRepository, ListeningAudioRepository>();
+        services.AddScoped<IListeningQuestionRepository, ListeningQuestionRepository>();
+        services.AddScoped<IListeningAttemptRepository, ListeningAttemptRepository>();
     }
 }
