@@ -8,6 +8,7 @@ using IELTSLms.Abstractions.Environment;
 using IELTSLms.Abstractions.Events;
 using IELTSLms.Abstractions.Security;
 using IELTSLms.Abstractions.Serialization;
+using IELTSLms.Abstractions.Storage;
 using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.Abstractions.Time;
 using IELTSLms.Infrastructure.AI;
@@ -24,6 +25,7 @@ using IELTSLms.Infrastructure.Performance;
 using IELTSLms.Infrastructure.Resilience;
 using IELTSLms.Infrastructure.Security;
 using IELTSLms.Infrastructure.Serialization;
+using IELTSLms.Infrastructure.Storage;
 using IELTSLms.Infrastructure.Tenancy;
 using IELTSLms.Infrastructure.Time;
 using Microsoft.Extensions.Configuration;
@@ -83,6 +85,7 @@ public static class DependencyInjection
         AddBilling(services, configuration);
         AddCaching(services, configuration);
         AddAi(services, configuration);
+        AddStorage(services, configuration);
         services.AddObservability(configuration);
         services.AddResiliencePolicies(configuration);
         services.AddPerformanceInfrastructure(configuration);
@@ -153,6 +156,15 @@ public static class DependencyInjection
             });
 
         services.AddScoped<IAiGateway, AiGateway>();
+    }
+
+    private static void AddStorage(IServiceCollection services, IConfiguration configuration)
+    {
+        // Not ValidateOnStart (mirrors StripeOptions/ClaudeOptions above): a blank signing key must not
+        // prevent the whole API from starting in local dev or CI.
+        services.AddOptions<StorageOptions>().Bind(configuration.GetSection(StorageOptions.SectionName));
+
+        services.AddSingleton<IFileStorage, LocalFileStorage>();
     }
 
     private static void AddCaching(IServiceCollection services, IConfiguration configuration)
