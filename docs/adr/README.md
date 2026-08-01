@@ -6,7 +6,7 @@ This directory records significant architectural decisions for **IELTS LMS AI**.
 
 ## Index
 
-_No ADRs recorded yet._
+- [ADR 0001: Writing Evaluation Workflow — Implementation Simplifications](./0001-writing-evaluation-workflow-simplifications.md) (Phase 6 Sprint 6)
 
 ## How to Add an ADR
 
