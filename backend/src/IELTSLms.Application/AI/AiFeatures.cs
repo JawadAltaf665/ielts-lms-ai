@@ -31,4 +31,17 @@ internal static class AiFeatures
 
     /// <summary>Billing <c>QuotaDefinition.Code</c> metering Writing evaluation requests (one unit per submission).</summary>
     public const string WritingEvaluationQuota = "ai.writing-evaluation.requests";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag for the Speaking Examiner step (Phase 6 Sprint 7,
+    /// Agentic AI Architecture §13.2). Unlike Writing, Speaking's workflow has a single agent — no
+    /// separate grammar/vocabulary sub-steps.
+    /// </summary>
+    public const string SpeakingExaminer = "speaking-examiner";
+
+    /// <summary>Billing <c>Feature.Code</c> gating the Speaking Evaluation Workflow (transcription + examiner scoring).</summary>
+    public const string SpeakingEvaluationEntitlement = "ai.speaking-evaluation";
+
+    /// <summary>Billing <c>QuotaDefinition.Code</c> metering Speaking evaluation requests (one unit per attempt).</summary>
+    public const string SpeakingEvaluationQuota = "ai.speaking-evaluation.requests";
 }

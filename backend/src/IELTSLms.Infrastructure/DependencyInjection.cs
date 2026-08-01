@@ -13,6 +13,7 @@ using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.Abstractions.Time;
 using IELTSLms.Infrastructure.AI;
 using IELTSLms.Infrastructure.AI.Claude;
+using IELTSLms.Infrastructure.AI.Whisper;
 using IELTSLms.Infrastructure.Billing;
 using IELTSLms.Infrastructure.Caching;
 using IELTSLms.Infrastructure.Configuration;
@@ -156,6 +157,22 @@ public static class DependencyInjection
             });
 
         services.AddScoped<IAiGateway, AiGateway>();
+
+        // Not ValidateOnStart (mirrors ClaudeOptions above): a blank Whisper API key must not prevent
+        // the whole API from starting in local dev or CI.
+        services.AddOptions<WhisperOptions>().Bind(configuration.GetSection(WhisperOptions.SectionName));
+
+        services.AddHttpClient<ISpeechToTextProvider, WhisperSpeechToTextProvider>((sp, client) =>
+            {
+                var whisperOptions = sp.GetRequiredService<IOptions<WhisperOptions>>().Value;
+                client.BaseAddress = new Uri(whisperOptions.BaseUrl);
+            })
+            .AddResilienceHandler("ai-whisper", (builder, context) =>
+            {
+                var resilienceOptions = ResilienceRegistration.ReadOptions(
+                    context.ServiceProvider.GetRequiredService<IConfiguration>());
+                ResilienceRegistration.ConfigureHttpPipeline(builder, resilienceOptions);
+            });
     }
 
     private static void AddStorage(IServiceCollection services, IConfiguration configuration)
