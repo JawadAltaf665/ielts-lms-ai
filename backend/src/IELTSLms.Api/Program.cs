@@ -146,6 +146,9 @@ try
     api.MapWritingEndpoints();
     api.MapSpeakingEndpoints();
     api.MapMockExamEndpoints();
+    api.MapAnalyticsEndpoints();
+    api.MapBandPredictionEndpoints();
+    api.MapCertificatesEndpoints();
     api.MapFilesEndpoints();
     api.MapWebhookEndpoints();
 
