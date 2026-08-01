@@ -14,4 +14,21 @@ public interface IAiPromptRepository : IRepository<AiPrompt, AiPromptId>
     /// the global default (<c>TenantId == null</c>) — mirrors <c>TenantFeature</c>'s resolution order.
     /// </summary>
     Task<AiPrompt?> GetActiveForFeatureAsync(Guid tenantId, string feature, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// All versions in one tenant-scoped (Feature, Scope) slot, newest first — the admin/versioning
+    /// surface's single query for computing the next version number, finding whichever version is
+    /// currently active in the slot, and finding the prior version to restore on rollback.
+    /// </summary>
+    Task<IReadOnlyList<AiPrompt>> GetVersionsAsync(
+        Guid tenantId, string feature, string scope, CancellationToken cancellationToken = default);
+
+    /// <summary>Tenant-scoped, filterable browse of prompt templates for the admin management surface.</summary>
+    Task<IReadOnlyList<AiPrompt>> ListAsync(
+        Guid tenantId, string? feature, string? scope, bool? isActive, int skip, int take,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Total count matching the same filters as <see cref="ListAsync"/>, for pagination.</summary>
+    Task<int> CountAsync(
+        Guid tenantId, string? feature, string? scope, bool? isActive, CancellationToken cancellationToken = default);
 }

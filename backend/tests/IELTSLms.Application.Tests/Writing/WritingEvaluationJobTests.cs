@@ -51,9 +51,9 @@ public sealed class WritingEvaluationJobTests
 
         if (seedPrompts)
         {
-            prompts.Seed(AiPrompt.Create(AiPromptId.From(Guid.NewGuid()), null, provider.Id, "grammar-coach", 1, "default", "sys", Now).Value);
-            prompts.Seed(AiPrompt.Create(AiPromptId.From(Guid.NewGuid()), null, provider.Id, "vocabulary-analysis", 1, "default", "sys", Now).Value);
-            prompts.Seed(AiPrompt.Create(AiPromptId.From(Guid.NewGuid()), null, provider.Id, "writing-examiner", 1, "default", "sys", Now).Value);
+            prompts.Seed(Active(AiPrompt.Create(AiPromptId.From(Guid.NewGuid()), null, provider.Id, "grammar-coach", 1, "default", "sys", Now).Value));
+            prompts.Seed(Active(AiPrompt.Create(AiPromptId.From(Guid.NewGuid()), null, provider.Id, "vocabulary-analysis", 1, "default", "sys", Now).Value));
+            prompts.Seed(Active(AiPrompt.Create(AiPromptId.From(Guid.NewGuid()), null, provider.Id, "writing-examiner", 1, "default", "sys", Now).Value));
         }
 
         var task = WritingTask.Create(
@@ -171,5 +171,11 @@ public sealed class WritingEvaluationJobTests
         await fixture.Job.ExecuteAsync(fixture.TenantId, fixture.Operation.Id.Value, fixture.Submission.Id.Value, CancellationToken.None);
 
         Assert.Equal(0, fixture.Gateway.InvokeCallCount);
+    }
+
+    private static AiPrompt Active(AiPrompt prompt)
+    {
+        prompt.Activate(Now);
+        return prompt;
     }
 }

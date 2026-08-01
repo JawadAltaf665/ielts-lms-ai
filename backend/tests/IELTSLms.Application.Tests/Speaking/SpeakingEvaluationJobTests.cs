@@ -55,7 +55,9 @@ public sealed class SpeakingEvaluationJobTests
 
         if (seedPrompts)
         {
-            prompts.Seed(AiPrompt.Create(AiPromptId.From(Guid.NewGuid()), null, provider.Id, "speaking-examiner", 1, "default", "sys", Now).Value);
+            var prompt = AiPrompt.Create(AiPromptId.From(Guid.NewGuid()), null, provider.Id, "speaking-examiner", 1, "default", "sys", Now).Value;
+            prompt.Activate(Now);
+            prompts.Seed(prompt);
         }
 
         var task = SpeakingTask.Create(

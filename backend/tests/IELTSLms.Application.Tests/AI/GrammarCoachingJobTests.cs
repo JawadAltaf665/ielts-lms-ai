@@ -34,6 +34,7 @@ public sealed class GrammarCoachingJobTests
 
         var prompt = AiPrompt.Create(
             AiPromptId.From(Guid.NewGuid()), null, provider.Id, "grammar-coach", 1, "default", "system template", Now).Value;
+        prompt.Activate(Now);
         prompts.Seed(prompt);
 
         var operation = AiOperation.Enqueue(

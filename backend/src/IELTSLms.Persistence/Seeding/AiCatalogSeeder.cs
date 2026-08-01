@@ -102,6 +102,9 @@ internal sealed partial class AiCatalogSeeder(
         var prompt = AiPrompt.Create(
             AiPromptId.From(Guid.NewGuid()), tenantId: null, providerId, "grammar-coach", version: 1, "default",
             GrammarCoachSystemPrompt, now).Value;
+        // Phase 7 Sprint 2: new versions are drafts until explicitly activated (see AiPrompt.Activate) —
+        // the seeded v1 has no other caller to promote it, so it must activate itself to go live.
+        prompt.Activate(now);
         dbContext.Set<AiPrompt>().Add(prompt);
     }
 
