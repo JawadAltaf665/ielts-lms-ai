@@ -144,6 +144,7 @@ try
     api.MapReadingEndpoints();
     api.MapListeningEndpoints();
     api.MapWritingEndpoints();
+    api.MapSpeakingEndpoints();
     api.MapFilesEndpoints();
     api.MapWebhookEndpoints();
 
