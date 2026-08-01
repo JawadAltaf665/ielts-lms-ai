@@ -150,6 +150,7 @@ try
     api.MapAnalyticsEndpoints();
     api.MapBandPredictionEndpoints();
     api.MapCertificatesEndpoints();
+    api.MapConversationEndpoints();
     api.MapFilesEndpoints();
     api.MapWebhookEndpoints();
 
