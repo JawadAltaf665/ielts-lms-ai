@@ -1203,6 +1203,15 @@ webhook dead-lettering). `Coupons` (ENT-043) gains a redemption-tracking child; 
 - **Check Constraints:** —
 - **Retention:** Retain for reproducibility. **Archiving:** Versioned.
 - **Data Type:** Reference Data.
+- **Phase 7 Sprint 2 reconciliation (Prompt Library & Versioning):** no schema change was needed.
+  `Scope` (already part of the unique key) doubles as the A/B-slot discriminator — e.g.
+  `Scope = "control"` / `Scope = "variant-b"` for the same `Feature` — each independently active per
+  `(TenantId, Feature, Scope)`. `IsActive` (added Phase 6 Sprint 3, not previously documented here)
+  is the "which version is active" marker per slot; a newly authored version starts as a draft
+  (`IsActive = false`) until an explicit activation promotes it, and activation deactivates whatever
+  else was active in the same slot (never across scopes). Rollback/activation history is not a new
+  column — it is derived from existing rows (the most recently deactivated version in a slot) and
+  audited via the existing `AuditLog` mechanism, not a new logging table.
 
 #### ENT-052 — AIResponses
 - **Purpose:** Recorded AI provider responses for traceability/cost.

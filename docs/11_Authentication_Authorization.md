@@ -349,6 +349,7 @@ Legend: ✅ full · 🟡 scoped/limited · ➖ none.
 | `analytics.view.self` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | `ai.grammar-coach.use` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ |
 | `ai.usage-summary.view` | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
+| `ai.prompt.manage` | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ |
 | `billing.manage` | 🟡 | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | `certificate.issue` | ➖ | ✅ | ✅ | ➖ | 🟡 | ➖ | ➖ |
 | `support.ticket.manage` | ✅ | ✅ | 🟡 | ➖ | ➖ | 🟡 | ✅ |
@@ -362,6 +363,12 @@ Legend: ✅ full · 🟡 scoped/limited · ➖ none.
 > Enforced today via `RequiredRoles` (the only mechanism `AuthorizationPipelineBehavior` currently wires
 > up), same precedent as `ai.grammar-coach.use` — the permission-key column documents intent for the
 > full RBAC/ABAC pass, not yet a second enforced code path.
+>
+> **Phase 7 Sprint 2 reconciliation:** `ai.prompt.manage` gates the Prompt Library &amp; Versioning admin
+> endpoints (`/api/v1/ai/prompts*`) — Tenant Admin/Content Manager only, following the existing
+> `content.manage` pattern (an authoring/governance tool, not a learner- or Institute-Admin-facing
+> capability). Enforced today via `RequiredRoles => ["Tenant Admin", "Content Manager"]`, same
+> not-yet-a-second-code-path caveat as every other `ai.*` permission key above.
 
 ---
 
