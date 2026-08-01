@@ -350,6 +350,7 @@ Legend: ✅ full · 🟡 scoped/limited · ➖ none.
 | `ai.grammar-coach.use` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ |
 | `ai.usage-summary.view` | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | `ai.prompt.manage` | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ |
+| `ai.conversation.view` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | `billing.manage` | 🟡 | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | `certificate.issue` | ➖ | ✅ | ✅ | ➖ | 🟡 | ➖ | ➖ |
 | `support.ticket.manage` | ✅ | ✅ | 🟡 | ➖ | ➖ | 🟡 | ✅ |
@@ -369,6 +370,13 @@ Legend: ✅ full · 🟡 scoped/limited · ➖ none.
 > `content.manage` pattern (an authoring/governance tool, not a learner- or Institute-Admin-facing
 > capability). Enforced today via `RequiredRoles => ["Tenant Admin", "Content Manager"]`, same
 > not-yet-a-second-code-path caveat as every other `ai.*` permission key above.
+>
+> **Phase 7 Sprint 3 reconciliation:** `ai.conversation.view` gates `/api/v1/conversations*` — declared
+> for documentation, but (unlike the rows above) enforced by **isolation, not `RequiredRoles`**: the
+> endpoints carry no role restriction, any authenticated learner may call them, and ownership
+> (`TenantId` + `UserId` match) is checked in the handler, returning `404` (not `403`) for another
+> user's conversation. A future cohort view for Teacher (mirroring `analytics.view.cohort`) is not yet
+> built — this sprint's endpoints are self-service only.
 
 ---
 

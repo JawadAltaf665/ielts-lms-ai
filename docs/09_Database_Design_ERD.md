@@ -1258,6 +1258,51 @@ webhook dead-lettering). `Coupons` (ENT-043) gains a redemption-tracking child; 
 - **Retention:** With user. **Archiving:** With user.
 - **Data Type:** Transactional/Derived.
 
+#### ENT-050B — Conversations
+- **Purpose:** A bounded dialog thread between a learner and an AI capability (short-term conversational memory tier).
+- **Description:** Phase 7 Sprint 3 (Memory & Conversation History, [AI Architecture §6](./17_AI_Architecture.md#6-context-management--memory), [Agentic AI Architecture §5](./18_Agentic_AI_Architecture.md#5-agent-memory)). One learner may have multiple conversations per `Feature` (e.g. one per lesson topic).
+- **Primary Key:** `ConversationId`.
+- **Foreign Keys:** `TenantId`, `UserId`.
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** *..1 User; 1..* ConversationMessages; 1..* ConversationSummaries.
+- **Business Rules:** `Feature` (e.g. `ai-tutor`, `ai-teacher`, mirrors `AIPrompts.Feature`) is immutable after creation — a conversation cannot switch capabilities mid-thread. No `(UserId, Feature)` uniqueness, index only.
+- **Soft Delete:** Yes (archive). **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`TenantId`, `UserId`, `Feature`), (`TenantId`, `UserId`, `LastMessageAt`).
+- **Unique Constraints:** —
+- **Check Constraints:** Status ∈ {Active, Archived}.
+- **Retention:** Retention policy applies; archive is soft-delete, not a hard purge. **Archiving:** Learner-initiated soft-delete.
+- **Data Type:** Transactional.
+
+#### ENT-050C — ConversationMessages
+- **Purpose:** One turn (user/assistant/system) in a Conversation.
+- **Description:** Append-only/immutable once written — mirrors `ActivityLogs`' (ENT-047) partition-candidate posture; a correction is always a new message, never an edit. `TokenCount` is captured at write time for context-budget accounting.
+- **Primary Key:** `ConversationMessageId`.
+- **Foreign Keys:** `TenantId`, `ConversationId`, `AIResponseId` (nullable — links an assistant turn back to the gateway call that produced it).
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** *..1 Conversation; 0..1 AIResponse.
+- **Business Rules:** `Sequence` is 1-based, monotonically increasing per `ConversationId` — the natural ordering key for both context assembly and pagination.
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`TenantId`, `ConversationId`, `Sequence`) — leading index, partition candidate (not partitioned yet, per [ERD §10.2](#102-partitioning)).
+- **Unique Constraints:** (`TenantId`, `ConversationId`, `Sequence`).
+- **Check Constraints:** Role ∈ {User, Assistant, System}.
+- **Retention:** Time-boxed per policy, mirrors AIResponses. **Archiving:** Cold storage then purge.
+- **Data Type:** Transactional (log).
+
+#### ENT-050D — ConversationSummaries
+- **Purpose:** The compaction artifact for long-running conversations.
+- **Description:** Replaces raw ConversationMessage rows up to `CoversUpToSequence` in context assembly; context assembly always reads the latest summary + messages after it, never re-summarizes on every call. Produced by one bounded AI Gateway call, not a bespoke text-compression routine.
+- **Primary Key:** `ConversationSummaryId`.
+- **Foreign Keys:** `TenantId`, `ConversationId`.
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** *..1 Conversation.
+- **Business Rules:** Write-once/immutable — a re-summarization persists a new row with a higher `CoversUpToSequence`, never edits a prior one. Summarization never drops the most recent N raw messages (recency floor), even under aggressive compaction.
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`TenantId`, `ConversationId`, `CoversUpToSequence`).
+- **Unique Constraints:** —
+- **Check Constraints:** —
+- **Retention:** Retained with the conversation. **Archiving:** With conversation.
+- **Data Type:** Transactional (log)/Derived.
+
 ### 6.9 Progress, Engagement & Support
 
 #### ENT-054 — Achievements

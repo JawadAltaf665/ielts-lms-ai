@@ -176,6 +176,17 @@ graph LR
 - **Domain grounding:** context is drawn from tenant-scoped domain data ([ERD](./09_Database_Design_ERD.md)), never cross-tenant.
 - **Memory tiers:** ephemeral (request) → session (conversation) → durable (learner insights/[ProgressTracking](./09_Database_Design_ERD.md#64-ai--insights)); long-term vector memory is [future](#7-rag--knowledge-base-readiness).
 
+> **Phase 7 Sprint 3 reconciliation (Memory & Conversation History):** the "conversation memory" and
+> "context assembly" behavior above is now concretely implemented, not just described. `Conversation` /
+> `ConversationMessage` / `ConversationSummary` ([ERD ENT-050B–D](./09_Database_Design_ERD.md#68-ai--intelligence))
+> are the session memory tier; `IConversationContextService` (`IELTSLms.Application/AI/`) is the context
+> assembly service — it composes the system prompt via the Sprint 1/2 `IPromptCompositionService`, adds
+> the latest `ConversationSummary` (if any) and the raw messages since it, and triggers summarization
+> (one more bounded call through the same `IAiGateway` port, not a bespoke compression routine) once the
+> raw tail exceeds its token budget, subject to a recency floor that never compacts away the most recent
+> few raw messages. Durable/long-term memory (`ProgressTracking`) is read-only from this service's
+> perspective — it is not owned or duplicated here.
+
 ---
 
 ## 7. RAG & Knowledge Base Readiness
