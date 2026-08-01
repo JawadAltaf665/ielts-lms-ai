@@ -458,6 +458,130 @@ namespace IELTSLms.Persistence.Migrations
                     b.ToTable("ai_responses", (string)null);
                 });
 
+            modelBuilder.Entity("IELTSLms.Domain.AI.BandPrediction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AIResponseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ai_response_id");
+
+                    b.Property<Guid>("AiOperationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ai_operation_id");
+
+                    b.Property<DateTimeOffset?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at_utc");
+
+                    b.Property<decimal?>("Confidence")
+                        .HasColumnType("numeric(3,2)")
+                        .HasColumnName("confidence");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<string>("ErrorCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("error_code");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("error_message");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<decimal?>("ListeningBand")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("listening_band");
+
+                    b.Property<decimal?>("OverallBand")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("overall_band");
+
+                    b.Property<decimal?>("ReadingBand")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("reading_band");
+
+                    b.Property<bool>("RecommendMorePractice")
+                        .HasColumnType("boolean")
+                        .HasColumnName("recommend_more_practice");
+
+                    b.Property<DateTimeOffset?>("RestoredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("restored_at_utc");
+
+                    b.Property<Guid?>("RestoredBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restored_by");
+
+                    b.Property<decimal?>("SpeakingBand")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("speaking_band");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<decimal?>("WritingBand")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("writing_band");
+
+                    b.HasKey("Id")
+                        .HasName("pk_band_predictions");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_band_predictions_tenant_id");
+
+                    b.HasIndex("TenantId", "UserId")
+                        .HasDatabaseName("ix_band_predictions_tenant_user");
+
+                    b.ToTable("band_predictions", (string)null);
+                });
+
             modelBuilder.Entity("IELTSLms.Domain.Assessment.MockExamResult", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2847,6 +2971,204 @@ namespace IELTSLms.Persistence.Migrations
                         .HasDatabaseName("ix_usage_records_tenant_quota_period");
 
                     b.ToTable("usage_records", (string)null);
+                });
+
+            modelBuilder.Entity("IELTSLms.Domain.Certificates.Achievement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AchievementType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("achievement_type");
+
+                    b.Property<DateTimeOffset>("AwardedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("awarded_at_utc");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<DateTimeOffset?>("RestoredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("restored_at_utc");
+
+                    b.Property<Guid?>("RestoredBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restored_by");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_achievements");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_achievements_tenant_id");
+
+                    b.HasIndex("TenantId", "UserId", "AchievementType")
+                        .IsUnique()
+                        .HasDatabaseName("ix_achievements_tenant_user_type_unique");
+
+                    b.ToTable("achievements", (string)null);
+                });
+
+            modelBuilder.Entity("IELTSLms.Domain.Certificates.Certificate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<DateTimeOffset>("IssuedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("issued_at_utc");
+
+                    b.Property<decimal>("OverallBand")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("overall_band");
+
+                    b.Property<string>("PdfStorageKey")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("pdf_storage_key");
+
+                    b.Property<DateTimeOffset?>("RestoredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("restored_at_utc");
+
+                    b.Property<Guid?>("RestoredBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restored_by");
+
+                    b.Property<DateTimeOffset?>("RevokedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at_utc");
+
+                    b.Property<string>("RevokedReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("revoked_reason");
+
+                    b.Property<Guid>("SourceResultId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_result_id");
+
+                    b.Property<string>("SourceType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("source_type");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("VerificationCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("verification_code");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_certificates");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_certificates_tenant_id");
+
+                    b.HasIndex("VerificationCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_certificates_verification_code_unique");
+
+                    b.HasIndex("TenantId", "UserId")
+                        .HasDatabaseName("ix_certificates_tenant_user");
+
+                    b.HasIndex("TenantId", "SourceType", "SourceResultId")
+                        .HasDatabaseName("ix_certificates_tenant_source");
+
+                    b.ToTable("certificates", (string)null);
                 });
 
             modelBuilder.Entity("IELTSLms.Domain.Files.FileAsset", b =>

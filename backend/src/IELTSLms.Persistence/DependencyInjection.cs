@@ -3,6 +3,7 @@ using IELTSLms.Abstractions.Persistence;
 using IELTSLms.Abstractions.Persistence.AI;
 using IELTSLms.Abstractions.Persistence.Assessment;
 using IELTSLms.Abstractions.Persistence.Billing;
+using IELTSLms.Abstractions.Persistence.Certificates;
 using IELTSLms.Abstractions.Persistence.Files;
 using IELTSLms.Abstractions.Persistence.Grammar;
 using IELTSLms.Abstractions.Persistence.Learning;
@@ -17,6 +18,7 @@ using IELTSLms.Persistence.Repositories;
 using IELTSLms.Persistence.Repositories.AI;
 using IELTSLms.Persistence.Repositories.Assessment;
 using IELTSLms.Persistence.Repositories.Billing;
+using IELTSLms.Persistence.Repositories.Certificates;
 using IELTSLms.Persistence.Repositories.Files;
 using IELTSLms.Persistence.Repositories.Grammar;
 using IELTSLms.Persistence.Repositories.Learning;
@@ -81,6 +83,7 @@ public static class DependencyInjection
         services.AddHostedService<AiCatalogSeeder>();
         services.AddHostedService<WritingCatalogSeeder>();
         services.AddHostedService<SpeakingCatalogSeeder>();
+        services.AddHostedService<ResultsCatalogSeeder>();
 
         return services;
     }
@@ -172,5 +175,10 @@ public static class DependencyInjection
         // Phase 6 Sprint 8 - Mock Exam Orchestration
         services.AddScoped<IMockExamRepository, MockExamRepository>();
         services.AddScoped<IMockExamResultRepository, MockExamResultRepository>();
+
+        // Phase 6 Sprint 9 - Results, History & Integration
+        services.AddScoped<IBandPredictionRepository, BandPredictionRepository>();
+        services.AddScoped<ICertificateRepository, CertificateRepository>();
+        services.AddScoped<IAchievementRepository, AchievementRepository>();
     }
 }
