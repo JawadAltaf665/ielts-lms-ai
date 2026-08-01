@@ -6,6 +6,7 @@ using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.Application.Exceptions;
 using IELTSLms.SharedKernel.Domain;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace IELTSLms.Persistence;
 
@@ -55,6 +56,12 @@ public sealed class ApplicationDbContext(
             var entityName = entry?.Metadata.ClrType.Name ?? "Unknown";
             var entityId = entry?.Property("Id")?.CurrentValue;
             throw new ConcurrencyConflictException(entityName, entityId);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } pgEx)
+        {
+            var entry = ex.Entries.Count > 0 ? ex.Entries[0] : null;
+            var entityName = entry?.Metadata.ClrType.Name ?? "Unknown";
+            throw new UniqueConstraintViolationException(entityName, pgEx.ConstraintName);
         }
 
         // Dispatch post-commit events (default behavior for unmarked events)

@@ -458,6 +458,271 @@ namespace IELTSLms.Persistence.Migrations
                     b.ToTable("ai_responses", (string)null);
                 });
 
+            modelBuilder.Entity("IELTSLms.Domain.Assessment.MockExamResult", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<DateTimeOffset?>("FinalizedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("finalized_at_utc");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<bool>("IsFinalized")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_finalized");
+
+                    b.Property<decimal?>("ListeningBand")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("listening_band");
+
+                    b.Property<Guid>("MockExamId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("mock_exam_id");
+
+                    b.Property<decimal?>("OverallBand")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("overall_band");
+
+                    b.Property<decimal?>("ReadingBand")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("reading_band");
+
+                    b.Property<DateTimeOffset?>("RestoredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("restored_at_utc");
+
+                    b.Property<Guid?>("RestoredBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restored_by");
+
+                    b.Property<decimal?>("SpeakingBand")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("speaking_band");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<decimal?>("WritingBand")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("writing_band");
+
+                    b.HasKey("Id")
+                        .HasName("pk_mock_exam_results");
+
+                    b.HasIndex("MockExamId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_mock_exam_results_mock_exam_id_unique");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_mock_exam_results_tenant_id");
+
+                    b.ToTable("mock_exam_results", (string)null);
+                });
+
+            modelBuilder.Entity("IELTSLms.Domain.Assessment.MonthlyMockExam", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("AbandonedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("abandoned_at_utc");
+
+                    b.Property<DateTimeOffset?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at_utc");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<Guid?>("ListeningAttemptId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("listening_attempt_id");
+
+                    b.Property<DateTimeOffset?>("ListeningCompletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("listening_completed_at_utc");
+
+                    b.Property<DateTimeOffset?>("ListeningDeadlineAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("listening_deadline_at_utc");
+
+                    b.Property<DateTimeOffset?>("ListeningStartedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("listening_started_at_utc");
+
+                    b.Property<Guid?>("ReadingAttemptId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reading_attempt_id");
+
+                    b.Property<DateTimeOffset?>("ReadingCompletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reading_completed_at_utc");
+
+                    b.Property<DateTimeOffset?>("ReadingDeadlineAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reading_deadline_at_utc");
+
+                    b.Property<DateTimeOffset?>("ReadingStartedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reading_started_at_utc");
+
+                    b.Property<DateTimeOffset?>("RestoredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("restored_at_utc");
+
+                    b.Property<Guid?>("RestoredBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restored_by");
+
+                    b.Property<Guid?>("SpeakingAttemptId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("speaking_attempt_id");
+
+                    b.Property<DateTimeOffset?>("SpeakingCompletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("speaking_completed_at_utc");
+
+                    b.Property<DateTimeOffset?>("SpeakingDeadlineAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("speaking_deadline_at_utc");
+
+                    b.Property<DateTimeOffset?>("SpeakingStartedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("speaking_started_at_utc");
+
+                    b.Property<DateTimeOffset>("StartedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_at_utc");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("state");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<DateTimeOffset?>("WritingCompletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("writing_completed_at_utc");
+
+                    b.Property<DateTimeOffset?>("WritingDeadlineAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("writing_deadline_at_utc");
+
+                    b.Property<DateTimeOffset?>("WritingStartedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("writing_started_at_utc");
+
+                    b.Property<Guid?>("WritingSubmissionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("writing_submission_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_monthly_mock_exams");
+
+                    b.HasIndex("ListeningAttemptId")
+                        .HasDatabaseName("ix_monthly_mock_exams_listening_attempt_id");
+
+                    b.HasIndex("ReadingAttemptId")
+                        .HasDatabaseName("ix_monthly_mock_exams_reading_attempt_id");
+
+                    b.HasIndex("SpeakingAttemptId")
+                        .HasDatabaseName("ix_monthly_mock_exams_speaking_attempt_id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_monthly_mock_exams_tenant_id");
+
+                    b.HasIndex("WritingSubmissionId")
+                        .HasDatabaseName("ix_monthly_mock_exams_writing_submission_id");
+
+                    b.HasIndex("TenantId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_monthly_mock_exams_tenant_user_active")
+                        .HasFilter("\"state\" = 'InProgress'");
+
+                    b.ToTable("monthly_mock_exams", (string)null);
+                });
+
             modelBuilder.Entity("IELTSLms.Domain.Audit.ActivityLog", b =>
                 {
                     b.Property<Guid>("Id")

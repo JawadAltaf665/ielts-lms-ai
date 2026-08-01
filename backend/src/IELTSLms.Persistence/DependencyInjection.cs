@@ -1,6 +1,7 @@
 using IELTSLms.Abstractions.Audit;
 using IELTSLms.Abstractions.Persistence;
 using IELTSLms.Abstractions.Persistence.AI;
+using IELTSLms.Abstractions.Persistence.Assessment;
 using IELTSLms.Abstractions.Persistence.Billing;
 using IELTSLms.Abstractions.Persistence.Files;
 using IELTSLms.Abstractions.Persistence.Grammar;
@@ -14,6 +15,7 @@ using IELTSLms.Persistence.Audit;
 using IELTSLms.Persistence.Interceptors;
 using IELTSLms.Persistence.Repositories;
 using IELTSLms.Persistence.Repositories.AI;
+using IELTSLms.Persistence.Repositories.Assessment;
 using IELTSLms.Persistence.Repositories.Billing;
 using IELTSLms.Persistence.Repositories.Files;
 using IELTSLms.Persistence.Repositories.Grammar;
@@ -166,5 +168,9 @@ public static class DependencyInjection
         services.AddScoped<ISpeakingTaskRepository, SpeakingTaskRepository>();
         services.AddScoped<ISpeakingAttemptRepository, SpeakingAttemptRepository>();
         services.AddScoped<ISpeakingEvaluationRepository, SpeakingEvaluationRepository>();
+
+        // Phase 6 Sprint 8 - Mock Exam Orchestration
+        services.AddScoped<IMockExamRepository, MockExamRepository>();
+        services.AddScoped<IMockExamResultRepository, MockExamResultRepository>();
     }
 }
