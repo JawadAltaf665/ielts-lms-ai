@@ -57,4 +57,12 @@ internal static class AiFeatures
 
     /// <summary>Billing <c>QuotaDefinition.Code</c> metering Band Prediction requests (one unit per request).</summary>
     public const string BandPredictorQuota = "ai.band-predictor.requests";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag for conversation-history compaction (Phase 7 Sprint 3,
+    /// AI Architecture §6). Triggered internally by <c>IConversationContextService</c> when a
+    /// conversation's raw tail exceeds its token budget — not a directly learner-invoked capability, so
+    /// unlike the entries above it has no entitlement/quota gating of its own.
+    /// </summary>
+    public const string ConversationSummary = "conversation-summary";
 }

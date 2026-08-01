@@ -47,4 +47,10 @@ internal static class AiErrors
     public static readonly Error PromptActiveCannotRetire = Error.Validation(
         "BUSINESS_AI_PROMPT_ACTIVE_CANNOT_RETIRE",
         "This prompt version is currently active. Activate a replacement before retiring it.");
+
+    public static readonly Error ConversationNotFound = Error.NotFound(
+        "NOT_FOUND_CONVERSATION", "Conversation not found.");
+
+    public static readonly Error ConversationSummaryPromptNotConfigured = Error.ServiceUnavailable(
+        "DEPENDENCY_AI_CONVERSATION_SUMMARY_PROMPT_NOT_CONFIGURED", "Conversation summarization is not yet configured.");
 }

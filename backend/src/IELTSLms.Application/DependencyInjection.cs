@@ -47,6 +47,10 @@ public static class DependencyInjection
         // Phase 7 Sprint 1 - the one composition path every AI capability handler binds prompts through.
         services.AddSingleton<IPromptCompositionService, PromptCompositionService>();
 
+        // Phase 7 Sprint 3 - Memory & Conversation History: shared context-assembly service Sprint 4's
+        // Tutor/Teacher handlers depend on, analogous in shape to IProgressTrackingService.
+        services.AddScoped<IConversationContextService, ConversationContextService>();
+
         // Phase 6 Sprint 3 - AI Gateway: enqueued via IBackgroundJobService, not a MediatR handler.
         services.AddScoped<GrammarCoachingJob>();
 
