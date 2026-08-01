@@ -1,3 +1,4 @@
+using IELTSLms.Domain.Learning.Events;
 using IELTSLms.SharedKernel.Domain;
 
 namespace IELTSLms.Domain.Learning;
@@ -37,11 +38,15 @@ public sealed class ProgressTracking : TenantAuditableEntity<ProgressTrackingId>
     public static ProgressTracking Create(ProgressTrackingId id, Guid tenantId, Guid userId, LearningSkill skill, DateTimeOffset nowUtc) =>
         new(id, tenantId, userId, skill, nowUtc);
 
-    /// <summary>Records one completed activity for this skill. Idempotent to call once per activity.</summary>
+    /// <summary>Records one completed activity for this skill. Idempotent to call once per activity.
+    /// Raises <see cref="ProgressRecalculatedDomainEvent"/> (POL-06) so certificate eligibility gets
+    /// (re)evaluated off the back of every skill activity, not just mock-exam completion.</summary>
     public void RecordActivity(DateTimeOffset nowUtc)
     {
         ActivityCount++;
         LastActivityAtUtc = nowUtc;
         UpdatedAtUtc = nowUtc;
+
+        RaiseDomainEvent(new ProgressRecalculatedDomainEvent(TenantId, UserId, Skill));
     }
 }

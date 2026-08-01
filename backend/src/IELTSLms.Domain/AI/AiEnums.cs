@@ -26,3 +26,12 @@ public enum AiOperationStatus
     Succeeded = 3,
     Failed = 4,
 }
+
+/// <summary>Lifecycle of a <see cref="BandPrediction"/> (Agentic AI Architecture §13.6): created
+/// pending alongside its <see cref="AiOperation"/>, then completed or failed by <c>BandPredictionJob</c>.</summary>
+public enum BandPredictionStatus
+{
+    Pending = 1,
+    Ready = 2,
+    Failed = 3,
+}

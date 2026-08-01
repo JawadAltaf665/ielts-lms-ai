@@ -31,3 +31,10 @@ public readonly record struct AiOperationId(Guid Value)
     public static AiOperationId From(Guid value) => new(value);
     public override string ToString() => Value.ToString();
 }
+
+/// <summary>Strongly-typed identifier for a <see cref="BandPrediction"/>.</summary>
+public readonly record struct BandPredictionId(Guid Value)
+{
+    public static BandPredictionId From(Guid value) => new(value);
+    public override string ToString() => Value.ToString();
+}
