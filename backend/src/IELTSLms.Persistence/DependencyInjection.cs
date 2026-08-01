@@ -180,5 +180,10 @@ public static class DependencyInjection
         services.AddScoped<IBandPredictionRepository, BandPredictionRepository>();
         services.AddScoped<ICertificateRepository, CertificateRepository>();
         services.AddScoped<IAchievementRepository, AchievementRepository>();
+
+        // Phase 7 Sprint 3 - Memory & Conversation History
+        services.AddScoped<IConversationRepository, ConversationRepository>();
+        services.AddScoped<IConversationMessageRepository, ConversationMessageRepository>();
+        services.AddScoped<IConversationSummaryRepository, ConversationSummaryRepository>();
     }
 }
