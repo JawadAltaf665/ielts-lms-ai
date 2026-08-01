@@ -141,6 +141,7 @@ try
     api.MapGrammarEndpoints();
     api.MapVocabularyEndpoints();
     api.MapAiEndpoints();
+    api.MapPromptEndpoints();
     api.MapReadingEndpoints();
     api.MapListeningEndpoints();
     api.MapWritingEndpoints();
