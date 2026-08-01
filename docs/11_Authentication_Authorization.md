@@ -347,6 +347,7 @@ Legend: ✅ full · 🟡 scoped/limited · ➖ none.
 | `writing.evaluate` | ➖ | 🟡 | 🟡 | ➖ | ✅ | ➖ | ➖ |
 | `analytics.view.cohort` | 🟡 | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | `analytics.view.self` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
+| `ai.grammar-coach.use` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ |
 | `billing.manage` | 🟡 | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | `certificate.issue` | ➖ | ✅ | ✅ | ➖ | 🟡 | ➖ | ➖ |
 | `support.ticket.manage` | ✅ | ✅ | 🟡 | ➖ | ➖ | 🟡 | ✅ |

@@ -1,10 +1,32 @@
 using IELTSLms.Abstractions.Audit;
 using IELTSLms.Abstractions.Persistence;
+using IELTSLms.Abstractions.Persistence.AI;
+using IELTSLms.Abstractions.Persistence.Assessment;
 using IELTSLms.Abstractions.Persistence.Billing;
+using IELTSLms.Abstractions.Persistence.Certificates;
+using IELTSLms.Abstractions.Persistence.Files;
+using IELTSLms.Abstractions.Persistence.Grammar;
+using IELTSLms.Abstractions.Persistence.Learning;
+using IELTSLms.Abstractions.Persistence.Listening;
+using IELTSLms.Abstractions.Persistence.Reading;
+using IELTSLms.Abstractions.Persistence.Speaking;
+using IELTSLms.Abstractions.Persistence.Vocabulary;
+using IELTSLms.Abstractions.Persistence.Writing;
 using IELTSLms.Persistence.Audit;
 using IELTSLms.Persistence.Interceptors;
 using IELTSLms.Persistence.Repositories;
+using IELTSLms.Persistence.Repositories.AI;
+using IELTSLms.Persistence.Repositories.Assessment;
 using IELTSLms.Persistence.Repositories.Billing;
+using IELTSLms.Persistence.Repositories.Certificates;
+using IELTSLms.Persistence.Repositories.Files;
+using IELTSLms.Persistence.Repositories.Grammar;
+using IELTSLms.Persistence.Repositories.Learning;
+using IELTSLms.Persistence.Repositories.Listening;
+using IELTSLms.Persistence.Repositories.Reading;
+using IELTSLms.Persistence.Repositories.Speaking;
+using IELTSLms.Persistence.Repositories.Vocabulary;
+using IELTSLms.Persistence.Repositories.Writing;
 using IELTSLms.Persistence.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -58,6 +80,10 @@ public static class DependencyInjection
         AddRepositories(services);
 
         services.AddHostedService<SystemTenantSeeder>();
+        services.AddHostedService<AiCatalogSeeder>();
+        services.AddHostedService<WritingCatalogSeeder>();
+        services.AddHostedService<SpeakingCatalogSeeder>();
+        services.AddHostedService<ResultsCatalogSeeder>();
 
         return services;
     }
@@ -106,5 +132,53 @@ public static class DependencyInjection
         services.AddScoped<ICouponRedemptionRepository, CouponRedemptionRepository>();
         services.AddScoped<IRefundRepository, RefundRepository>();
         services.AddScoped<IFailedWebhookEventRepository, FailedWebhookEventRepository>();
+
+        // Phase 6 Sprint 1 - Grammar
+        services.AddScoped<IGrammarTopicRepository, GrammarTopicRepository>();
+        services.AddScoped<IGrammarExerciseRepository, GrammarExerciseRepository>();
+        services.AddScoped<IGrammarQuestionRepository, GrammarQuestionRepository>();
+        services.AddScoped<IGrammarAttemptRepository, GrammarAttemptRepository>();
+        services.AddScoped<IGrammarProgressRepository, GrammarProgressRepository>();
+        services.AddScoped<IProgressTrackingRepository, ProgressTrackingRepository>();
+
+        // Phase 6 Sprint 2 - Vocabulary
+        services.AddScoped<IVocabularyWordRepository, VocabularyWordRepository>();
+        services.AddScoped<IVocabularyProgressRepository, VocabularyProgressRepository>();
+
+        // Phase 6 Sprint 3 - AI Gateway
+        services.AddScoped<IAiProviderRepository, AiProviderRepository>();
+        services.AddScoped<IAiPromptRepository, AiPromptRepository>();
+        services.AddScoped<IAiResponseRepository, AiResponseRepository>();
+        services.AddScoped<IAiOperationRepository, AiOperationRepository>();
+
+        // Phase 6 Sprint 4 - Reading
+        services.AddScoped<IReadingPassageRepository, ReadingPassageRepository>();
+        services.AddScoped<IReadingQuestionRepository, ReadingQuestionRepository>();
+        services.AddScoped<IReadingAttemptRepository, ReadingAttemptRepository>();
+
+        // Phase 6 Sprint 5 - Listening
+        services.AddScoped<IFileAssetRepository, FileAssetRepository>();
+        services.AddScoped<IListeningAudioRepository, ListeningAudioRepository>();
+        services.AddScoped<IListeningQuestionRepository, ListeningQuestionRepository>();
+        services.AddScoped<IListeningAttemptRepository, ListeningAttemptRepository>();
+
+        // Phase 6 Sprint 6 - Writing
+        services.AddScoped<IWritingTaskRepository, WritingTaskRepository>();
+        services.AddScoped<IWritingSubmissionRepository, WritingSubmissionRepository>();
+        services.AddScoped<IWritingEvaluationRepository, WritingEvaluationRepository>();
+
+        // Phase 6 Sprint 7 - Speaking
+        services.AddScoped<ISpeakingTaskRepository, SpeakingTaskRepository>();
+        services.AddScoped<ISpeakingAttemptRepository, SpeakingAttemptRepository>();
+        services.AddScoped<ISpeakingEvaluationRepository, SpeakingEvaluationRepository>();
+
+        // Phase 6 Sprint 8 - Mock Exam Orchestration
+        services.AddScoped<IMockExamRepository, MockExamRepository>();
+        services.AddScoped<IMockExamResultRepository, MockExamResultRepository>();
+
+        // Phase 6 Sprint 9 - Results, History & Integration
+        services.AddScoped<IBandPredictionRepository, BandPredictionRepository>();
+        services.AddScoped<ICertificateRepository, CertificateRepository>();
+        services.AddScoped<IAchievementRepository, AchievementRepository>();
     }
 }

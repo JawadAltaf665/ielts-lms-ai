@@ -1,18 +1,25 @@
+using IELTSLms.Abstractions.AI;
 using IELTSLms.Abstractions.Audit;
 using IELTSLms.Abstractions.Billing;
 using IELTSLms.Abstractions.Caching;
 using IELTSLms.Abstractions.Context;
+using IELTSLms.Abstractions.Documents;
 using IELTSLms.Abstractions.Email;
 using IELTSLms.Abstractions.Environment;
 using IELTSLms.Abstractions.Events;
 using IELTSLms.Abstractions.Security;
 using IELTSLms.Abstractions.Serialization;
+using IELTSLms.Abstractions.Storage;
 using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.Abstractions.Time;
+using IELTSLms.Infrastructure.AI;
+using IELTSLms.Infrastructure.AI.Claude;
+using IELTSLms.Infrastructure.AI.Whisper;
 using IELTSLms.Infrastructure.Billing;
 using IELTSLms.Infrastructure.Caching;
 using IELTSLms.Infrastructure.Configuration;
 using IELTSLms.Infrastructure.Context;
+using IELTSLms.Infrastructure.Documents;
 using IELTSLms.Infrastructure.Email;
 using IELTSLms.Infrastructure.Environment;
 using IELTSLms.Infrastructure.Events;
@@ -21,11 +28,14 @@ using IELTSLms.Infrastructure.Performance;
 using IELTSLms.Infrastructure.Resilience;
 using IELTSLms.Infrastructure.Security;
 using IELTSLms.Infrastructure.Serialization;
+using IELTSLms.Infrastructure.Storage;
 using IELTSLms.Infrastructure.Tenancy;
 using IELTSLms.Infrastructure.Time;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Http.Resilience;
+using Microsoft.Extensions.Options;
 
 namespace IELTSLms.Infrastructure;
 
@@ -77,6 +87,9 @@ public static class DependencyInjection
         AddEmail(services);
         AddBilling(services, configuration);
         AddCaching(services, configuration);
+        AddAi(services, configuration);
+        AddStorage(services, configuration);
+        AddDocuments(services);
         services.AddObservability(configuration);
         services.AddResiliencePolicies(configuration);
         services.AddPerformanceInfrastructure(configuration);
@@ -126,6 +139,58 @@ public static class DependencyInjection
 
         services.AddSingleton<IPaymentGateway, StripePaymentGateway>();
         services.AddSingleton<IStripeWebhookVerifier, StripeWebhookVerifier>();
+    }
+
+    private static void AddAi(IServiceCollection services, IConfiguration configuration)
+    {
+        // Not ValidateOnStart (mirrors StripeOptions/AddBilling above): a blank Claude API key must not
+        // prevent the whole API from starting in local dev or CI.
+        services.AddOptions<ClaudeOptions>().Bind(configuration.GetSection(ClaudeOptions.SectionName));
+
+        services.AddHttpClient<IAiChatProvider, ClaudeChatProvider>((sp, client) =>
+            {
+                var claudeOptions = sp.GetRequiredService<IOptions<ClaudeOptions>>().Value;
+                client.BaseAddress = new Uri(claudeOptions.BaseUrl);
+            })
+            .AddResilienceHandler("ai-claude", (builder, context) =>
+            {
+                var resilienceOptions = ResilienceRegistration.ReadOptions(
+                    context.ServiceProvider.GetRequiredService<IConfiguration>());
+                ResilienceRegistration.ConfigureHttpPipeline(builder, resilienceOptions);
+            });
+
+        services.AddScoped<IAiGateway, AiGateway>();
+
+        // Not ValidateOnStart (mirrors ClaudeOptions above): a blank Whisper API key must not prevent
+        // the whole API from starting in local dev or CI.
+        services.AddOptions<WhisperOptions>().Bind(configuration.GetSection(WhisperOptions.SectionName));
+
+        services.AddHttpClient<ISpeechToTextProvider, WhisperSpeechToTextProvider>((sp, client) =>
+            {
+                var whisperOptions = sp.GetRequiredService<IOptions<WhisperOptions>>().Value;
+                client.BaseAddress = new Uri(whisperOptions.BaseUrl);
+            })
+            .AddResilienceHandler("ai-whisper", (builder, context) =>
+            {
+                var resilienceOptions = ResilienceRegistration.ReadOptions(
+                    context.ServiceProvider.GetRequiredService<IConfiguration>());
+                ResilienceRegistration.ConfigureHttpPipeline(builder, resilienceOptions);
+            });
+    }
+
+    private static void AddStorage(IServiceCollection services, IConfiguration configuration)
+    {
+        // Not ValidateOnStart (mirrors StripeOptions/ClaudeOptions above): a blank signing key must not
+        // prevent the whole API from starting in local dev or CI.
+        services.AddOptions<StorageOptions>().Bind(configuration.GetSection(StorageOptions.SectionName));
+
+        services.AddSingleton<IFileStorage, LocalFileStorage>();
+    }
+
+    private static void AddDocuments(IServiceCollection services)
+    {
+        QuestPdfCertificateGenerator.ConfigureLicense();
+        services.AddSingleton<ICertificatePdfGenerator, QuestPdfCertificateGenerator>();
     }
 
     private static void AddCaching(IServiceCollection services, IConfiguration configuration)

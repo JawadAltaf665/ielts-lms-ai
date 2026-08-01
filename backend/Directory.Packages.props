@@ -84,6 +84,11 @@
     <PackageVersion Include="Stripe.net" Version="47.4.0" />
   </ItemGroup>
 
+  <ItemGroup Label="Documents (PDF)">
+    <!-- Certificate PDF rendering (Phase 6 Sprint 9); Community license, referenced by Infrastructure only. -->
+    <PackageVersion Include="QuestPDF" Version="2026.7.2" />
+  </ItemGroup>
+
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />
