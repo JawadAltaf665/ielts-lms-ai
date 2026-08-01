@@ -31,4 +31,20 @@ internal static class AiErrors
 
     public static readonly Error UsageSummaryInvalidRange = Error.Validation(
         "VALIDATION_AI_USAGE_SUMMARY_INVALID_RANGE", "The 'from' date must not be after the 'to' date.");
+
+    public static readonly Error PromptNotFound = Error.NotFound(
+        "NOT_FOUND_AI_PROMPT", "Prompt version not found.");
+
+    public static readonly Error PromptVersionMismatch = Error.Conflict(
+        "CONFLICT_AI_PROMPT_VERSION_MISMATCH", "The prompt was modified by someone else since you loaded it. Reload and try again.");
+
+    public static readonly Error PromptNotActive = Error.Validation(
+        "BUSINESS_AI_PROMPT_NOT_ACTIVE", "Only the currently active version for its feature/scope can be rolled back.");
+
+    public static readonly Error PromptNoPriorVersion = Error.Validation(
+        "BUSINESS_AI_PROMPT_NO_PRIOR_VERSION", "There is no prior version to roll back to for this feature/scope.");
+
+    public static readonly Error PromptActiveCannotRetire = Error.Validation(
+        "BUSINESS_AI_PROMPT_ACTIVE_CANNOT_RETIRE",
+        "This prompt version is currently active. Activate a replacement before retiring it.");
 }
