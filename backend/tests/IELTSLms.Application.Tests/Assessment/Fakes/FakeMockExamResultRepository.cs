@@ -20,4 +20,18 @@ internal sealed class FakeMockExamResultRepository : IMockExamResultRepository
     public void Add(MockExamResult aggregate) => _results.Add(aggregate);
 
     public void Remove(MockExamResult aggregate) => _results.Remove(aggregate);
+
+    public Task<IReadOnlyList<MockExamResult>> ListByUserAsync(
+        Guid tenantId, Guid userId, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<MockExamResult>>(_results
+            .Where(r => r.TenantId == tenantId && r.UserId == userId && r.IsFinalized)
+            .OrderByDescending(r => r.CreatedAtUtc)
+            .ToList());
+
+    public Task<MockExamResult?> GetLatestFinalizedByUserAsync(
+        Guid tenantId, Guid userId, CancellationToken cancellationToken = default) =>
+        Task.FromResult(_results
+            .Where(r => r.TenantId == tenantId && r.UserId == userId && r.IsFinalized)
+            .OrderByDescending(r => r.FinalizedAtUtc)
+            .FirstOrDefault());
 }

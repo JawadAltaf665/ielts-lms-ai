@@ -17,4 +17,11 @@ internal sealed class FakeReadingAttemptRepository : IReadingAttemptRepository
     public void Add(ReadingAttempt aggregate) => _attempts.Add(aggregate);
 
     public void Remove(ReadingAttempt aggregate) => _attempts.Remove(aggregate);
+
+    public Task<IReadOnlyList<ReadingAttempt>> ListByUserAsync(
+        Guid tenantId, Guid userId, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<ReadingAttempt>>(_attempts
+            .Where(a => a.TenantId == tenantId && a.UserId == userId && a.SubmittedAtUtc != null)
+            .OrderByDescending(a => a.CreatedAtUtc)
+            .ToList());
 }

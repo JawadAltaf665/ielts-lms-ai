@@ -17,4 +17,11 @@ internal sealed class FakeSpeakingAttemptRepository : ISpeakingAttemptRepository
     public void Add(SpeakingAttempt aggregate) => _attempts.Add(aggregate);
 
     public void Remove(SpeakingAttempt aggregate) => _attempts.Remove(aggregate);
+
+    public Task<IReadOnlyList<SpeakingAttempt>> ListByUserAsync(
+        Guid tenantId, Guid userId, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<SpeakingAttempt>>(_attempts
+            .Where(a => a.TenantId == tenantId && a.UserId == userId && a.Status != SpeakingAttemptStatus.Recorded)
+            .OrderByDescending(a => a.CreatedAtUtc)
+            .ToList());
 }

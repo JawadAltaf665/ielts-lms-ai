@@ -17,4 +17,11 @@ internal sealed class FakeWritingSubmissionRepository : IWritingSubmissionReposi
     public void Add(WritingSubmission aggregate) => _submissions.Add(aggregate);
 
     public void Remove(WritingSubmission aggregate) => _submissions.Remove(aggregate);
+
+    public Task<IReadOnlyList<WritingSubmission>> ListByUserAsync(
+        Guid tenantId, Guid userId, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<WritingSubmission>>(_submissions
+            .Where(s => s.TenantId == tenantId && s.UserId == userId && s.Status != WritingSubmissionStatus.Draft)
+            .OrderByDescending(s => s.CreatedAtUtc)
+            .ToList());
 }

@@ -17,4 +17,11 @@ internal sealed class FakeListeningAttemptRepository : IListeningAttemptReposito
     public void Add(ListeningAttempt aggregate) => _attempts.Add(aggregate);
 
     public void Remove(ListeningAttempt aggregate) => _attempts.Remove(aggregate);
+
+    public Task<IReadOnlyList<ListeningAttempt>> ListByUserAsync(
+        Guid tenantId, Guid userId, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<ListeningAttempt>>(_attempts
+            .Where(a => a.TenantId == tenantId && a.UserId == userId && a.SubmittedAtUtc != null)
+            .OrderByDescending(a => a.CreatedAtUtc)
+            .ToList());
 }

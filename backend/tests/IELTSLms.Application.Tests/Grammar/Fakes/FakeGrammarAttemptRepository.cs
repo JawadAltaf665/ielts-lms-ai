@@ -17,4 +17,11 @@ internal sealed class FakeGrammarAttemptRepository : IGrammarAttemptRepository
     public void Add(GrammarAttempt aggregate) => _attempts.Add(aggregate);
 
     public void Remove(GrammarAttempt aggregate) => _attempts.Remove(aggregate);
+
+    public Task<IReadOnlyList<GrammarAttempt>> ListByUserAsync(
+        Guid tenantId, Guid userId, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<GrammarAttempt>>(_attempts
+            .Where(a => a.TenantId == tenantId && a.UserId == userId)
+            .OrderByDescending(a => a.CreatedAtUtc)
+            .ToList());
 }
