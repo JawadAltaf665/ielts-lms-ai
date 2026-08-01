@@ -4969,6 +4969,381 @@ namespace IELTSLms.Persistence.Migrations
                     b.ToTable("vocabulary_words", (string)null);
                 });
 
+            modelBuilder.Entity("IELTSLms.Domain.Writing.WritingEvaluation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AIProviderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ai_provider_id");
+
+                    b.Property<Guid?>("AIResponseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ai_response_id");
+
+                    b.Property<decimal>("CoherenceCohesion")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("coherence_cohesion");
+
+                    b.Property<decimal>("Confidence")
+                        .HasColumnType("numeric(3,2)")
+                        .HasColumnName("confidence");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<decimal>("EstimatedBand")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("estimated_band");
+
+                    b.Property<string>("FeedbackText")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("feedback_text");
+
+                    b.Property<decimal>("GrammaticalRangeAccuracy")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("grammatical_range_accuracy");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<decimal>("LexicalResource")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("lexical_resource");
+
+                    b.Property<DateTimeOffset?>("OverriddenAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("overridden_at_utc");
+
+                    b.Property<decimal?>("OverriddenBand")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("overridden_band");
+
+                    b.Property<Guid?>("OverriddenBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("overridden_by");
+
+                    b.Property<decimal?>("OverriddenCoherenceCohesion")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("overridden_coherence_cohesion");
+
+                    b.Property<decimal?>("OverriddenGrammaticalRangeAccuracy")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("overridden_grammatical_range_accuracy");
+
+                    b.Property<decimal?>("OverriddenLexicalResource")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("overridden_lexical_resource");
+
+                    b.Property<decimal?>("OverriddenTaskResponse")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("overridden_task_response");
+
+                    b.Property<string>("OverrideReason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("override_reason");
+
+                    b.Property<bool>("RequiresHumanReview")
+                        .HasColumnType("boolean")
+                        .HasColumnName("requires_human_review");
+
+                    b.Property<DateTimeOffset?>("RestoredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("restored_at_utc");
+
+                    b.Property<Guid?>("RestoredBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restored_by");
+
+                    b.Property<decimal>("TaskResponse")
+                        .HasColumnType("numeric(2,1)")
+                        .HasColumnName("task_response");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<Guid>("WritingSubmissionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("writing_submission_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_writing_evaluations");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_writing_evaluations_tenant_id");
+
+                    b.HasIndex("WritingSubmissionId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_writing_evaluations_submission_id_unique");
+
+                    b.HasIndex("TenantId", "EstimatedBand")
+                        .HasDatabaseName("ix_writing_evaluations_tenant_band");
+
+                    b.ToTable("writing_evaluations", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_writing_evaluations_coherence_cohesion_range", "\"coherence_cohesion\" >= 0 AND \"coherence_cohesion\" <= 9 AND MOD(\"coherence_cohesion\" * 2, 1) = 0");
+
+                            t.HasCheckConstraint("ck_writing_evaluations_confidence_range", "\"confidence\" >= 0 AND \"confidence\" <= 1");
+
+                            t.HasCheckConstraint("ck_writing_evaluations_grammatical_range_accuracy_range", "\"grammatical_range_accuracy\" >= 0 AND \"grammatical_range_accuracy\" <= 9 AND MOD(\"grammatical_range_accuracy\" * 2, 1) = 0");
+
+                            t.HasCheckConstraint("ck_writing_evaluations_lexical_resource_range", "\"lexical_resource\" >= 0 AND \"lexical_resource\" <= 9 AND MOD(\"lexical_resource\" * 2, 1) = 0");
+
+                            t.HasCheckConstraint("ck_writing_evaluations_task_response_range", "\"task_response\" >= 0 AND \"task_response\" <= 9 AND MOD(\"task_response\" * 2, 1) = 0");
+                        });
+                });
+
+            modelBuilder.Entity("IELTSLms.Domain.Writing.WritingSubmission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("ResponseText")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("response_text");
+
+                    b.Property<DateTimeOffset?>("RestoredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("restored_at_utc");
+
+                    b.Property<Guid?>("RestoredBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restored_by");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("SubmittedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("submitted_at_utc");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<int>("WordCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("word_count");
+
+                    b.Property<Guid?>("WritingEvaluationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("writing_evaluation_id");
+
+                    b.Property<Guid>("WritingTaskId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("writing_task_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_writing_submissions");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_writing_submissions_status");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_writing_submissions_tenant_id");
+
+                    b.HasIndex("WritingTaskId")
+                        .HasDatabaseName("ix_writing_submissions_writing_task_id");
+
+                    b.HasIndex("TenantId", "UserId")
+                        .HasDatabaseName("ix_writing_submissions_tenant_user");
+
+                    b.ToTable("writing_submissions", (string)null);
+                });
+
+            modelBuilder.Entity("IELTSLms.Domain.Writing.WritingTask", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("CategoryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("category_id");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<int>("MaxWordCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("max_word_count");
+
+                    b.Property<int>("MinWordCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("min_word_count");
+
+                    b.Property<string>("PromptText")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("prompt_text");
+
+                    b.Property<DateTimeOffset?>("RestoredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("restored_at_utc");
+
+                    b.Property<Guid?>("RestoredBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restored_by");
+
+                    b.Property<string>("RubricReference")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("rubric_reference");
+
+                    b.Property<string>("TaskType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("task_type");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("Track")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("track");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_writing_tasks");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_writing_tasks_tenant_id");
+
+                    b.HasIndex("Title")
+                        .IsUnique()
+                        .HasDatabaseName("ix_writing_tasks_global_title_unique")
+                        .HasFilter("\"tenant_id\" IS NULL");
+
+                    b.HasIndex("TenantId", "Title")
+                        .IsUnique()
+                        .HasDatabaseName("ix_writing_tasks_tenant_title_unique")
+                        .HasFilter("\"tenant_id\" IS NOT NULL");
+
+                    b.HasIndex("Track", "TaskType")
+                        .HasDatabaseName("ix_writing_tasks_track_task_type");
+
+                    b.ToTable("writing_tasks", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_writing_tasks_word_count_bounds", "\"max_word_count\" >= \"min_word_count\" AND \"min_word_count\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("IELTSLms.Persistence.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")

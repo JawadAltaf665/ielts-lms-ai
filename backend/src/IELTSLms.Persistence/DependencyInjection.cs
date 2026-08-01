@@ -8,6 +8,7 @@ using IELTSLms.Abstractions.Persistence.Learning;
 using IELTSLms.Abstractions.Persistence.Listening;
 using IELTSLms.Abstractions.Persistence.Reading;
 using IELTSLms.Abstractions.Persistence.Vocabulary;
+using IELTSLms.Abstractions.Persistence.Writing;
 using IELTSLms.Persistence.Audit;
 using IELTSLms.Persistence.Interceptors;
 using IELTSLms.Persistence.Repositories;
@@ -19,6 +20,7 @@ using IELTSLms.Persistence.Repositories.Learning;
 using IELTSLms.Persistence.Repositories.Listening;
 using IELTSLms.Persistence.Repositories.Reading;
 using IELTSLms.Persistence.Repositories.Vocabulary;
+using IELTSLms.Persistence.Repositories.Writing;
 using IELTSLms.Persistence.Seeding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -73,6 +75,7 @@ public static class DependencyInjection
 
         services.AddHostedService<SystemTenantSeeder>();
         services.AddHostedService<AiCatalogSeeder>();
+        services.AddHostedService<WritingCatalogSeeder>();
 
         return services;
     }
@@ -150,5 +153,10 @@ public static class DependencyInjection
         services.AddScoped<IListeningAudioRepository, ListeningAudioRepository>();
         services.AddScoped<IListeningQuestionRepository, ListeningQuestionRepository>();
         services.AddScoped<IListeningAttemptRepository, ListeningAttemptRepository>();
+
+        // Phase 6 Sprint 6 - Writing
+        services.AddScoped<IWritingTaskRepository, WritingTaskRepository>();
+        services.AddScoped<IWritingSubmissionRepository, WritingSubmissionRepository>();
+        services.AddScoped<IWritingEvaluationRepository, WritingEvaluationRepository>();
     }
 }
