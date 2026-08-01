@@ -145,6 +145,7 @@ try
     api.MapListeningEndpoints();
     api.MapWritingEndpoints();
     api.MapSpeakingEndpoints();
+    api.MapMockExamEndpoints();
     api.MapFilesEndpoints();
     api.MapWebhookEndpoints();
 
