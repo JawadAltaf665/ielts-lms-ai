@@ -3,6 +3,7 @@ using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.Api.Contracts;
 using IELTSLms.Api.Extensions;
 using IELTSLms.Application.AI.GetAiOperationStatus;
+using IELTSLms.Application.AI.GetAiUsageSummary;
 using IELTSLms.Application.AI.RequestGrammarCoaching;
 using IELTSLms.SharedKernel.Results;
 using MediatR;
@@ -30,6 +31,14 @@ internal static class AiEndpoints
             .WithTags("AI")
             .WithName("GetAiOperationStatus")
             .WithSummary("Polls the status of an async AI operation.");
+
+        builder.MapGet("/ai/usage-summary", GetUsageSummaryAsync)
+            .RequireAuthorization()
+            .WithTags("AI")
+            .WithName("GetAiUsageSummary")
+            .WithSummary(
+                "Tenant-scoped AI cost/usage aggregated by capability/provider/day, defaults to the trailing " +
+                "30 days (Tenant Admin/Institute Admin).");
 
         return builder;
     }
@@ -94,6 +103,20 @@ internal static class AiEndpoints
         return error.ToProblem(httpContext);
     }
 
+    private static async Task<IResult> GetUsageSummaryAsync(
+        [AsParameters] AiUsageSummaryQueryParams queryParams, ISender sender, ITenantContext tenantContext,
+        HttpContext httpContext, CancellationToken cancellationToken)
+    {
+        if (!TryGetTenantId(tenantContext, out var tenantId))
+        {
+            return TenantNotResolved.ToProblem(httpContext);
+        }
+
+        var result = await sender.Send(
+            new GetAiUsageSummaryQuery(tenantId, queryParams.From, queryParams.To), cancellationToken);
+        return result.IsSuccess ? Results.Ok(ApiResponse.From(result.Value, httpContext)) : result.ToProblem(httpContext);
+    }
+
     private static bool TryGetTenantId(ITenantContext tenantContext, out Guid tenantId)
     {
         if (tenantContext.TenantId is { } id)
@@ -117,3 +140,5 @@ internal static class AiEndpoints
 }
 
 public sealed record GrammarCoachRequest(string Text);
+
+public sealed record AiUsageSummaryQueryParams(DateOnly? From, DateOnly? To);
