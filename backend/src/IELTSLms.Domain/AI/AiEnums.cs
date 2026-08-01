@@ -5,6 +5,7 @@ namespace IELTSLms.Domain.AI;
 public enum AiProviderKind
 {
     Claude = 1,
+    OpenAi = 2,
 }
 
 /// <summary>Outcome of a recorded <see cref="AiResponse"/> (AI Architecture §8).</summary>

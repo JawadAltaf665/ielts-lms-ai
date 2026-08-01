@@ -1,3 +1,4 @@
+using IELTSLms.Application.AI;
 using IELTSLms.Application.AI.Jobs;
 using IELTSLms.Application.Tests.AI.Fakes;
 using IELTSLms.Application.Tests.Grammar.Fakes;
@@ -40,8 +41,9 @@ public sealed class GrammarCoachingJobTests
         operations.Seed(operation);
 
         var job = new GrammarCoachingJob(
-            operations, providers, prompts, responses, unitOfWork, gateway, tenantContextAccessor,
-            new FakeClock(Now.AddSeconds(1)), new FakeGuidProvider(), NullLogger<GrammarCoachingJob>.Instance);
+            operations, providers, prompts, responses, unitOfWork, gateway, new PromptCompositionService(),
+            tenantContextAccessor, new FakeClock(Now.AddSeconds(1)), new FakeGuidProvider(),
+            NullLogger<GrammarCoachingJob>.Instance);
 
         return new Fixture(operations, providers, prompts, responses, unitOfWork, gateway, tenantContextAccessor, job, tenantId, operation);
     }
@@ -122,7 +124,8 @@ public sealed class GrammarCoachingJobTests
 
         var job = new GrammarCoachingJob(
             operations, providers, prompts, fixture.Responses, fixture.UnitOfWork, fixture.Gateway,
-            fixture.TenantContextAccessor, new FakeClock(Now), new FakeGuidProvider(), NullLogger<GrammarCoachingJob>.Instance);
+            new PromptCompositionService(), fixture.TenantContextAccessor, new FakeClock(Now), new FakeGuidProvider(),
+            NullLogger<GrammarCoachingJob>.Instance);
 
         await job.ExecuteAsync(fixture.TenantId, operation.Id.Value, CancellationToken.None);
 

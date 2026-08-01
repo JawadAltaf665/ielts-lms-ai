@@ -17,13 +17,21 @@ namespace IELTSLms.Infrastructure.AI;
 /// <c>HttpClient</c>) → this is the only Infrastructure-layer piece of the gateway; it never touches a
 /// DbContext — the caller persists the outcome as an <c>AiResponse</c>.
 /// </summary>
-public sealed class AiGateway(IAiChatProvider chatProvider, ICacheService cache) : IAiGateway
+public sealed class AiGateway(IEnumerable<IAiChatProvider> chatProviders, ICacheService cache) : IAiGateway
 {
     private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(24);
 
     public async Task<Result<AiGatewayInvocationResult>> InvokeAsync(
         AiGatewayRequest request, CancellationToken cancellationToken = default)
     {
+        var chatProvider = chatProviders.FirstOrDefault(p => p.Kind == request.ProviderKind);
+        if (chatProvider is null)
+        {
+            return Result.Failure<AiGatewayInvocationResult>(
+                Error.ServiceUnavailable(
+                    "DEPENDENCY_AI_PROVIDER_NOT_CONFIGURED", "The configured AI provider is not available."));
+        }
+
         var safety = PromptSafetyGuard.Evaluate(request.UserInput);
         if (safety.IsBlocked)
         {

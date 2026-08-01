@@ -2,6 +2,7 @@ using System.Reflection;
 using FluentValidation;
 using IELTSLms.Abstractions.Billing;
 using IELTSLms.Application.Abstractions.Behaviors;
+using IELTSLms.Application.AI;
 using IELTSLms.Application.AI.Jobs;
 using IELTSLms.Application.Billing.Services;
 using IELTSLms.Application.Learning;
@@ -42,6 +43,9 @@ public static class DependencyInjection
         services.AddScoped<IEntitlementService, EntitlementService>();
         services.AddScoped<IQuotaService, QuotaService>();
         services.AddScoped<IProgressTrackingService, ProgressTrackingService>();
+
+        // Phase 7 Sprint 1 - the one composition path every AI capability handler binds prompts through.
+        services.AddSingleton<IPromptCompositionService, PromptCompositionService>();
 
         // Phase 6 Sprint 3 - AI Gateway: enqueued via IBackgroundJobService, not a MediatR handler.
         services.AddScoped<GrammarCoachingJob>();

@@ -21,4 +21,14 @@ internal static class AiErrors
 
     public static readonly Error PromptNotConfigured = Error.ServiceUnavailable(
         "DEPENDENCY_AI_PROMPT_NOT_CONFIGURED", "This AI capability is not yet configured.");
+
+    public static readonly Error PromptVariableMissing = Error.Validation(
+        "VALIDATION_AI_PROMPT_VARIABLE_MISSING", "The prompt template references a variable that was not supplied.");
+
+    public static readonly Error PromptVariableInjectionRejected = Error.Validation(
+        "VALIDATION_AI_PROMPT_VARIABLE_INJECTION_REJECTED",
+        "A supplied prompt variable was rejected because it contained template syntax.");
+
+    public static readonly Error UsageSummaryInvalidRange = Error.Validation(
+        "VALIDATION_AI_USAGE_SUMMARY_INVALID_RANGE", "The 'from' date must not be after the 'to' date.");
 }

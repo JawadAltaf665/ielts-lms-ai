@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using IELTSLms.Abstractions.AI;
+using IELTSLms.Domain.AI;
 using Microsoft.Extensions.Options;
 
 namespace IELTSLms.Infrastructure.AI.Claude;
@@ -18,6 +19,8 @@ namespace IELTSLms.Infrastructure.AI.Claude;
 public sealed class ClaudeChatProvider(HttpClient httpClient, IOptions<ClaudeOptions> options) : IAiChatProvider
 {
     private const string MessagesPath = "/v1/messages";
+
+    public AiProviderKind Kind => AiProviderKind.Claude;
 
     public async Task<AiChatResult> CompleteAsync(AiChatRequest request, CancellationToken cancellationToken = default)
     {

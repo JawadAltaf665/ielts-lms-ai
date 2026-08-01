@@ -29,12 +29,15 @@ public sealed partial class GrammarCoachingJob(
     IAiResponseRepository responses,
     IUnitOfWork unitOfWork,
     IAiGateway gateway,
+    IPromptCompositionService promptComposition,
     ITenantContextAccessor tenantContextAccessor,
     IClock clock,
     IGuidProvider guids,
     ILogger<GrammarCoachingJob> logger)
 {
     private const int MaxOutputTokens = 1024;
+    private static readonly IReadOnlyDictionary<string, string> NoSystemVariables =
+        new Dictionary<string, string>();
 
     public async Task ExecuteAsync(Guid tenantId, Guid operationId, CancellationToken cancellationToken = default)
     {
@@ -72,10 +75,17 @@ public sealed partial class GrammarCoachingJob(
             return;
         }
 
+        var composed = promptComposition.Compose(prompt, NoSystemVariables, operation.InputText);
+        if (composed.IsFailure)
+        {
+            await FailAsync(operation, composed.Error, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         var invocation = await gateway.InvokeAsync(
             new AiGatewayRequest(
-                tenantId, AiFeatures.GrammarCoach, prompt.PromptVersion, provider.Kind, prompt.SystemTemplate, operation.InputText,
-                GrammarCoachSchema.Name, GrammarCoachSchema.Json, MaxOutputTokens),
+                tenantId, AiFeatures.GrammarCoach, prompt.PromptVersion, provider.Kind, composed.Value.SystemPrompt,
+                composed.Value.UserContent, GrammarCoachSchema.Name, GrammarCoachSchema.Json, MaxOutputTokens),
             cancellationToken).ConfigureAwait(false);
 
         if (invocation.IsFailure)

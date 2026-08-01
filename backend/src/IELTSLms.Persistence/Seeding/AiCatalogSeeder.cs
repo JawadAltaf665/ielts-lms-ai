@@ -38,6 +38,9 @@ internal sealed partial class AiCatalogSeeder(
 
             var provider = await SeedProviderAsync(dbContext, now, cancellationToken).ConfigureAwait(false);
             await SeedPromptAsync(dbContext, provider.Id, now, cancellationToken).ConfigureAwait(false);
+            // Catalog row for the Phase 7 Sprint 1 second adapter — no AiPrompt references it yet
+            // (every capability still resolves Claude), it exists so a future prompt/tenant override can.
+            await SeedOpenAiProviderAsync(dbContext, now, cancellationToken).ConfigureAwait(false);
             await SeedEntitlementAsync(dbContext, now, cancellationToken).ConfigureAwait(false);
             await SeedQuotaAsync(dbContext, now, cancellationToken).ConfigureAwait(false);
 
@@ -67,6 +70,22 @@ internal sealed partial class AiCatalogSeeder(
             "https://api.anthropic.com", now).Value;
         dbContext.Set<AiProvider>().Add(provider);
         return provider;
+    }
+
+    private static async Task SeedOpenAiProviderAsync(ApplicationDbContext dbContext, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        var existing = await dbContext.Set<AiProvider>()
+            .AnyAsync(p => p.TenantId == null && p.Name == "openai", cancellationToken)
+            .ConfigureAwait(false);
+        if (existing)
+        {
+            return;
+        }
+
+        var provider = AiProvider.Create(
+            AiProviderId.From(Guid.NewGuid()), tenantId: null, "openai", AiProviderKind.OpenAi,
+            "https://api.openai.com", now).Value;
+        dbContext.Set<AiProvider>().Add(provider);
     }
 
     private static async Task SeedPromptAsync(

@@ -1,12 +1,19 @@
+using IELTSLms.Domain.AI;
+
 namespace IELTSLms.Abstractions.AI;
 
 /// <summary>
 /// Provider-agnostic chat/completion port (AI Architecture §2–3). Implemented once per vendor in
-/// Infrastructure/AI (Claude to start); the domain and Application layer never see vendor-specific
+/// Infrastructure/AI (Claude, OpenAI); the domain and Application layer never see vendor-specific
 /// request/response shapes — that translation is the adapter's anti-corruption-layer job.
+/// <see cref="IAiGateway"/> resolves which registered adapter to call for a given
+/// <see cref="AiGatewayRequest.ProviderKind"/> by matching <see cref="Kind"/>, so adding a vendor is a
+/// new adapter + DI registration, never a change to the gateway or any capability handler.
 /// </summary>
 public interface IAiChatProvider
 {
+    AiProviderKind Kind { get; }
+
     Task<AiChatResult> CompleteAsync(AiChatRequest request, CancellationToken cancellationToken = default);
 }
 
