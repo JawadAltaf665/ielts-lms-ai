@@ -687,7 +687,12 @@ Each context defines: **Purpose, Responsibilities, Owned Entities, Events, Servi
 - **Responsibilities:** Rubric-aligned evaluation, band prediction, tutor interactions, prompt governance; isolate external LLM providers.
 - **Owned Entities:** `Evaluation` (writing/speaking), `BandPrediction`, `AIPrompt`, `AIResponse`, `AIProvider`.
 - **Events:** `WritingEvaluated`, `SpeakingEvaluated`, `BandPredicted`, `TutorInteractionCompleted`.
-- **Services:** `EvaluationService`, `BandPredictionService`, `TutoringService`, `WeaknessDetectionService`.
+- **Services:** `EvaluationService`, `BandPredictionService`, `TutoringService`, `WeaknessDetectionService`,
+  `IPromptCompositionService` (app; Phase 7 Sprint 1) — the single path every capability handler binds an
+  `AIPrompt.SystemTemplate` + typed variables + user content into the final system/user message pair
+  through; enforces "no unescaped user text in the system portion" structurally (user content never
+  participates in template substitution) and rejects (not truncates) variable values that themselves
+  contain template syntax.
 - **Relationships:** Supplier to Writing, Speaking, Assessment, Learning, Analytics.
 - **Dependencies:** External LLM providers via **ACL**; prompt governance.
 - **External Interfaces:** LLM/AI provider APIs (ACL-wrapped). See [AI Architecture](./16_AI_Architecture.md).

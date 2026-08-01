@@ -348,12 +348,20 @@ Legend: ✅ full · 🟡 scoped/limited · ➖ none.
 | `analytics.view.cohort` | 🟡 | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | `analytics.view.self` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | `ai.grammar-coach.use` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ |
+| `ai.usage-summary.view` | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | `billing.manage` | 🟡 | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | `certificate.issue` | ➖ | ✅ | ✅ | ➖ | 🟡 | ➖ | ➖ |
 | `support.ticket.manage` | ✅ | ✅ | 🟡 | ➖ | ➖ | 🟡 | ✅ |
 | `audit.view` | ✅ | ✅ | 🟡 | ➖ | ➖ | ➖ | 🟡 |
 
 > Super Admin cells are 🟡 for tenant-scoped capabilities because such access is **exceptional and audited** ([§12.2](#122-cross-tenant-protection)), not routine.
+
+> **Phase 7 Sprint 1 reconciliation:** `GET /api/v1/ai/usage-summary` got its own permission key,
+> `ai.usage-summary.view`, rather than folding into `analytics.view.cohort` — AI cost/budget visibility
+> is narrower (Tenant Admin/Institute Admin only, no Teacher access) than general cohort analytics.
+> Enforced today via `RequiredRoles` (the only mechanism `AuthorizationPipelineBehavior` currently wires
+> up), same precedent as `ai.grammar-coach.use` — the permission-key column documents intent for the
+> full RBAC/ABAC pass, not yet a second enforced code path.
 
 ---
 

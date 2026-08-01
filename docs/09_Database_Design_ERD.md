@@ -1219,6 +1219,21 @@ webhook dead-lettering). `Coupons` (ENT-043) gains a redemption-tracking child; 
 - **Retention:** Time-boxed per policy. **Archiving:** Cold storage then purge.
 - **Data Type:** Transactional (log).
 
+#### ENT-050A — AIOperations
+- **Purpose:** The reusable async-operation resource backing `GET /api/v1/operations/{id}` (API Design Standards §14.2) for any AI capability invocation.
+- **Description:** Tracks the lifecycle (queued → processing → succeeded/failed) of one asynchronous gateway invocation on behalf of a user; carries the raw learner input and, once resolved, a reference to the recorded `AIResponse`. Built in Phase 6 Sprint 3 alongside the AI Gateway; documented here at Phase 7 Sprint 1 reconciliation.
+- **Primary Key:** `AIOperationId`.
+- **Foreign Keys:** `TenantId`, `UserId`, `AIResponseId` (nullable, set on success).
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** *..1 User; 0..1 AIResponse.
+- **Business Rules:** `Kind` is the capability tag (e.g. `grammar-coach`), matching `AIPrompts.Feature`; terminal states (`Succeeded`/`Failed`) are not reprocessed (idempotency guard against background-job retry).
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`TenantId`, `UserId`, createdAt).
+- **Unique Constraints:** —
+- **Check Constraints:** Status ∈ {Queued, Processing, Succeeded, Failed}.
+- **Retention:** Time-boxed per policy, mirrors AIResponses. **Archiving:** Cold storage then purge.
+- **Data Type:** Transactional (log).
+
 #### ENT-053 — BandPredictions
 - **Purpose:** AI-estimated IELTS band prediction for a learner.
 - **Description:** Predicted overall/section bands with confidence and inputs snapshot.
