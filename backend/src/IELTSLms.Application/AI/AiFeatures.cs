@@ -44,4 +44,17 @@ internal static class AiFeatures
 
     /// <summary>Billing <c>QuotaDefinition.Code</c> metering Speaking evaluation requests (one unit per attempt).</summary>
     public const string SpeakingEvaluationQuota = "ai.speaking-evaluation.requests";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag for the standalone, history-based Band Predictor
+    /// (Phase 6 Sprint 9, Agentic AI Architecture §13.6) — a new capability, not a reuse of the
+    /// per-submission Writing/Speaking Examiner <c>EstimatedBand</c> values.
+    /// </summary>
+    public const string BandPredictor = "band-predictor";
+
+    /// <summary>Billing <c>Feature.Code</c> gating the Band Prediction Workflow.</summary>
+    public const string BandPredictorEntitlement = "ai.band-predictor";
+
+    /// <summary>Billing <c>QuotaDefinition.Code</c> metering Band Prediction requests (one unit per request).</summary>
+    public const string BandPredictorQuota = "ai.band-predictor.requests";
 }
