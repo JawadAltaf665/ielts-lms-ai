@@ -3,6 +3,7 @@ using IELTSLms.Abstractions.Audit;
 using IELTSLms.Abstractions.Billing;
 using IELTSLms.Abstractions.Caching;
 using IELTSLms.Abstractions.Context;
+using IELTSLms.Abstractions.Documents;
 using IELTSLms.Abstractions.Email;
 using IELTSLms.Abstractions.Environment;
 using IELTSLms.Abstractions.Events;
@@ -18,6 +19,7 @@ using IELTSLms.Infrastructure.Billing;
 using IELTSLms.Infrastructure.Caching;
 using IELTSLms.Infrastructure.Configuration;
 using IELTSLms.Infrastructure.Context;
+using IELTSLms.Infrastructure.Documents;
 using IELTSLms.Infrastructure.Email;
 using IELTSLms.Infrastructure.Environment;
 using IELTSLms.Infrastructure.Events;
@@ -87,6 +89,7 @@ public static class DependencyInjection
         AddCaching(services, configuration);
         AddAi(services, configuration);
         AddStorage(services, configuration);
+        AddDocuments(services);
         services.AddObservability(configuration);
         services.AddResiliencePolicies(configuration);
         services.AddPerformanceInfrastructure(configuration);
@@ -182,6 +185,12 @@ public static class DependencyInjection
         services.AddOptions<StorageOptions>().Bind(configuration.GetSection(StorageOptions.SectionName));
 
         services.AddSingleton<IFileStorage, LocalFileStorage>();
+    }
+
+    private static void AddDocuments(IServiceCollection services)
+    {
+        QuestPdfCertificateGenerator.ConfigureLicense();
+        services.AddSingleton<ICertificatePdfGenerator, QuestPdfCertificateGenerator>();
     }
 
     private static void AddCaching(IServiceCollection services, IConfiguration configuration)
