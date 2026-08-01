@@ -143,6 +143,7 @@ try
     api.MapAiEndpoints();
     api.MapReadingEndpoints();
     api.MapListeningEndpoints();
+    api.MapWritingEndpoints();
     api.MapFilesEndpoints();
     api.MapWebhookEndpoints();
 
