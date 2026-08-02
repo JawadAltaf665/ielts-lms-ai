@@ -53,4 +53,16 @@ internal static class AiErrors
 
     public static readonly Error ConversationSummaryPromptNotConfigured = Error.ServiceUnavailable(
         "DEPENDENCY_AI_CONVERSATION_SUMMARY_PROMPT_NOT_CONFIGURED", "Conversation summarization is not yet configured.");
+
+    public static readonly Error LessonSessionNotFound = Error.NotFound(
+        "NOT_FOUND_LESSON_SESSION", "Lesson session not found.");
+
+    public static readonly Error ActiveLessonSessionExists = Error.Conflict(
+        "CONFLICT_LESSON_SESSION_ACTIVE_EXISTS", "You already have an active session for this lesson.");
+
+    public static readonly Error LessonSessionCompleted = Error.Validation(
+        "BUSINESS_LESSON_SESSION_COMPLETED", "This lesson session has already been completed.");
+
+    public static readonly Error TeacherStepPromptNotConfigured = Error.ServiceUnavailable(
+        "DEPENDENCY_AI_TEACHER_STEP_PROMPT_NOT_CONFIGURED", "This lesson step is not yet configured.");
 }

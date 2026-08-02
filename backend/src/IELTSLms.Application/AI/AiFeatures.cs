@@ -1,3 +1,5 @@
+using IELTSLms.Domain.AI;
+
 namespace IELTSLms.Application.AI;
 
 /// <summary>Well-known codes tying the AI capability catalog together: the <c>AiPrompt.Feature</c> tag,
@@ -65,4 +67,51 @@ internal static class AiFeatures
     /// unlike the entries above it has no entitlement/quota gating of its own.
     /// </summary>
     public const string ConversationSummary = "conversation-summary";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag, <see cref="Domain.AI.Conversation.Feature"/> tag,
+    /// and <see cref="Domain.AI.AiOperation.Kind"/> value for AI Tutor (Phase 7 Sprint 4,
+    /// Agentic AI Architecture §12.1). Same literal also names the gating Billing
+    /// <c>Feature.Code</c> — reconciliation notes flag this single-tag convention as new (Grammar's
+    /// entitlement code carries an <c>"ai."</c> prefix its capability tag doesn't).
+    /// </summary>
+    public const string AiTutor = "ai-tutor";
+
+    /// <summary>Billing <c>QuotaDefinition.Code</c> metering AI Tutor "ask" turns.</summary>
+    public const string AiTutorQuota = "ai-tutor.requests";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag, <see cref="Domain.AI.Conversation.Feature"/> tag,
+    /// and <see cref="Domain.AI.AiOperation.Kind"/> value for AI Teacher (Phase 7 Sprint 4). Also the
+    /// gating Billing <c>Feature.Code</c> — see <see cref="AiTutor"/>'s remarks. Per-lesson-step prompt
+    /// variants live under this one feature via <see cref="Domain.AI.AiPrompt.Scope"/>
+    /// (see <see cref="LessonStepScopes"/>), not four separate feature tags.
+    /// </summary>
+    public const string AiTeacher = "ai-teacher";
+
+    /// <summary>Billing <c>QuotaDefinition.Code</c> metering AI Teacher turns (session start + each respond).</summary>
+    public const string AiTeacherQuota = "ai-teacher.requests";
+}
+
+/// <summary>
+/// <see cref="Domain.AI.AiPrompt.Scope"/> values for the <see cref="AiFeatures.AiTeacher"/> feature —
+/// one active prompt per <see cref="Domain.AI.LessonStep"/>, resolved by the step-state-machine rather
+/// than a single fixed template (this sprint's whole reason for using the Scope slot per-feature —
+/// see AiPrompt's own doc comment on "(TenantId, Feature, Scope) slot").
+/// </summary>
+internal static class LessonStepScopes
+{
+    public const string Explain = "explain";
+    public const string CheckUnderstanding = "check-understanding";
+    public const string Practice = "practice";
+    public const string Recap = "recap";
+
+    public static string ForStep(LessonStep step) => step switch
+    {
+        LessonStep.Explain => Explain,
+        LessonStep.CheckUnderstanding => CheckUnderstanding,
+        LessonStep.Practice => Practice,
+        LessonStep.Recap => Recap,
+        _ => throw new ArgumentOutOfRangeException(nameof(step), step, "Completed has no prompt scope."),
+    };
 }
