@@ -15,4 +15,8 @@ public enum LearningSkill
     Listening = 5,
     Writing = 6,
     Speaking = 7,
+
+    /// <summary>AI Teacher structured lesson delivery (Phase 7 Sprint 4) — recorded when a
+    /// <c>LessonSession</c> completes, alongside the human-authored skill modules above.</summary>
+    AiTeacher = 8,
 }

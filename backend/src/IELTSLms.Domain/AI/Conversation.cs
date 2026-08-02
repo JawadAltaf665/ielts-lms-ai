@@ -52,6 +52,15 @@ public sealed class Conversation : TenantAuditableEntity<ConversationId>
         return Result.Success(new Conversation(id, tenantId, userId, feature.Trim(), nowUtc));
     }
 
+    /// <summary>Bumps <see cref="LastMessageAtUtc"/> when a new turn is appended (Phase 7 Sprint 4 — the
+    /// first caller that actually appends messages after a conversation is created). Idempotent to call
+    /// more than once per turn; callers own message ordering, this only tracks recency.</summary>
+    public void RecordMessage(DateTimeOffset nowUtc)
+    {
+        LastMessageAtUtc = nowUtc;
+        UpdatedAtUtc = nowUtc;
+    }
+
     /// <summary>Archives (soft-deletes) the conversation — learner-initiated cleanup, not a hard purge
     /// (retention policy still applies). Idempotent: archiving an already-archived conversation is a no-op.</summary>
     public void Archive(DateTimeOffset nowUtc)

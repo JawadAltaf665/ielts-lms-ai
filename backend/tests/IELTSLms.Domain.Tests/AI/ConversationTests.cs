@@ -41,6 +41,17 @@ public sealed class ConversationTests
     }
 
     [Fact]
+    public void RecordMessage_bumps_LastMessageAtUtc()
+    {
+        var conversation = Conversation.Create(ConversationId.From(Guid.NewGuid()), Guid.NewGuid(), Guid.NewGuid(), "ai-tutor", Now).Value;
+
+        conversation.RecordMessage(Now.AddMinutes(5));
+
+        Assert.Equal(Now.AddMinutes(5), conversation.LastMessageAtUtc);
+        Assert.Equal(Now.AddMinutes(5), conversation.UpdatedAtUtc);
+    }
+
+    [Fact]
     public void Archive_is_idempotent()
     {
         var conversation = Conversation.Create(ConversationId.From(Guid.NewGuid()), Guid.NewGuid(), Guid.NewGuid(), "ai-tutor", Now).Value;

@@ -62,7 +62,10 @@ public sealed class AiOperation : TenantAuditableEntity<AiOperationId>
         UpdatedAtUtc = nowUtc;
     }
 
-    public void MarkSucceeded(AiResponseId aiResponseId, DateTimeOffset nowUtc)
+    /// <summary><paramref name="aiResponseId"/> is <see langword="null"/> only for a turn that never
+    /// reached the gateway (e.g. AI Tutor's scope guard rejecting the question before any provider call
+    /// is made) — there is no <c>AiResponse</c> row to link in that case.</summary>
+    public void MarkSucceeded(AiResponseId? aiResponseId, DateTimeOffset nowUtc)
     {
         Status = AiOperationStatus.Succeeded;
         AiResponseId = aiResponseId;
