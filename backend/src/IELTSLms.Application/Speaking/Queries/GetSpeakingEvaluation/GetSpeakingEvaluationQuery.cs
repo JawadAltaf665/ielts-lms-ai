@@ -16,4 +16,5 @@ public sealed record SpeakingEvaluationResponse(
     decimal Pronunciation, decimal EstimatedBand, decimal Confidence, string FeedbackText, bool RequiresHumanReview,
     bool IsOverridden, decimal? OverriddenFluencyCoherence, decimal? OverriddenLexicalResource,
     decimal? OverriddenGrammaticalRangeAccuracy, decimal? OverriddenPronunciation, decimal? OverriddenBand, Guid? OverriddenBy,
-    DateTimeOffset? OverriddenAtUtc, string? OverrideReason);
+    DateTimeOffset? OverriddenAtUtc, string? OverrideReason, bool IsReviewed, Guid? ReviewedBy, DateTimeOffset? ReviewedAtUtc,
+    string? ReviewDecision);

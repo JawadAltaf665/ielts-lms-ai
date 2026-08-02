@@ -18,8 +18,8 @@ public sealed class GetSpeakingEvaluationQueryHandlerTests
         attempts.Seed(attempt);
 
         var evaluation = SpeakingEvaluation.Create(
-            SpeakingEvaluationId.From(Guid.NewGuid()), tenantId, attempt.Id, 7.0m, 6.5m, 7.0m, 6.5m, 0.9m, "feedback", 0.7m, null, null, Now)
-            .Value;
+            SpeakingEvaluationId.From(Guid.NewGuid()), tenantId, attempt.Id, 7.0m, 6.5m, 7.0m, 6.5m, 0.9m, "feedback", 0.7m, 3.0m, null,
+            null, Now).Value;
         evaluations.Seed(evaluation);
 
         return (attempt, evaluation);

@@ -5729,6 +5729,19 @@ namespace IELTSLms.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("restored_by");
 
+                    b.Property<string>("ReviewDecision")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("review_decision");
+
+                    b.Property<DateTimeOffset?>("ReviewedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at_utc");
+
+                    b.Property<Guid?>("ReviewedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reviewed_by");
+
                     b.Property<Guid>("SpeakingAttemptId")
                         .HasColumnType("uuid")
                         .HasColumnName("speaking_attempt_id");
@@ -5763,6 +5776,9 @@ namespace IELTSLms.Persistence.Migrations
 
                     b.HasIndex("TenantId", "EstimatedBand")
                         .HasDatabaseName("ix_speaking_evaluations_tenant_band");
+
+                    b.HasIndex("TenantId", "RequiresHumanReview", "CreatedAtUtc")
+                        .HasDatabaseName("ix_speaking_evaluations_tenant_requires_review");
 
                     b.ToTable("speaking_evaluations", null, t =>
                         {

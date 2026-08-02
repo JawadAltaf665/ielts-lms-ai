@@ -51,6 +51,10 @@ internal sealed class SpeakingEvaluationConfiguration : IEntityTypeConfiguration
         builder.Property(e => e.OverriddenAtUtc);
         builder.Property(e => e.OverrideReason).HasMaxLength(2000);
 
+        builder.Property(e => e.ReviewedBy);
+        builder.Property(e => e.ReviewedAtUtc);
+        builder.Property(e => e.ReviewDecision).HasMaxLength(50);
+
         builder.Property(e => e.CreatedAtUtc).IsRequired();
         builder.Property(e => e.UpdatedAtUtc);
         builder.Property(e => e.IsDeleted).IsRequired();
@@ -62,6 +66,10 @@ internal sealed class SpeakingEvaluationConfiguration : IEntityTypeConfiguration
         // ERD: exactly one active evaluation per attempt.
         builder.HasIndex(e => e.SpeakingAttemptId).IsUnique().HasDatabaseName("ix_speaking_evaluations_attempt_id_unique");
         builder.HasIndex(e => new { e.TenantId, e.EstimatedBand }).HasDatabaseName("ix_speaking_evaluations_tenant_band");
+
+        // Review queue's filter shape (GetSpeakingReviewQueue): flagged, not yet reviewed or overridden.
+        builder.HasIndex(e => new { e.TenantId, e.RequiresHumanReview, e.CreatedAtUtc })
+            .HasDatabaseName("ix_speaking_evaluations_tenant_requires_review");
 
         builder.Ignore(e => e.DomainEvents);
     }

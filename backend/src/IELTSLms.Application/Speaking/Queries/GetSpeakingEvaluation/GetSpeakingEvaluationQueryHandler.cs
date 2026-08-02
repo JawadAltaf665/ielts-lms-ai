@@ -36,5 +36,6 @@ public sealed class GetSpeakingEvaluationQueryHandler(
         evaluation.GrammaticalRangeAccuracy, evaluation.Pronunciation, evaluation.EstimatedBand, evaluation.Confidence,
         evaluation.FeedbackText, evaluation.RequiresHumanReview, evaluation.IsOverridden, evaluation.OverriddenFluencyCoherence,
         evaluation.OverriddenLexicalResource, evaluation.OverriddenGrammaticalRangeAccuracy, evaluation.OverriddenPronunciation,
-        evaluation.OverriddenBand, evaluation.OverriddenBy, evaluation.OverriddenAtUtc, evaluation.OverrideReason);
+        evaluation.OverriddenBand, evaluation.OverriddenBy, evaluation.OverriddenAtUtc, evaluation.OverrideReason,
+        evaluation.IsReviewed, evaluation.ReviewedBy, evaluation.ReviewedAtUtc, evaluation.ReviewDecision);
 }
