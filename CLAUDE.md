@@ -65,3 +65,12 @@ for deep standards research so it isn't re-derived every session. (`.claude/agen
   global filter yet — Sprint 3 wires the real Tenants table + filter). Email uniqueness is
   `(tenant_id, email)`. Sprint 2 adds `EmailVerificationToken`, `PasswordResetToken`, `UserSession`,
   `LoginHistory` (not yet in the ERD — mirror ERD audit/token conventions; reconcile back later).
+
+Note before any implementation:
+  This project follows a documentation-first development methodology. Every implementation must remain fully traceable to the architecture documents. Before writing code:
+
+Review all relevant documents.
+Identify the requirements related to this phase.
+Map implementation tasks back to those requirements.
+Implement only what is defined.
+If documentation is incomplete or ambiguous, stop and report the gap instead of making assumptions.
