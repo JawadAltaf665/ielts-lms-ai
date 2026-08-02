@@ -1173,6 +1173,53 @@ Each module section provides: **Purpose, Overview, Business Rules, User Stories,
 
 ---
 
+### FR Module: AI Teacher (AITEACHER)
+
+- **Purpose:** Deliver a structured, sequenced lesson to a learner with no human teacher in the loop —
+  distinct from AI Tutor's reactive Q&A. New at Phase 7 Sprint 4; closest in spirit to [AI §13
+  Capability Catalog](./17_AI_Architecture.md#13-ai-capability-catalog)'s "Personalized Learning" row,
+  and to a new "Teacher Agent" entry in [Agentic §12.1](./18_Agentic_AI_Architecture.md#121-learning--coaching-agents)
+  — **not** the same as §12.4's "Teacher Assistant Agent" (grading assist for a human Teacher role user).
+- **Overview:** The agent initiates and sequences a fixed step flow (explain → check understanding →
+  practice → recap) for one lesson; the learner responds within that flow rather than driving it.
+- **Business Rules:** Entitlement- and quota-gated like every AI capability; a step only advances on a
+  passing check (bounded retries, then force-advance rather than looping forever); completion is
+  reported to the shared progress-tracking path, not a parallel one. See [AI Architecture](./16_AI_Architecture.md).
+- **User Stories:** *As a student, I want the AI to walk me through a lesson step by step so that I
+  learn a topic even without a human teacher available.*
+
+**FR-AITEACHER-001 — Conduct a Structured Lesson Session**
+- **Description:** Deliver one lesson's explain/check/practice/recap sequence to a learner.
+- **Inputs:** Lesson identifier and topic context; learner's response at each step.
+- **Outputs:** Step content (explanation, comprehension check, practice exercise, or recap); a
+  completion signal once the sequence finishes.
+- **Success Flow:** Start session → Explain delivered → learner responds → CheckUnderstanding →
+  passing check advances → Practice → Recap → session completes.
+- **Alternative Flow:** A failed comprehension check repeats the same step (bounded retries) instead of
+  advancing.
+- **Exception Flow:** Provider timeout → graceful failure on that turn, retryable; session already
+  completed → further responses rejected.
+- **Acceptance Criteria:** Steps cannot be skipped; a failed check never advances the session on its
+  own; the session completes exactly once.
+- **Priority:** Must
+
+- **Acceptance Criteria (Module):** The AI Teacher delivers a coherent, on-topic, safe lesson sequence
+  and cannot get stuck in an unbounded retry loop.
+- **Dependencies:** Prompt Management, Memory & Conversation History, Lessons (not yet implemented —
+  the lesson's topic/content is supplied by the caller until a Lessons content model exists to look it
+  up server-side; see [ERD ENT-050E](./09_Database_Design_ERD.md#68-ai--intelligence)'s reconciliation note).
+- **Preconditions:** Entitlement present; AI service available; no other active session for the same
+  learner/lesson.
+- **Postconditions:** Session step state persisted; completion recorded in shared progress tracking.
+- **Validation Rules:** Entitlement/quota checks; one active session per learner per lesson.
+- **Failure Scenarios:** Provider outage (turn fails, retryable); repeated check failures (bounded
+  retry cap, then forced advance rather than an unbounded loop).
+- **Priority:** Must
+- **Future Enhancements:** Adaptive step content from weakness signals; multi-lesson curriculum
+  sequencing; human-teacher escalation on repeated comprehension failures.
+
+---
+
 ### FR Module: Writing Evaluation (AIWE)
 
 - **Purpose:** Evaluate writing submissions against IELTS band descriptors.

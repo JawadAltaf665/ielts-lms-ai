@@ -1303,6 +1303,21 @@ webhook dead-lettering). `Coupons` (ENT-043) gains a redemption-tracking child; 
 - **Retention:** Retained with the conversation. **Archiving:** With conversation.
 - **Data Type:** Transactional (log)/Derived.
 
+#### ENT-050E — LessonSessions
+- **Purpose:** AI Teacher's step-state machine for one learner/lesson pairing (structured lesson delivery, distinct from the reactive AI Tutor conversation).
+- **Description:** Phase 7 Sprint 4 (AI Tutor + AI Teacher, [Agentic AI Architecture §12.1](./18_Agentic_AI_Architecture.md#121-learning--coaching-agents) — new "Teacher Agent" entry, distinct from §12.4's human-teacher-facing "Teacher Assistant Agent"). Backs one `Conversation` (`Feature = "ai-teacher"`) scoped to a single lesson, tracking a fixed step sequence: Explain → CheckUnderstanding → Practice → Recap → Completed.
+- **Primary Key:** `LessonSessionId`.
+- **Foreign Keys:** `TenantId`, `UserId`, `ConversationId`. `LessonId` is **not** a foreign key — the Course/Module/Lesson content model (ENT-014 `Lessons`) does not exist in the implementation yet; `LessonId` is carried as a bare id, mirroring the documented "column now, FK later" precedent (`CLAUDE.md` Sprint 2 identity tables). Reconcile to a real FK once Lessons ships.
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** *..1 User; 1..1 Conversation.
+- **Business Rules:** One active (non-`Completed`) session per (`UserId`, `LessonId`) — mirrors ENT-036 MonthlyMockExams' single-active-session pattern. `CurrentStep` only advances unconditionally for Explain/Practice/Recap; the `CheckUnderstanding` step advances only on a passed check, and repeats (bounded by a retry cap, then force-advances) on a failed one — never loops forever. Raises `LessonSessionCompleted` exactly once, on reaching `Completed`, routed through the existing `ProgressTracking` (ENT-055) write path, not a parallel one.
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`TenantId`, `UserId`, `LessonId`), `ConversationId`.
+- **Unique Constraints:** (`TenantId`, `UserId`, `LessonId`) active (partial, `CurrentStep <> 'Completed'`).
+- **Check Constraints:** CurrentStep ∈ {Explain, CheckUnderstanding, Practice, Recap, Completed}.
+- **Retention:** With user. **Archiving:** With user.
+- **Data Type:** Transactional.
+
 ### 6.9 Progress, Engagement & Support
 
 #### ENT-054 — Achievements

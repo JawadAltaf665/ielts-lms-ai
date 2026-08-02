@@ -314,12 +314,19 @@ Each capability is delivered via the gateway with a versioned prompt, structured
 | **Mock Test Review** | Explain mock results | Item-level review |
 | **Feedback Generation** | Rich formative feedback | Narrative + structured tips |
 | **Personalized Learning** | Tailor content/path | Personalized sequence |
+| **AI Tutor** | Reactive Q&A scoped to IELTS prep | Grounded answer, redirect if out of scope |
+| **AI Teacher (Lesson Delivery)** | Deliver a structured, sequenced lesson — the AI acts as the teacher, no human teacher in the loop | Step content (explain/check/practice/recap) + completion signal |
 | **Certificate Insights** | Summarize achievement | Insight summary |
 | **Admin AI** | Ops assistance (config, insights) | Actions/summaries (guarded) |
-| **Teacher AI** | Grading assist, cohort insights | Suggestions/summaries |
+| **Teacher AI (Grading Assist)** | Grading assist, cohort insights *for a human Teacher role user* | Suggestions/summaries |
 | **Support AI** | Answer support queries | Answers + escalation |
 | **Analytics AI** | Natural-language analytics | Charts/summaries |
 
+> **Phase 7 Sprint 4 disambiguation:** "AI Teacher (Lesson Delivery)" and "Teacher AI (Grading Assist)"
+> are two different capabilities that happened to share a name before this row was split out — the
+> former is student-facing (the AI *is* the teacher), the latter is a human-Teacher-facing grading aid
+> ([Agentic §12.4](./18_Agentic_AI_Architecture.md#124-role--operations-agents)). Don't conflate them.
+>
 > Capabilities respect [RBAC/permissions](./11_Authentication_Authorization.md#11-roles--permission-matrix) and [plan entitlements](./13_Subscription_Billing.md#2-subscription-plans--feature-matrix); e.g., Teacher/Admin AI require the corresponding roles.
 
 ---

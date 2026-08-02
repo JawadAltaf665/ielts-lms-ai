@@ -151,6 +151,8 @@ try
     api.MapBandPredictionEndpoints();
     api.MapCertificatesEndpoints();
     api.MapConversationEndpoints();
+    api.MapTutorEndpoints();
+    api.MapTeacherEndpoints();
     api.MapFilesEndpoints();
     api.MapWebhookEndpoints();
 

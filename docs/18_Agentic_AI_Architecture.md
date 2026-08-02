@@ -333,6 +333,13 @@ Each agent below is defined by **Purpose, Responsibilities, Inputs, Outputs, Too
 | **Sentence Builder Agent** | Scaffold better sentences | Sentence/prompt | Rewrites, patterns | Grammar/lexicon tools | — |
 | **Reading Coach Agent** | Reading strategy + explanations | Passage, answers | Guidance, rationale | Content fetch, question analysis | — |
 | **Listening Coach Agent** | Listening strategy + explanations | Audio transcript, answers | Guidance, rationale | Transcript fetch, analysis | — |
+| **Tutor Agent** | Reactive Q&A scoped to IELTS prep (Phase 7 Sprint 4) | Learner question, conversation history | Grounded answer, or a redirect if out of scope | Conversation memory, code-level scope guard | Out-of-scope question → redirected without a model call |
+| **Teacher Agent** | Deliver a structured, sequenced lesson — student-facing; the AI *is* the teacher, no human in the loop (Phase 7 Sprint 4) | Lesson id/topic, learner response per step | Step content (explain/check/practice/recap) + completion signal | Conversation memory, lesson step-state machine | Repeated failed comprehension check → bounded retry cap, then forced advance |
+
+> **Disambiguation:** **Teacher Agent** (above, §12.1) is not **Teacher Assistant Agent** (§12.4) — the
+> former delivers lessons to a *student* with no human teacher present; the latter assists a *human
+> Teacher role user* with grading/cohort insights. They were easy to conflate before this row existed;
+> don't merge them.
 
 ### 12.2 Assessment & Prediction Agents
 

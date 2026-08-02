@@ -351,6 +351,8 @@ Legend: ✅ full · 🟡 scoped/limited · ➖ none.
 | `ai.usage-summary.view` | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | `ai.prompt.manage` | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ |
 | `ai.conversation.view` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
+| `ai.tutor.use` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
+| `ai.teacher.use` | ➖ | ➖ | ➖ | ➖ | 🟡 | ✅ | ➖ |
 | `billing.manage` | 🟡 | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | `certificate.issue` | ➖ | ✅ | ✅ | ➖ | 🟡 | ➖ | ➖ |
 | `support.ticket.manage` | ✅ | ✅ | 🟡 | ➖ | ➖ | 🟡 | ✅ |
@@ -377,6 +379,14 @@ Legend: ✅ full · 🟡 scoped/limited · ➖ none.
 > (`TenantId` + `UserId` match) is checked in the handler, returning `404` (not `403`) for another
 > user's conversation. A future cohort view for Teacher (mirroring `analytics.view.cohort`) is not yet
 > built — this sprint's endpoints are self-service only.
+>
+> **Phase 7 Sprint 4 reconciliation:** `ai.tutor.use` and `ai.teacher.use` gate
+> `/api/v1/ai/tutor/*`/`/api/v1/ai/teacher/*` — same isolation-not-`RequiredRoles` shape as
+> `ai.conversation.view` (self-service, `404` not `403` on cross-user access). Teacher's Student cell is
+> ✅ (learner-facing lesson delivery); the Teacher-role cell is 🟡 because the sprint file's
+> `GET .../sessions/{id}` also names a cohort-view path (`analytics.view.cohort`) for a human Teacher to
+> read a *learner's* session — not built this sprint (no teacher/cohort-membership lookup exists yet),
+> so the row reflects intent, not an implemented second access path.
 
 ---
 

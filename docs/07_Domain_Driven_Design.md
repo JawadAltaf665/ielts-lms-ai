@@ -454,6 +454,7 @@ classDiagram
 | EVT-AI-02 | `SpeakingEvaluated` | AI |
 | EVT-ASM-01 | `MockExamCompleted` | Assessment |
 | EVT-AI-03 | `BandPredicted` | AI |
+| EVT-AI-04 | `LessonSessionCompleted` | AI |
 | EVT-ANL-01 | `ProgressRecalculated` | Analytics |
 | EVT-CRT-01 | `CertificateIssued` | Certificates |
 | EVT-NOT-01 | `NotificationDispatched` | Notifications |
