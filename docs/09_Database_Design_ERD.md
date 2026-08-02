@@ -687,9 +687,9 @@ Entities are grouped by domain. Each entity defines: **Purpose, Description, Pri
 - **Foreign Keys:** `TenantId`, `SpeakingAttemptId`, `AIResponseId` (nullable), `AIProviderId` (nullable).
 - **Tenant Isolation:** `TenantId` required.
 - **Relationships:** 1..1 SpeakingAttempt.
-- **Business Rules:** Criteria aligned to official descriptors; AI-labeled; low-confidence flagged ([FR-AISE-001](./04_Functional_Requirements.md)).
+- **Business Rules:** Criteria aligned to official descriptors; AI-labeled; low-confidence **or** criterion-spread-inconsistency flagged for human review ([FR-AISE-001](./04_Functional_Requirements.md); Phase 7 Sprint 5 added the spread check alongside the pre-existing confidence check). Review resolution is itself audited: `ReviewedBy`/`ReviewedAtUtc`/`ReviewDecision` (Phase 7 Sprint 5, distinct from the pre-existing `Overridden*` score-override audit trail — either clears the evaluation from the review queue).
 - **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
-- **Indexes:** (`SpeakingAttemptId`), band.
+- **Indexes:** (`SpeakingAttemptId`), band, (`TenantId`, `RequiresHumanReview`, `CreatedAtUtc`) — review queue.
 - **Unique Constraints:** (`SpeakingAttemptId`) latest/active.
 - **Check Constraints:** Criterion bands 0–9 (0.5 steps).
 - **Retention:** With attempt. **Archiving:** With attempt.

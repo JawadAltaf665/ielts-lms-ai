@@ -346,10 +346,14 @@ Each agent below is defined by **Purpose, Responsibilities, Inputs, Outputs, Too
 | Agent | Purpose | Inputs | Outputs | Key Tools | Escalation |
 | --- | --- | --- | --- | --- | --- |
 | **Writing Examiner Agent** | Score writing on IELTS criteria | Essay, task type | Band per criterion + feedback | Rubric, plagiarism/similarity check | Low confidence/dispute → human review (HITL) |
-| **Speaking Examiner Agent** | Score speaking | Audio/transcript | Band per criterion + feedback | Transcription, rubric | Low confidence → human review |
+| **Speaking Examiner Agent** | Score speaking | Audio/transcript | Band per criterion + feedback | Transcription, rubric | Low confidence or criterion-spread inconsistency → human review |
 | **Band Predictor Agent** | Predict overall band | History, recent scores | Predicted band + confidence | Analytics, profile fetch | Wide interval → recommend more practice |
 | **Mock Exam Agent** | Run/review full mock exams | Exam config, responses | Section scores + review | Exam orchestration, scoring tools | Section failure → retry section |
 | **Progress Analysis Agent** | Analyze trends/weaknesses | Historical performance | Weakness profile, trends | Analytics, profile | — |
+
+> **Speaking Examiner Agent registry entry.** Phase 7 Sprint 5 filled in this row's full registry
+> record (version slots, memory, permissions, budget, escalation thresholds, calibration gate) — see
+> [AI Evaluation Architecture](./architecture/ai-evaluation.md#speaking-examiner--agent-registry-entry).
 
 ### 12.3 Planning & Personalization Agents
 
