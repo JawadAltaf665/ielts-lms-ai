@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+:root {
+  --background: #05060a;
+  --foreground: #f4f5f7;
+  --muted: #9a9ea8;
+
+  --surface: #0b0d14;
+  --surface-glass: rgba(255, 255, 255, 0.04);
+  --border-glass: rgba(255, 255, 255, 0.09);
+
+  --accent-violet: #7c6df2;
+  --accent-indigo: #5b6dfa;
+  --accent-cyan: #4fd8e8;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-base: 350ms;
+  --duration-slow: 700ms;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-surface: var(--surface);
+
+  --color-accent-violet: var(--accent-violet);
+  --color-accent-indigo: var(--accent-indigo);
+  --color-accent-cyan: var(--accent-cyan);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  border-color: var(--border-glass);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+::selection {
+  background: var(--accent-violet);
+  color: var(--foreground);
+}
+
+/* Glass surface used by cards, nav, modals */
+.glass-panel {
+  background: var(--surface-glass);
+  border: 1px solid var(--border-glass);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+}
+
+/* Animated aurora backdrop, layered behind hero/section content */
+.aurora-bg {
+  position: absolute;
+  inset: -10% -10% auto -10%;
+  height: 140%;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(40% 35% at 20% 20%, color-mix(in oklch, var(--accent-violet) 35%, transparent) 0%, transparent 70%),
+    radial-gradient(35% 40% at 80% 15%, color-mix(in oklch, var(--accent-cyan) 30%, transparent) 0%, transparent 70%),
+    radial-gradient(45% 45% at 50% 60%, color-mix(in oklch, var(--accent-indigo) 25%, transparent) 0%, transparent 70%);
+  filter: blur(60px);
+  animation: aurora-drift 24s var(--ease-out-expo) infinite alternate;
+}
+
+@keyframes aurora-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(2%, -3%, 0) scale(1.08); }
+}
+
+/* Rotating conic-gradient border, wraps any relatively-positioned element with .glow-border-wrap > .glow-border-fill */
+.glow-border {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--angle, 0deg),
+    transparent 0%,
+    var(--accent-violet) 15%,
+    transparent 30%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: glow-spin 6s linear infinite;
+}
+
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes glow-spin {
+  to { --angle: 360deg; }
+}
+
+.text-gradient {
+  background: linear-gradient(120deg, var(--foreground), var(--accent-cyan) 50%, var(--accent-violet));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* Decorative circular score ring used in stylized mockups (not a real product screenshot) */
+.band-ring {
+  display: grid;
+  place-items: center;
+  width: 6.5rem;
+  height: 6.5rem;
+  border-radius: 999px;
+  font-family: var(--font-geist-mono);
+  font-size: 1.5rem;
+  font-weight: 600;
+  background:
+    radial-gradient(closest-side, var(--surface) 72%, transparent 73%),
+    conic-gradient(var(--accent-cyan), var(--accent-violet) 75%, var(--border-glass) 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-bg,
+  .glow-border {
+    animation: none !important;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
