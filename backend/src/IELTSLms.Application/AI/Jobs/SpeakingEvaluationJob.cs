@@ -42,6 +42,7 @@ public sealed partial class SpeakingEvaluationJob(
     ISpeechToTextProvider speechToText,
     IUnitOfWork unitOfWork,
     IAiGateway gateway,
+    IPromptCompositionService promptComposition,
     ITenantContextAccessor tenantContextAccessor,
     IClock clock,
     IGuidProvider guids,
@@ -51,6 +52,11 @@ public sealed partial class SpeakingEvaluationJob(
 
     /// <summary>Below this examiner-reported confidence, the evaluation is flagged for human review (HITL) rather than silently accepted.</summary>
     private const decimal LowConfidenceThreshold = 0.7m;
+
+    /// <summary>Above this max-minus-min spread across the four criteria, the evaluation is flagged for
+    /// human review even at high confidence — an internal-consistency escalation check (Agentic AI
+    /// Architecture §10), e.g. Pronunciation wildly divergent from Fluency without rationale.</summary>
+    private const decimal MaxCriterionSpread = 3.0m;
 
     public async Task ExecuteAsync(
         Guid tenantId, Guid operationId, Guid speakingAttemptId, CancellationToken cancellationToken = default)
@@ -90,9 +96,16 @@ public sealed partial class SpeakingEvaluationJob(
         var provider = await providers.GetActiveByKindAsync(AiProviderKind.Claude, cancellationToken).ConfigureAwait(false);
         var examinerPrompt = provider is null
             ? null
-            : await prompts.GetActiveForFeatureAsync(tenantId, AiFeatures.SpeakingExaminer, cancellationToken).ConfigureAwait(false);
+            : await prompts
+                .GetActiveForFeatureAndScopeAsync(tenantId, AiFeatures.SpeakingExaminer, SpeakingExaminerScopes.Default, cancellationToken)
+                .ConfigureAwait(false);
+        var rubricPrompt = provider is null
+            ? null
+            : await prompts
+                .GetActiveForFeatureAndScopeAsync(tenantId, AiFeatures.SpeakingExaminer, SpeakingExaminerScopes.Rubric, cancellationToken)
+                .ConfigureAwait(false);
 
-        if (provider is null || examinerPrompt is null)
+        if (provider is null || examinerPrompt is null || rubricPrompt is null)
         {
             await FailAsync(operation, attempt, AiErrors.PromptNotConfigured, cancellationToken).ConfigureAwait(false);
             return;
@@ -132,14 +145,24 @@ public sealed partial class SpeakingEvaluationJob(
         }
 
         // Speaking Examiner Agent: scores the four criteria from the transcript, and (merged
-        // simplification, same as Writing) composes the learner-facing feedback in the same call.
+        // simplification, same as Writing) composes the learner-facing feedback in the same call. The
+        // rubric is fetched as its own versioned artifact and bound into the examiner template's
+        // {{rubric}} placeholder via the shared composition path, not baked in as literal prompt text.
         var examinerInput = JsonSerializer.Serialize(
             new SpeakingExaminerInput(task.PromptText, task.Part.ToString(), transcript.Text), JsonSerializerOptions.Web);
 
+        var composed = promptComposition.Compose(
+            examinerPrompt, new Dictionary<string, string> { ["rubric"] = rubricPrompt.SystemTemplate }, examinerInput);
+        if (composed.IsFailure)
+        {
+            await FailAsync(operation, attempt, composed.Error, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         var examinerInvocation = await gateway.InvokeAsync(
             new AiGatewayRequest(
-                tenantId, AiFeatures.SpeakingExaminer, examinerPrompt.PromptVersion, provider.Kind, examinerPrompt.SystemTemplate,
-                examinerInput, SpeakingExaminerSchema.Name, SpeakingExaminerSchema.Json, ExaminerMaxOutputTokens),
+                tenantId, AiFeatures.SpeakingExaminer, examinerPrompt.PromptVersion, provider.Kind, composed.Value.SystemPrompt,
+                composed.Value.UserContent, SpeakingExaminerSchema.Name, SpeakingExaminerSchema.Json, ExaminerMaxOutputTokens),
             cancellationToken).ConfigureAwait(false);
 
         if (examinerInvocation.IsFailure)
@@ -175,7 +198,8 @@ public sealed partial class SpeakingEvaluationJob(
         var evaluationCreate = SpeakingEvaluation.Create(
             SpeakingEvaluationId.From(guids.NewGuid()), tenantId, attempt.Id, examinerOutput.FluencyCoherence,
             examinerOutput.LexicalResource, examinerOutput.GrammaticalRangeAccuracy, examinerOutput.Pronunciation,
-            examinerOutput.Confidence, examinerOutput.FeedbackText, LowConfidenceThreshold, examinerResponse.Id, provider.Id, now);
+            examinerOutput.Confidence, examinerOutput.FeedbackText, LowConfidenceThreshold, MaxCriterionSpread, examinerResponse.Id,
+            provider.Id, now);
 
         if (evaluationCreate.IsFailure)
         {

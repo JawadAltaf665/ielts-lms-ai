@@ -94,6 +94,20 @@ internal static class AiFeatures
 }
 
 /// <summary>
+/// <see cref="Domain.AI.AiPrompt.Scope"/> values for the <see cref="AiFeatures.SpeakingExaminer"/>
+/// feature (Phase 7 Sprint 5): the examiner system template lives in <see cref="Default"/> as before,
+/// while <see cref="Rubric"/> is the four-criteria band rubric fetched as its own versioned artifact and
+/// composed into the template's <c>{{rubric}}</c> placeholder — a rubric update is then a new "rubric"
+/// version, not a full examiner-prompt rewrite. Same per-feature multi-slot mechanic as
+/// <see cref="LessonStepScopes"/>.
+/// </summary>
+internal static class SpeakingExaminerScopes
+{
+    public const string Default = "default";
+    public const string Rubric = "rubric";
+}
+
+/// <summary>
 /// <see cref="Domain.AI.AiPrompt.Scope"/> values for the <see cref="AiFeatures.AiTeacher"/> feature —
 /// one active prompt per <see cref="Domain.AI.LessonStep"/>, resolved by the step-state-machine rather
 /// than a single fixed template (this sprint's whole reason for using the Scope slot per-feature —
