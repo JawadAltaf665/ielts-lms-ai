@@ -185,5 +185,8 @@ public static class DependencyInjection
         services.AddScoped<IConversationRepository, ConversationRepository>();
         services.AddScoped<IConversationMessageRepository, ConversationMessageRepository>();
         services.AddScoped<IConversationSummaryRepository, ConversationSummaryRepository>();
+
+        // Phase 7 Sprint 4 - AI Tutor + AI Teacher
+        services.AddScoped<ILessonSessionRepository, LessonSessionRepository>();
     }
 }

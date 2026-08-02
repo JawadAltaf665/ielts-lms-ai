@@ -27,6 +27,27 @@ internal sealed class AiPromptRepository(ApplicationDbContext dbContext)
             .ConfigureAwait(false);
     }
 
+    public async Task<AiPrompt?> GetActiveForFeatureAndScopeAsync(
+        Guid tenantId, string feature, string scope, CancellationToken cancellationToken = default)
+    {
+        var tenantOverride = await Set
+            .Where(p => p.IsActive && p.Feature == feature && p.Scope == scope && p.TenantId == tenantId)
+            .OrderByDescending(p => p.PromptVersion)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (tenantOverride is not null)
+        {
+            return tenantOverride;
+        }
+
+        return await Set
+            .Where(p => p.IsActive && p.Feature == feature && p.Scope == scope && p.TenantId == null)
+            .OrderByDescending(p => p.PromptVersion)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     public async Task<IReadOnlyList<AiPrompt>> GetVersionsAsync(
         Guid tenantId, string feature, string scope, CancellationToken cancellationToken = default) =>
         await Set

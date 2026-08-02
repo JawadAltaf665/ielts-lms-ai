@@ -32,6 +32,23 @@ internal sealed class FakeAiPromptRepository : IAiPromptRepository
         return Task.FromResult(global);
     }
 
+    public Task<AiPrompt?> GetActiveForFeatureAndScopeAsync(
+        Guid tenantId, string feature, string scope, CancellationToken cancellationToken = default)
+    {
+        var tenantOverride = _prompts
+            .Where(p => p.IsActive && p.Feature == feature && p.Scope == scope && p.TenantId == tenantId)
+            .MaxBy(p => p.PromptVersion);
+        if (tenantOverride is not null)
+        {
+            return Task.FromResult<AiPrompt?>(tenantOverride);
+        }
+
+        var global = _prompts
+            .Where(p => p.IsActive && p.Feature == feature && p.Scope == scope && p.TenantId == null)
+            .MaxBy(p => p.PromptVersion);
+        return Task.FromResult(global);
+    }
+
     public Task<IReadOnlyList<AiPrompt>> GetVersionsAsync(
         Guid tenantId, string feature, string scope, CancellationToken cancellationToken = default)
     {
