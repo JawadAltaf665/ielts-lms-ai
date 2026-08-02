@@ -23,7 +23,7 @@ public sealed class PromptLibraryContractTests
         var prompts = new FakeAiPromptRepository();
         var unitOfWork = new FakeUnitOfWork();
         var createHandler = new CreatePromptVersionCommandHandler(prompts, unitOfWork, new FakeClock(Now), new FakeGuidProvider());
-        var activateHandler = new ActivatePromptVersionCommandHandler(prompts, unitOfWork, new FakeClock(Now.AddMinutes(1)));
+        var activateHandler = new ActivatePromptVersionCommandHandler(prompts, unitOfWork, new FakeClock(Now.AddMinutes(1)), []);
 
         // Before authoring anything, the job's resolution query finds nothing for this tenant.
         var beforeCreate = await prompts.GetActiveForFeatureAsync(_tenantId, "grammar-coach", CancellationToken.None);

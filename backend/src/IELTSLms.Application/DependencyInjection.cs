@@ -3,9 +3,12 @@ using FluentValidation;
 using IELTSLms.Abstractions.Billing;
 using IELTSLms.Application.Abstractions.Behaviors;
 using IELTSLms.Application.AI;
+using IELTSLms.Application.AI.Evaluation;
 using IELTSLms.Application.AI.Jobs;
+using IELTSLms.Application.AI.Prompts;
 using IELTSLms.Application.Billing.Services;
 using IELTSLms.Application.Learning;
+using IELTSLms.Application.Speaking;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -53,6 +56,11 @@ public static class DependencyInjection
 
         // Phase 6 Sprint 3 - AI Gateway: enqueued via IBackgroundJobService, not a MediatR handler.
         services.AddScoped<GrammarCoachingJob>();
+
+        // Phase 7 Sprint 5 - Speaking Examiner calibration gate: offline eval harness + the
+        // feature-specific validator ActivatePromptVersionCommandHandler discovers by Feature.
+        services.AddScoped<ISpeakingCalibrationHarness, SpeakingCalibrationHarness>();
+        services.AddScoped<IPromptActivationValidator, SpeakingExaminerPromptActivationValidator>();
 
         return services;
     }

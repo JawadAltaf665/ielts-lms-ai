@@ -65,4 +65,8 @@ internal static class AiErrors
 
     public static readonly Error TeacherStepPromptNotConfigured = Error.ServiceUnavailable(
         "DEPENDENCY_AI_TEACHER_STEP_PROMPT_NOT_CONFIGURED", "This lesson step is not yet configured.");
+
+    public static readonly Error PromptCalibrationFailed = Error.Validation(
+        "BUSINESS_AI_PROMPT_CALIBRATION_FAILED",
+        "This prompt version did not meet the calibration tolerance against the expert-rated sample set.");
 }

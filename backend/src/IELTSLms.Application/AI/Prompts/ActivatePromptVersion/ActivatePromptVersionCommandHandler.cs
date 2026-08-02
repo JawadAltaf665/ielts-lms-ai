@@ -7,7 +7,8 @@ using IELTSLms.SharedKernel.Results;
 
 namespace IELTSLms.Application.AI.Prompts.ActivatePromptVersion;
 
-public sealed class ActivatePromptVersionCommandHandler(IAiPromptRepository prompts, IUnitOfWork unitOfWork, IClock clock)
+public sealed class ActivatePromptVersionCommandHandler(
+    IAiPromptRepository prompts, IUnitOfWork unitOfWork, IClock clock, IEnumerable<IPromptActivationValidator> activationValidators)
     : ICommandHandler<ActivatePromptVersionCommand, AiPromptResponse>
 {
     public async Task<Result<AiPromptResponse>> Handle(ActivatePromptVersionCommand request, CancellationToken cancellationToken)
@@ -25,6 +26,19 @@ public sealed class ActivatePromptVersionCommandHandler(IAiPromptRepository prom
 
         if (!target.IsActive)
         {
+            // Calibration gating (Phase 7 Sprint 5): a feature-specific validator, if one is registered,
+            // must pass before this version is allowed to go live — a pre-activation check, not a manual
+            // step someone can skip.
+            var validator = activationValidators.FirstOrDefault(v => v.Feature == target.Feature);
+            if (validator is not null)
+            {
+                var validation = await validator.ValidateAsync(request.TenantId, target, cancellationToken).ConfigureAwait(false);
+                if (validation.IsFailure)
+                {
+                    return Result.Failure<AiPromptResponse>(validation.Error);
+                }
+            }
+
             var now = clock.UtcNow;
             var slotVersions = await prompts
                 .GetVersionsAsync(request.TenantId, target.Feature, target.Scope, cancellationToken)
