@@ -1,5 +1,7 @@
 using IELTSLms.Abstractions.AI;
+using IELTSLms.Application.AI;
 using IELTSLms.Application.AI.Jobs;
+using IELTSLms.Application.AI.SimilarityCheck;
 using IELTSLms.Application.Tests.AI.Fakes;
 using IELTSLms.Application.Tests.Writing.Fakes;
 using IELTSLms.Domain.AI;
@@ -31,7 +33,7 @@ public sealed class WritingEvaluationJobTests
         FakeTenantContextAccessor TenantContextAccessor, WritingEvaluationJob Job, Guid TenantId, AiOperation Operation,
         WritingSubmission Submission);
 
-    private static Fixture CreateFixture(bool seedPrompts = true)
+    private static Fixture CreateFixture(bool seedPrompts = true, bool seedRubricPrompt = true)
     {
         var tenantId = Guid.NewGuid();
         var operations = new FakeAiOperationRepository();
@@ -53,7 +55,12 @@ public sealed class WritingEvaluationJobTests
         {
             prompts.Seed(Active(AiPrompt.Create(AiPromptId.From(Guid.NewGuid()), null, provider.Id, "grammar-coach", 1, "default", "sys", Now).Value));
             prompts.Seed(Active(AiPrompt.Create(AiPromptId.From(Guid.NewGuid()), null, provider.Id, "vocabulary-analysis", 1, "default", "sys", Now).Value));
-            prompts.Seed(Active(AiPrompt.Create(AiPromptId.From(Guid.NewGuid()), null, provider.Id, "writing-examiner", 1, "default", "sys", Now).Value));
+            prompts.Seed(Active(AiPrompt.Create(AiPromptId.From(Guid.NewGuid()), null, provider.Id, "writing-examiner", 1, "default", "sys {{rubric}}", Now).Value));
+        }
+
+        if (seedRubricPrompt)
+        {
+            prompts.Seed(Active(AiPrompt.Create(AiPromptId.From(Guid.NewGuid()), null, provider.Id, "writing-examiner", 1, "rubric", "score each criterion", Now).Value));
         }
 
         var task = WritingTask.Create(
@@ -71,7 +78,8 @@ public sealed class WritingEvaluationJobTests
         operations.Seed(operation);
 
         var job = new WritingEvaluationJob(
-            operations, providers, prompts, responses, submissions, tasks, evaluations, unitOfWork, gateway, tenantContextAccessor,
+            operations, providers, prompts, responses, submissions, tasks, evaluations, unitOfWork, gateway,
+            new SimilarityCheckProvider(submissions), new PromptCompositionService(), tenantContextAccessor,
             new FakeClock(Now.AddSeconds(5)), new FakeGuidProvider(), NullLogger<WritingEvaluationJob>.Instance);
 
         return new Fixture(
@@ -120,6 +128,27 @@ public sealed class WritingEvaluationJobTests
     }
 
     [Fact]
+    public async Task A_near_duplicate_prior_submission_for_the_same_task_flags_the_evaluation_via_similarity()
+    {
+        var fixture = CreateFixture();
+        var priorSubmission = WritingSubmission.Create(
+            WritingSubmissionId.From(Guid.NewGuid()), fixture.TenantId, Guid.NewGuid(), fixture.Submission.WritingTaskId,
+            fixture.Submission.ResponseText, Now).Value;
+        priorSubmission.Submit(6, Now);
+        fixture.Submissions.Seed(priorSubmission);
+
+        fixture.Gateway.SetResult("grammar-coach", Success(ValidGrammarOutput));
+        fixture.Gateway.SetResult("vocabulary-analysis", Success(ValidVocabOutput));
+        fixture.Gateway.SetResult("writing-examiner", Success(ValidExaminerOutput));
+
+        await fixture.Job.ExecuteAsync(fixture.TenantId, fixture.Operation.Id.Value, fixture.Submission.Id.Value, CancellationToken.None);
+
+        var evaluation = Assert.Single(fixture.Evaluations.Evaluations);
+        Assert.Equal(1.0m, evaluation.SimilarityScore);
+        Assert.True(evaluation.RequiresHumanReview);
+    }
+
+    [Fact]
     public async Task Grammar_agent_failure_fails_both_the_operation_and_the_submission()
     {
         var fixture = CreateFixture();
@@ -153,6 +182,19 @@ public sealed class WritingEvaluationJobTests
     public async Task Missing_prompt_configuration_fails_gracefully_without_calling_the_gateway()
     {
         var fixture = CreateFixture(seedPrompts: false);
+
+        await fixture.Job.ExecuteAsync(fixture.TenantId, fixture.Operation.Id.Value, fixture.Submission.Id.Value, CancellationToken.None);
+
+        Assert.Equal(AiOperationStatus.Failed, fixture.Operation.Status);
+        Assert.Equal("DEPENDENCY_AI_PROMPT_NOT_CONFIGURED", fixture.Operation.ErrorCode);
+        Assert.Equal(WritingSubmissionStatus.Failed, fixture.Submission.Status);
+        Assert.Equal(0, fixture.Gateway.InvokeCallCount);
+    }
+
+    [Fact]
+    public async Task Missing_rubric_configuration_fails_gracefully_without_calling_the_gateway()
+    {
+        var fixture = CreateFixture(seedRubricPrompt: false);
 
         await fixture.Job.ExecuteAsync(fixture.TenantId, fixture.Operation.Id.Value, fixture.Submission.Id.Value, CancellationToken.None);
 

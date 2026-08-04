@@ -637,16 +637,16 @@ Entities are grouped by domain. Each entity defines: **Purpose, Description, Pri
 
 #### ENT-029 — WritingEvaluations
 - **Purpose:** Rubric-aligned evaluation of a writing submission.
-- **Description:** Per-criterion scores, estimated band, feedback, confidence, provider reference.
+- **Description:** Per-criterion scores, estimated band, feedback, confidence, similarity-check score, provider reference.
 - **Primary Key:** `WritingEvaluationId`.
 - **Foreign Keys:** `TenantId`, `WritingSubmissionId`, `AIResponseId` (nullable), `AIProviderId` (nullable).
 - **Tenant Isolation:** `TenantId` required.
 - **Relationships:** 1..1 WritingSubmission.
-- **Business Rules:** Criteria aligned to official descriptors; AI-labeled; low-confidence flagged; teacher override allowed ([FR-AIWE-001](./04_Functional_Requirements.md)).
+- **Business Rules:** Criteria aligned to official descriptors; AI-labeled; low-confidence **or** high-similarity flagged for human review ([FR-AIWE-001](./04_Functional_Requirements.md); Phase 7 Sprint 6 added `SimilarityScore` and the similarity-threshold check alongside the pre-existing confidence check, mirroring Phase 7 Sprint 5's Speaking criterion-spread addition). Teacher override allowed. Review resolution is itself audited: `ReviewedBy`/`ReviewedAtUtc`/`ReviewDecision` (Phase 7 Sprint 6, distinct from the pre-existing `Overridden*` score-override audit trail — either clears the evaluation from the review queue), same shape as `SpeakingEvaluations` (ENT-032).
 - **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
-- **Indexes:** (`WritingSubmissionId`), band.
+- **Indexes:** (`WritingSubmissionId`), band, (`TenantId`, `RequiresHumanReview`, `CreatedAtUtc`) — review queue.
 - **Unique Constraints:** (`WritingSubmissionId`) latest/active.
-- **Check Constraints:** Criterion bands 0–9 (0.5 steps).
+- **Check Constraints:** Criterion bands 0–9 (0.5 steps); `SimilarityScore` null or 0–1.
 - **Retention:** With submission. **Archiving:** With submission.
 - **Data Type:** Transactional/Derived.
 

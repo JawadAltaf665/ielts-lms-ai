@@ -16,8 +16,8 @@ public sealed class GetWritingEvaluationQueryHandlerTests
         submission.Submit(200, Now.AddMinutes(1));
 
         var evaluation = WritingEvaluation.Create(
-            WritingEvaluationId.From(Guid.NewGuid()), tenantId, submission.Id, 7.0m, 6.5m, 7.0m, 6.5m, 0.9m, "feedback", 0.7m, null, null,
-            Now.AddMinutes(2)).Value;
+            WritingEvaluationId.From(Guid.NewGuid()), tenantId, submission.Id, 7.0m, 6.5m, 7.0m, 6.5m, 0.9m, "feedback", 0.7m, null, 0.6m,
+            null, null, Now.AddMinutes(2)).Value;
         submission.AttachEvaluation(evaluation.Id, evaluation.EstimatedBand, Now.AddMinutes(2));
 
         submissions.Seed(submission);

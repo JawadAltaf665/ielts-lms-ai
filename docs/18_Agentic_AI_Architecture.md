@@ -355,6 +355,13 @@ Each agent below is defined by **Purpose, Responsibilities, Inputs, Outputs, Too
 > record (version slots, memory, permissions, budget, escalation thresholds, calibration gate) — see
 > [AI Evaluation Architecture](./architecture/ai-evaluation.md#speaking-examiner--agent-registry-entry).
 
+> **Writing Examiner Agent registry entry.** Phase 7 Sprint 6 filled in this row's full registry record
+> the same way, and made the "plagiarism/similarity check" tool named above concrete: a within-tenant,
+> same-task corpus comparison (word-shingle Jaccard similarity) that flags — never blocks — high-similarity
+> submissions for human review. Also confirmed the Vocabulary Agent (§12.1) genuinely feeds this agent's
+> context, not a no-op placeholder. See
+> [AI Evaluation Architecture](./architecture/ai-evaluation.md#writing-examiner--agent-registry-entry).
+
 ### 12.3 Planning & Personalization Agents
 
 | Agent | Purpose | Inputs | Outputs | Key Tools | Escalation |
