@@ -5,6 +5,7 @@ using IELTSLms.Api.Extensions;
 using IELTSLms.Application.AI.GetAiOperationStatus;
 using IELTSLms.Application.AI.GetAiUsageSummary;
 using IELTSLms.Application.AI.RequestGrammarCoaching;
+using IELTSLms.Application.AI.RequestVocabularyCoaching;
 using IELTSLms.SharedKernel.Results;
 using MediatR;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -25,6 +26,13 @@ internal static class AiEndpoints
             .WithTags("AI")
             .WithName("RequestGrammarCoaching")
             .WithSummary("Ad-hoc grammar check on arbitrary learner text (ai.grammar-coach.use). Returns 202 + an operation resource.");
+
+        builder.MapPost("/ai/vocabulary-coach", RequestVocabularyCoachingAsync)
+            .RequireAuthorization()
+            .WithTags("AI")
+            .WithName("RequestVocabularyCoaching")
+            .WithSummary(
+                "Usage/synonym/collocation suggestions for a word (ai.vocabulary-coach.use). Returns 202 + an operation resource.");
 
         builder.MapGet("/operations/{id:guid}", GetOperationStatusAsync)
             .RequireAuthorization()
@@ -58,6 +66,30 @@ internal static class AiEndpoints
         }
 
         var command = new RequestGrammarCoachingCommand(tenantId, userId, request.Text);
+        var result = await sender.Send(command, cancellationToken);
+        if (result.IsFailure)
+        {
+            return ToProblemWithRetryAfter(result.Error, httpContext);
+        }
+
+        return Results.Accepted($"/api/v1/operations/{result.Value.Id}", ApiResponse.From(result.Value, httpContext));
+    }
+
+    private static async Task<IResult> RequestVocabularyCoachingAsync(
+        VocabularyCoachRequest request, ISender sender, ITenantContext tenantContext, HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetTenantId(tenantContext, out var tenantId))
+        {
+            return TenantNotResolved.ToProblem(httpContext);
+        }
+
+        if (!TryGetUserId(httpContext, out var userId))
+        {
+            return UserNotResolved.ToProblem(httpContext);
+        }
+
+        var command = new RequestVocabularyCoachingCommand(tenantId, userId, request.Word, request.Topic, request.Difficulty);
         var result = await sender.Send(command, cancellationToken);
         if (result.IsFailure)
         {
@@ -140,5 +172,7 @@ internal static class AiEndpoints
 }
 
 public sealed record GrammarCoachRequest(string Text);
+
+public sealed record VocabularyCoachRequest(string Word, string? Topic, string? Difficulty);
 
 public sealed record AiUsageSummaryQueryParams(DateOnly? From, DateOnly? To);

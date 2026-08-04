@@ -91,6 +91,31 @@ internal static class AiFeatures
 
     /// <summary>Billing <c>QuotaDefinition.Code</c> metering AI Teacher turns (session start + each respond).</summary>
     public const string AiTeacherQuota = "ai-teacher.requests";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag for Vocabulary Coach (Phase 7 Sprint 7, AI
+    /// Architecture §13 capability catalog) — same request/response shape as <see cref="GrammarCoach"/>.
+    /// </summary>
+    public const string VocabularyCoach = "vocabulary-coach";
+
+    /// <summary>Billing <c>Feature.Code</c> gating access to Vocabulary Coach.</summary>
+    public const string VocabularyCoachEntitlement = "ai.vocabulary-coach";
+
+    /// <summary>Billing <c>QuotaDefinition.Code</c> metering Vocabulary Coach calls.</summary>
+    public const string VocabularyCoachQuota = "ai.vocabulary-coach.requests";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag for the Sentence Builder AI scaffolding/validation
+    /// capability (Phase 7 Sprint 7) — enriches a <see cref="Domain.SentenceBuilder.SentenceAttempt"/>
+    /// asynchronously after its synchronous deterministic score.
+    /// </summary>
+    public const string SentenceBuilderAi = "sentence-builder-ai";
+
+    /// <summary>Billing <c>Feature.Code</c> gating access to Sentence Builder AI scaffolding.</summary>
+    public const string SentenceBuilderAiEntitlement = "ai.sentence-builder";
+
+    /// <summary>Billing <c>QuotaDefinition.Code</c> metering Sentence Builder AI scaffolding calls.</summary>
+    public const string SentenceBuilderAiQuota = "ai.sentence-builder.requests";
 }
 
 /// <summary>
