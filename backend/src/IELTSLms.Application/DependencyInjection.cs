@@ -6,9 +6,11 @@ using IELTSLms.Application.AI;
 using IELTSLms.Application.AI.Evaluation;
 using IELTSLms.Application.AI.Jobs;
 using IELTSLms.Application.AI.Prompts;
+using IELTSLms.Application.AI.SimilarityCheck;
 using IELTSLms.Application.Billing.Services;
 using IELTSLms.Application.Learning;
 using IELTSLms.Application.Speaking;
+using IELTSLms.Application.Writing;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -61,6 +63,12 @@ public static class DependencyInjection
         // feature-specific validator ActivatePromptVersionCommandHandler discovers by Feature.
         services.AddScoped<ISpeakingCalibrationHarness, SpeakingCalibrationHarness>();
         services.AddScoped<IPromptActivationValidator, SpeakingExaminerPromptActivationValidator>();
+
+        // Phase 7 Sprint 6 - Writing Examiner: within-tenant similarity check (new tool) + the same
+        // calibration-gate shape as Speaking, reused rather than reinvented.
+        services.AddScoped<ISimilarityCheckProvider, SimilarityCheckProvider>();
+        services.AddScoped<IWritingCalibrationHarness, WritingCalibrationHarness>();
+        services.AddScoped<IPromptActivationValidator, WritingExaminerPromptActivationValidator>();
 
         return services;
     }

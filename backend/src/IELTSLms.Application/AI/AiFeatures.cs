@@ -108,6 +108,18 @@ internal static class SpeakingExaminerScopes
 }
 
 /// <summary>
+/// <see cref="Domain.AI.AiPrompt.Scope"/> values for the <see cref="AiFeatures.WritingExaminer"/>
+/// feature (Phase 7 Sprint 6): same "rubric fetched as its own versioned artifact" shape as
+/// <see cref="SpeakingExaminerScopes"/> — the four-criteria band rubric composes into the examiner
+/// template's <c>{{rubric}}</c> placeholder rather than being baked in as literal prompt text.
+/// </summary>
+internal static class WritingExaminerScopes
+{
+    public const string Default = "default";
+    public const string Rubric = "rubric";
+}
+
+/// <summary>
 /// <see cref="Domain.AI.AiPrompt.Scope"/> values for the <see cref="AiFeatures.AiTeacher"/> feature —
 /// one active prompt per <see cref="Domain.AI.LessonStep"/>, resolved by the step-state-machine rather
 /// than a single fixed template (this sprint's whole reason for using the Scope slot per-feature —

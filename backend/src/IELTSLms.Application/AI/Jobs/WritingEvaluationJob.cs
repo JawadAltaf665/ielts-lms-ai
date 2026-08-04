@@ -8,6 +8,7 @@ using IELTSLms.Abstractions.Persistence.Writing;
 using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.Abstractions.Time;
 using IELTSLms.Application.AI.GrammarCoach;
+using IELTSLms.Application.AI.SimilarityCheck;
 using IELTSLms.Application.AI.VocabularyAnalysis;
 using IELTSLms.Application.AI.WritingExaminer;
 using IELTSLms.Application.Writing;
@@ -22,10 +23,11 @@ namespace IELTSLms.Application.AI.Jobs;
 /// Executes the Writing Evaluation Workflow for an already-enqueued <see cref="AiOperation"/>
 /// (Agentic AI Architecture §13.1), simplified per the sprint's own explicit allowance into a plain
 /// async pipeline rather than a separate agent framework: Grammar Agent (reuses Sprint 3's Grammar
-/// Coach capability verbatim) and Vocabulary Agent run in parallel, then the Writing Examiner call
-/// takes both outputs as context and produces bands, confidence, and feedback in one structured
-/// response — folding the workflow's Feedback Composer step into that same call (see this sprint's
-/// reconciliation notes for both simplifications). Enqueued via
+/// Coach capability verbatim), Vocabulary Agent, and the similarity-check tool (Phase 7 Sprint 6, new)
+/// all run in parallel, then the Writing Examiner call takes the grammar/vocabulary outputs as context
+/// (composed with the rubric artifact, same shape as <c>SpeakingEvaluationJob</c>) and produces bands,
+/// confidence, and feedback in one structured response — folding the workflow's Feedback Composer step
+/// into that same call (see this sprint's reconciliation notes for both simplifications). Enqueued via
 /// <c>IBackgroundJobService.Enqueue&lt;WritingEvaluationJob&gt;</c> from
 /// <see cref="SubmitWriting.SubmitWritingCommandHandler"/>; not a MediatR handler, same reason as
 /// <see cref="GrammarCoachingJob"/> (Hangfire needs a plain, container-resolvable class).
@@ -40,6 +42,8 @@ public sealed partial class WritingEvaluationJob(
     IWritingEvaluationRepository evaluations,
     IUnitOfWork unitOfWork,
     IAiGateway gateway,
+    ISimilarityCheckProvider similarityCheck,
+    IPromptCompositionService promptComposition,
     ITenantContextAccessor tenantContextAccessor,
     IClock clock,
     IGuidProvider guids,
@@ -50,6 +54,10 @@ public sealed partial class WritingEvaluationJob(
 
     /// <summary>Below this examiner-reported confidence, the evaluation is flagged for human review (HITL) rather than silently accepted.</summary>
     private const decimal LowConfidenceThreshold = 0.7m;
+
+    /// <summary>Above this similarity-check score (0-1), the evaluation is flagged for human review even
+    /// at high confidence — the check flags, it never blocks scoring or publication on its own.</summary>
+    private const decimal HighSimilarityThreshold = 0.6m;
 
     public async Task ExecuteAsync(
         Guid tenantId, Guid operationId, Guid writingSubmissionId, CancellationToken cancellationToken = default)
@@ -95,9 +103,16 @@ public sealed partial class WritingEvaluationJob(
             : await prompts.GetActiveForFeatureAsync(tenantId, AiFeatures.VocabularyAnalysis, cancellationToken).ConfigureAwait(false);
         var examinerPrompt = provider is null
             ? null
-            : await prompts.GetActiveForFeatureAsync(tenantId, AiFeatures.WritingExaminer, cancellationToken).ConfigureAwait(false);
+            : await prompts
+                .GetActiveForFeatureAndScopeAsync(tenantId, AiFeatures.WritingExaminer, WritingExaminerScopes.Default, cancellationToken)
+                .ConfigureAwait(false);
+        var rubricPrompt = provider is null
+            ? null
+            : await prompts
+                .GetActiveForFeatureAndScopeAsync(tenantId, AiFeatures.WritingExaminer, WritingExaminerScopes.Rubric, cancellationToken)
+                .ConfigureAwait(false);
 
-        if (provider is null || grammarPrompt is null || vocabPrompt is null || examinerPrompt is null)
+        if (provider is null || grammarPrompt is null || vocabPrompt is null || examinerPrompt is null || rubricPrompt is null)
         {
             await FailAsync(operation, submission, AiErrors.PromptNotConfigured, cancellationToken).ConfigureAwait(false);
             return;
@@ -110,7 +125,9 @@ public sealed partial class WritingEvaluationJob(
             return;
         }
 
-        // Grammar Agent + Vocabulary Agent run in parallel (Agentic AI Architecture §13.1).
+        // Grammar Agent + Vocabulary Agent + similarity-check tool all run in parallel (Agentic AI
+        // Architecture §12.2/§13.1) — the similarity check must not add to the 30s p95 budget
+        // disproportionately, so it fans out alongside the AI calls rather than sequentially after them.
         var grammarTask = gateway.InvokeAsync(
             new AiGatewayRequest(
                 tenantId, AiFeatures.GrammarCoach, grammarPrompt.PromptVersion, provider.Kind, grammarPrompt.SystemTemplate,
@@ -121,7 +138,9 @@ public sealed partial class WritingEvaluationJob(
                 tenantId, AiFeatures.VocabularyAnalysis, vocabPrompt.PromptVersion, provider.Kind, vocabPrompt.SystemTemplate,
                 operation.InputText, VocabularyAnalysisSchema.Name, VocabularyAnalysisSchema.Json, GrammarVocabMaxOutputTokens),
             cancellationToken);
-        await Task.WhenAll(grammarTask, vocabTask).ConfigureAwait(false);
+        var similarityTask = similarityCheck.CheckAsync(
+            tenantId, submission.WritingTaskId, submission.Id, submission.ResponseText, cancellationToken);
+        await Task.WhenAll(grammarTask, vocabTask, similarityTask).ConfigureAwait(false);
 
         var grammarInvocation = await grammarTask.ConfigureAwait(false);
         if (grammarInvocation.IsFailure)
@@ -174,15 +193,25 @@ public sealed partial class WritingEvaluationJob(
 
         // Writing Examiner Agent: scores the four criteria using the grammar/vocabulary findings as
         // supporting context, and (merged simplification) composes the learner-facing feedback in the
-        // same call rather than a separate Feedback Composer step.
+        // same call rather than a separate Feedback Composer step. The rubric is fetched as its own
+        // versioned artifact and bound into the examiner template's {{rubric}} placeholder via the same
+        // shared composition path SpeakingEvaluationJob uses, not baked in as literal prompt text.
         var examinerInput = JsonSerializer.Serialize(
             new WritingExaminerInput(task.PromptText, task.TaskType.ToString(), submission.ResponseText, grammarOutput, vocabOutput),
             JsonSerializerOptions.Web);
 
+        var composed = promptComposition.Compose(
+            examinerPrompt, new Dictionary<string, string> { ["rubric"] = rubricPrompt.SystemTemplate }, examinerInput);
+        if (composed.IsFailure)
+        {
+            await FailAsync(operation, submission, composed.Error, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         var examinerInvocation = await gateway.InvokeAsync(
             new AiGatewayRequest(
-                tenantId, AiFeatures.WritingExaminer, examinerPrompt.PromptVersion, provider.Kind, examinerPrompt.SystemTemplate,
-                examinerInput, WritingExaminerSchema.Name, WritingExaminerSchema.Json, ExaminerMaxOutputTokens),
+                tenantId, AiFeatures.WritingExaminer, examinerPrompt.PromptVersion, provider.Kind, composed.Value.SystemPrompt,
+                composed.Value.UserContent, WritingExaminerSchema.Name, WritingExaminerSchema.Json, ExaminerMaxOutputTokens),
             cancellationToken).ConfigureAwait(false);
 
         if (examinerInvocation.IsFailure)
@@ -215,10 +244,13 @@ public sealed partial class WritingEvaluationJob(
             return;
         }
 
+        var similarityResult = await similarityTask.ConfigureAwait(false);
+
         var evaluationCreate = WritingEvaluation.Create(
             WritingEvaluationId.From(guids.NewGuid()), tenantId, submission.Id, examinerOutput.TaskResponse,
             examinerOutput.CoherenceCohesion, examinerOutput.LexicalResource, examinerOutput.GrammaticalRangeAccuracy,
-            examinerOutput.Confidence, examinerOutput.FeedbackText, LowConfidenceThreshold, examinerResponse.Id, provider.Id, now);
+            examinerOutput.Confidence, examinerOutput.FeedbackText, LowConfidenceThreshold, similarityResult.Score,
+            HighSimilarityThreshold, examinerResponse.Id, provider.Id, now);
 
         if (evaluationCreate.IsFailure)
         {
