@@ -9,6 +9,7 @@ using IELTSLms.Abstractions.Persistence.Grammar;
 using IELTSLms.Abstractions.Persistence.Learning;
 using IELTSLms.Abstractions.Persistence.Listening;
 using IELTSLms.Abstractions.Persistence.Reading;
+using IELTSLms.Abstractions.Persistence.SentenceBuilder;
 using IELTSLms.Abstractions.Persistence.Speaking;
 using IELTSLms.Abstractions.Persistence.Vocabulary;
 using IELTSLms.Abstractions.Persistence.Writing;
@@ -24,6 +25,7 @@ using IELTSLms.Persistence.Repositories.Grammar;
 using IELTSLms.Persistence.Repositories.Learning;
 using IELTSLms.Persistence.Repositories.Listening;
 using IELTSLms.Persistence.Repositories.Reading;
+using IELTSLms.Persistence.Repositories.SentenceBuilder;
 using IELTSLms.Persistence.Repositories.Speaking;
 using IELTSLms.Persistence.Repositories.Vocabulary;
 using IELTSLms.Persistence.Repositories.Writing;
@@ -144,6 +146,10 @@ public static class DependencyInjection
         // Phase 6 Sprint 2 - Vocabulary
         services.AddScoped<IVocabularyWordRepository, VocabularyWordRepository>();
         services.AddScoped<IVocabularyProgressRepository, VocabularyProgressRepository>();
+
+        // Phase 7 Sprint 7 - Sentence Builder base module
+        services.AddScoped<ISentenceExerciseRepository, SentenceExerciseRepository>();
+        services.AddScoped<ISentenceAttemptRepository, SentenceAttemptRepository>();
 
         // Phase 6 Sprint 3 - AI Gateway
         services.AddScoped<IAiProviderRepository, AiProviderRepository>();
