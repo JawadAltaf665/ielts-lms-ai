@@ -17,6 +17,8 @@ internal sealed class WritingEvaluationConfiguration : IEntityTypeConfiguration<
             t.HasCheckConstraint("ck_writing_evaluations_lexical_resource_range", BandRangeStepCheck("lexical_resource"));
             t.HasCheckConstraint("ck_writing_evaluations_grammatical_range_accuracy_range", BandRangeStepCheck("grammatical_range_accuracy"));
             t.HasCheckConstraint("ck_writing_evaluations_confidence_range", "\"confidence\" >= 0 AND \"confidence\" <= 1");
+            t.HasCheckConstraint(
+                "ck_writing_evaluations_similarity_score_range", "\"similarity_score\" IS NULL OR (\"similarity_score\" >= 0 AND \"similarity_score\" <= 1)");
         });
 
         builder.HasKey(e => e.Id);
@@ -35,6 +37,7 @@ internal sealed class WritingEvaluationConfiguration : IEntityTypeConfiguration<
         builder.Property(e => e.EstimatedBand).HasColumnType("numeric(2,1)").IsRequired();
         builder.Property(e => e.Confidence).HasColumnType("numeric(3,2)").IsRequired();
         builder.Property(e => e.FeedbackText).HasColumnType("text").IsRequired();
+        builder.Property(e => e.SimilarityScore).HasColumnType("numeric(3,2)");
         builder.Property(e => e.RequiresHumanReview).IsRequired();
 
         builder.Property(e => e.AIResponseId)
@@ -51,6 +54,10 @@ internal sealed class WritingEvaluationConfiguration : IEntityTypeConfiguration<
         builder.Property(e => e.OverriddenAtUtc);
         builder.Property(e => e.OverrideReason).HasMaxLength(2000);
 
+        builder.Property(e => e.ReviewedBy);
+        builder.Property(e => e.ReviewedAtUtc);
+        builder.Property(e => e.ReviewDecision).HasMaxLength(50);
+
         builder.Property(e => e.CreatedAtUtc).IsRequired();
         builder.Property(e => e.UpdatedAtUtc);
         builder.Property(e => e.IsDeleted).IsRequired();
@@ -62,6 +69,10 @@ internal sealed class WritingEvaluationConfiguration : IEntityTypeConfiguration<
         // ERD: exactly one active evaluation per submission.
         builder.HasIndex(e => e.WritingSubmissionId).IsUnique().HasDatabaseName("ix_writing_evaluations_submission_id_unique");
         builder.HasIndex(e => new { e.TenantId, e.EstimatedBand }).HasDatabaseName("ix_writing_evaluations_tenant_band");
+
+        // Review queue's filter shape (GetWritingReviewQueue): flagged, not yet reviewed or overridden.
+        builder.HasIndex(e => new { e.TenantId, e.RequiresHumanReview, e.CreatedAtUtc })
+            .HasDatabaseName("ix_writing_evaluations_tenant_requires_review");
 
         builder.Ignore(e => e.DomainEvents);
     }

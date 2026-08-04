@@ -6391,6 +6391,23 @@ namespace IELTSLms.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("restored_by");
 
+                    b.Property<string>("ReviewDecision")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("review_decision");
+
+                    b.Property<DateTimeOffset?>("ReviewedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at_utc");
+
+                    b.Property<Guid?>("ReviewedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reviewed_by");
+
+                    b.Property<decimal?>("SimilarityScore")
+                        .HasColumnType("numeric(3,2)")
+                        .HasColumnName("similarity_score");
+
                     b.Property<decimal>("TaskResponse")
                         .HasColumnType("numeric(2,1)")
                         .HasColumnName("task_response");
@@ -6430,6 +6447,9 @@ namespace IELTSLms.Persistence.Migrations
                     b.HasIndex("TenantId", "EstimatedBand")
                         .HasDatabaseName("ix_writing_evaluations_tenant_band");
 
+                    b.HasIndex("TenantId", "RequiresHumanReview", "CreatedAtUtc")
+                        .HasDatabaseName("ix_writing_evaluations_tenant_requires_review");
+
                     b.ToTable("writing_evaluations", null, t =>
                         {
                             t.HasCheckConstraint("ck_writing_evaluations_coherence_cohesion_range", "\"coherence_cohesion\" >= 0 AND \"coherence_cohesion\" <= 9 AND MOD(\"coherence_cohesion\" * 2, 1) = 0");
@@ -6439,6 +6459,8 @@ namespace IELTSLms.Persistence.Migrations
                             t.HasCheckConstraint("ck_writing_evaluations_grammatical_range_accuracy_range", "\"grammatical_range_accuracy\" >= 0 AND \"grammatical_range_accuracy\" <= 9 AND MOD(\"grammatical_range_accuracy\" * 2, 1) = 0");
 
                             t.HasCheckConstraint("ck_writing_evaluations_lexical_resource_range", "\"lexical_resource\" >= 0 AND \"lexical_resource\" <= 9 AND MOD(\"lexical_resource\" * 2, 1) = 0");
+
+                            t.HasCheckConstraint("ck_writing_evaluations_similarity_score_range", "\"similarity_score\" IS NULL OR (\"similarity_score\" >= 0 AND \"similarity_score\" <= 1)");
 
                             t.HasCheckConstraint("ck_writing_evaluations_task_response_range", "\"task_response\" >= 0 AND \"task_response\" <= 9 AND MOD(\"task_response\" * 2, 1) = 0");
                         });

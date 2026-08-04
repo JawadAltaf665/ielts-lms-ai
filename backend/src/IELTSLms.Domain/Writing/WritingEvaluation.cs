@@ -17,7 +17,7 @@ public sealed class WritingEvaluation : TenantAuditableEntity<WritingEvaluationI
     private WritingEvaluation(
         WritingEvaluationId id, Guid tenantId, WritingSubmissionId writingSubmissionId, decimal taskResponse,
         decimal coherenceCohesion, decimal lexicalResource, decimal grammaticalRangeAccuracy, decimal estimatedBand,
-        decimal confidence, string feedbackText, bool requiresHumanReview, AiResponseId? aiResponseId,
+        decimal confidence, string feedbackText, decimal? similarityScore, bool requiresHumanReview, AiResponseId? aiResponseId,
         AiProviderId? aiProviderId, DateTimeOffset nowUtc)
         : base(id)
     {
@@ -30,6 +30,7 @@ public sealed class WritingEvaluation : TenantAuditableEntity<WritingEvaluationI
         EstimatedBand = estimatedBand;
         Confidence = confidence;
         FeedbackText = feedbackText;
+        SimilarityScore = similarityScore;
         RequiresHumanReview = requiresHumanReview;
         AIResponseId = aiResponseId;
         AIProviderId = aiProviderId;
@@ -58,7 +59,17 @@ public sealed class WritingEvaluation : TenantAuditableEntity<WritingEvaluationI
 
     public string FeedbackText { get; private init; }
 
-    /// <summary>Set when <see cref="Confidence"/> is low — surfaced for human review, never silently accepted (HITL, DDD §18 §12 footnote).</summary>
+    /// <summary>
+    /// The plagiarism/similarity-check tool's highest match score, 0-1, against the tenant's other
+    /// submissions for the same task (Agentic AI Architecture §12.2's "plagiarism/similarity check"
+    /// tool) — <see langword="null"/> when the check found no comparable prior submissions. Flags, never
+    /// blocks: a high score only contributes to <see cref="RequiresHumanReview"/>, the submission is
+    /// still scored and published.
+    /// </summary>
+    public decimal? SimilarityScore { get; private init; }
+
+    /// <summary>Set when <see cref="Confidence"/> is low, or <see cref="SimilarityScore"/> is above threshold —
+    /// surfaced for human review, never silently accepted (HITL, DDD §18 §12 footnote).</summary>
     public bool RequiresHumanReview { get; private init; }
 
     public AiResponseId? AIResponseId { get; private init; }
@@ -83,11 +94,20 @@ public sealed class WritingEvaluation : TenantAuditableEntity<WritingEvaluationI
 
     public bool IsOverridden => OverriddenAtUtc is not null;
 
+    public Guid? ReviewedBy { get; private set; }
+
+    public DateTimeOffset? ReviewedAtUtc { get; private set; }
+
+    /// <summary>The teacher's decision when resolving a flagged review (e.g. "Confirmed", "Escalated") — distinct from <see cref="Override"/>, which records a score change.</summary>
+    public string? ReviewDecision { get; private set; }
+
+    public bool IsReviewed => ReviewedAtUtc is not null;
+
     public static Result<WritingEvaluation> Create(
         WritingEvaluationId id, Guid tenantId, WritingSubmissionId writingSubmissionId, decimal taskResponse,
         decimal coherenceCohesion, decimal lexicalResource, decimal grammaticalRangeAccuracy, decimal confidence,
-        string feedbackText, decimal lowConfidenceThreshold, AiResponseId? aiResponseId, AiProviderId? aiProviderId,
-        DateTimeOffset nowUtc)
+        string feedbackText, decimal lowConfidenceThreshold, decimal? similarityScore, decimal highSimilarityThreshold,
+        AiResponseId? aiResponseId, AiProviderId? aiProviderId, DateTimeOffset nowUtc)
     {
         foreach (var score in new[] { taskResponse, coherenceCohesion, lexicalResource, grammaticalRangeAccuracy })
         {
@@ -102,12 +122,47 @@ public sealed class WritingEvaluation : TenantAuditableEntity<WritingEvaluationI
             return Result.Failure<WritingEvaluation>(WritingDomainErrors.ConfidenceOutOfRange);
         }
 
+        if (similarityScore is < 0m or > 1m)
+        {
+            return Result.Failure<WritingEvaluation>(WritingDomainErrors.SimilarityScoreOutOfRange);
+        }
+
         var estimatedBand = WritingBandCalculator.ToBand(taskResponse, coherenceCohesion, lexicalResource, grammaticalRangeAccuracy);
-        var requiresHumanReview = confidence < lowConfidenceThreshold;
+
+        // Escalation policy (Agentic AI Architecture §12.2): low confidence OR a similarity-check match
+        // above threshold flags for human review — the similarity check flags, it never blocks scoring
+        // or publication on its own.
+        var requiresHumanReview = confidence < lowConfidenceThreshold || similarityScore >= highSimilarityThreshold;
 
         return Result.Success(new WritingEvaluation(
             id, tenantId, writingSubmissionId, taskResponse, coherenceCohesion, lexicalResource, grammaticalRangeAccuracy,
-            estimatedBand, confidence, feedbackText, requiresHumanReview, aiResponseId, aiProviderId, nowUtc));
+            estimatedBand, confidence, feedbackText, similarityScore, requiresHumanReview, aiResponseId, aiProviderId, nowUtc));
+    }
+
+    /// <summary>
+    /// Records a teacher's review decision on a flagged evaluation (audited: actor, timestamp, decision)
+    /// — distinct from <see cref="Override"/>, which additionally changes the scores. A teacher may call
+    /// either, or both (override first, then resolve, or vice versa); the review queue excludes an
+    /// evaluation once it has been reviewed or overridden, whichever happens first.
+    /// </summary>
+    public Result MarkReviewed(string decision, Guid reviewedBy, DateTimeOffset nowUtc)
+    {
+        if (string.IsNullOrWhiteSpace(decision))
+        {
+            return Result.Failure(WritingDomainErrors.ReviewDecisionRequired);
+        }
+
+        if (!RequiresHumanReview)
+        {
+            return Result.Failure(WritingDomainErrors.EvaluationNotFlaggedForReview);
+        }
+
+        ReviewDecision = decision;
+        ReviewedBy = reviewedBy;
+        ReviewedAtUtc = nowUtc;
+        UpdatedAtUtc = nowUtc;
+
+        return Result.Success();
     }
 
     /// <summary>
