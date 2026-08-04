@@ -513,6 +513,16 @@ Entities are grouped by domain. Each entity defines: **Purpose, Description, Pri
 - **Retention:** With user. **Archiving:** With user.
 - **Data Type:** Transactional.
 
+> **Implementation note (Phase 7 Sprint 7):** ENT-019/ENT-020 were cataloged here but had no
+> Implementation-prompts sprint until Phase 7 Sprint 7 shipped them as the minimal non-AI base a
+> Sentence Builder AI capability needed to attach to (YAGNI — see that sprint's own gap note). The
+> shipped shape is deliberately narrower than this catalog entry: `SentenceExercises` has `Prompt`
+> and `TargetPattern` (a JSON array of required tokens, deterministically pattern-matched — no `Title`/
+> `Track`/`CategoryId`, no title-uniqueness constraint); `SentenceAttempts` adds `AiResponseId`
+> (nullable) and `Feedback` (nullable), populated asynchronously by the AI scaffolding job after the
+> synchronous `Score` (0-100, not DB-constrained to a range — validated in the deterministic scorer).
+> Widen to the full catalog shape only if a future sprint's admin tooling actually needs it.
+
 ### 6.3 Skills: Reading, Listening, Writing, Speaking
 
 #### ENT-021 — ReadingPassages

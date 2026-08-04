@@ -345,9 +345,13 @@ Legend: ✅ full · 🟡 scoped/limited · ➖ none.
 | `assignment.create` | ➖ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | `writing.submit` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | `writing.evaluate` | ➖ | 🟡 | 🟡 | ➖ | ✅ | ➖ | ➖ |
+| `sentence-builder.view` | ➖ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ |
+| `sentence-builder.manage` | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ |
+| `sentence-builder.attempt` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | `analytics.view.cohort` | 🟡 | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | `analytics.view.self` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | `ai.grammar-coach.use` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ |
+| `ai.vocabulary-coach.use` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ |
 | `ai.usage-summary.view` | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | `ai.prompt.manage` | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ |
 | `ai.conversation.view` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
@@ -387,6 +391,17 @@ Legend: ✅ full · 🟡 scoped/limited · ➖ none.
 > `GET .../sessions/{id}` also names a cohort-view path (`analytics.view.cohort`) for a human Teacher to
 > read a *learner's* session — not built this sprint (no teacher/cohort-membership lookup exists yet),
 > so the row reflects intent, not an implemented second access path.
+>
+> **Phase 7 Sprint 7 reconciliation:** `ai.vocabulary-coach.use` mirrors `ai.grammar-coach.use`'s row
+> exactly — same request/response shape, same entitlement/quota gating. `sentence-builder.*` follows
+> Grammar's own split: `.view` is broad catalog read access (mirrors `content.manage`'s viewer set),
+> `.manage` is Tenant Admin/Content Manager authoring (mirrors Grammar's `grammar.manage`), `.attempt`
+> is Student-only self-service submission (mirrors `writing.submit`). `GET /grammar-attempts/{id}/coaching`
+> and `GET /sentence-attempts/{id}` both document an `analytics.view.cohort` alternative in their sprint
+> file for non-owner Teacher access — not built this sprint (no cohort-membership lookup exists yet, same
+> gap as Sprint 4's Teacher row above), so only the owner path is enforced. Every key here is declared via
+> `RequiredPermissions` for documentation, same not-yet-a-second-code-path caveat as every `ai.*`/`grammar.*`
+> permission key above (`AuthorizationPipelineBehavior` only enforces `RequiredRoles` today).
 
 ---
 
