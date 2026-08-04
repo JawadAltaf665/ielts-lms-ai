@@ -140,6 +140,7 @@ try
     api.MapBillingEndpoints();
     api.MapGrammarEndpoints();
     api.MapVocabularyEndpoints();
+    api.MapSentenceBuilderEndpoints();
     api.MapAiEndpoints();
     api.MapPromptEndpoints();
     api.MapReadingEndpoints();
