@@ -5,6 +5,8 @@ using IELTSLms.Api.Extensions;
 using IELTSLms.Application.AI.GetAiOperationStatus;
 using IELTSLms.Application.AI.GetAiUsageSummary;
 using IELTSLms.Application.AI.RequestGrammarCoaching;
+using IELTSLms.Application.AI.RequestListeningCoaching;
+using IELTSLms.Application.AI.RequestReadingCoaching;
 using IELTSLms.Application.AI.RequestVocabularyCoaching;
 using IELTSLms.SharedKernel.Results;
 using MediatR;
@@ -33,6 +35,18 @@ internal static class AiEndpoints
             .WithName("RequestVocabularyCoaching")
             .WithSummary(
                 "Usage/synonym/collocation suggestions for a word (ai.vocabulary-coach.use). Returns 202 + an operation resource.");
+
+        builder.MapPost("/ai/reading-coach", RequestReadingCoachingAsync)
+            .RequireAuthorization()
+            .WithTags("AI")
+            .WithName("RequestReadingCoaching")
+            .WithSummary("On-demand Reading strategy guidance (ai.reading-coach.use). Returns 202 + an operation resource.");
+
+        builder.MapPost("/ai/listening-coach", RequestListeningCoachingAsync)
+            .RequireAuthorization()
+            .WithTags("AI")
+            .WithName("RequestListeningCoaching")
+            .WithSummary("On-demand Listening strategy guidance (ai.listening-coach.use). Returns 202 + an operation resource.");
 
         builder.MapGet("/operations/{id:guid}", GetOperationStatusAsync)
             .RequireAuthorization()
@@ -90,6 +104,54 @@ internal static class AiEndpoints
         }
 
         var command = new RequestVocabularyCoachingCommand(tenantId, userId, request.Word, request.Topic, request.Difficulty);
+        var result = await sender.Send(command, cancellationToken);
+        if (result.IsFailure)
+        {
+            return ToProblemWithRetryAfter(result.Error, httpContext);
+        }
+
+        return Results.Accepted($"/api/v1/operations/{result.Value.Id}", ApiResponse.From(result.Value, httpContext));
+    }
+
+    private static async Task<IResult> RequestReadingCoachingAsync(
+        ReadingCoachRequest request, ISender sender, ITenantContext tenantContext, HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetTenantId(tenantContext, out var tenantId))
+        {
+            return TenantNotResolved.ToProblem(httpContext);
+        }
+
+        if (!TryGetUserId(httpContext, out var userId))
+        {
+            return UserNotResolved.ToProblem(httpContext);
+        }
+
+        var command = new RequestReadingCoachingCommand(tenantId, userId, request.Text);
+        var result = await sender.Send(command, cancellationToken);
+        if (result.IsFailure)
+        {
+            return ToProblemWithRetryAfter(result.Error, httpContext);
+        }
+
+        return Results.Accepted($"/api/v1/operations/{result.Value.Id}", ApiResponse.From(result.Value, httpContext));
+    }
+
+    private static async Task<IResult> RequestListeningCoachingAsync(
+        ListeningCoachRequest request, ISender sender, ITenantContext tenantContext, HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetTenantId(tenantContext, out var tenantId))
+        {
+            return TenantNotResolved.ToProblem(httpContext);
+        }
+
+        if (!TryGetUserId(httpContext, out var userId))
+        {
+            return UserNotResolved.ToProblem(httpContext);
+        }
+
+        var command = new RequestListeningCoachingCommand(tenantId, userId, request.Text);
         var result = await sender.Send(command, cancellationToken);
         if (result.IsFailure)
         {
@@ -174,5 +236,9 @@ internal static class AiEndpoints
 public sealed record GrammarCoachRequest(string Text);
 
 public sealed record VocabularyCoachRequest(string Word, string? Topic, string? Difficulty);
+
+public sealed record ReadingCoachRequest(string Text);
+
+public sealed record ListeningCoachRequest(string Text);
 
 public sealed record AiUsageSummaryQueryParams(DateOnly? From, DateOnly? To);

@@ -1328,6 +1328,21 @@ webhook dead-lettering). `Coupons` (ENT-043) gains a redemption-tracking child; 
 - **Retention:** With user. **Archiving:** With user.
 - **Data Type:** Transactional.
 
+#### ENT-050F — QuestionVariantDrafts
+- **Purpose:** The output of the Reading/Listening difficulty-adaptation capability, pending human review.
+- **Description:** Phase 7 Sprint 8 (Reading AI + Listening AI, [AI Architecture §13](./17_AI_Architecture.md#13-ai-capability-catalog)) — "generation assists, humans approve": a draft, AI-adjusted variant of an existing `ReadingQuestions`/`ListeningQuestions` (ENT-022/ENT-025) row, inert until a `content.manage` actor approves it. `SourceQuestionId` is a polymorphic reference (`SourceType` picks which of the two question tables it points at, same discriminator shape as `AIResponses.RequestingEntityType`/`RequestingEntityId`) — no FK constraint, resolved in application code. `DraftContent` is structured JSON, the same `{ type, prompt, answerKey }` shape a question is authored with.
+- **Primary Key:** `QuestionVariantDraftId`.
+- **Foreign Keys:** `TenantId`, `AIResponseId`. `SourceQuestionId` is a bare id (polymorphic, see above).
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** *..1 AIResponse.
+- **Business Rules:** Approval promotes the draft into a real question through the *existing* Reading/Listening content-authoring commands (`AddReadingQuestionCommand`/`AddListeningQuestionCommand`) — never a second, parallel content-creation path. A rejected draft keeps its row (`Status` flips, no hard delete) for audit, same posture as evaluation-override decisions elsewhere in the platform. Never auto-published.
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`SourceType`, `SourceQuestionId`), (`TenantId`, `Status`).
+- **Unique Constraints:** —
+- **Check Constraints:** SourceType ∈ {Reading, Listening}; Status ∈ {Pending, Approved, Rejected}.
+- **Retention:** With tenant content. **Archiving:** With tenant content.
+- **Data Type:** Transactional (content-authoring draft).
+
 ### 6.9 Progress, Engagement & Support
 
 #### ENT-054 — Achievements

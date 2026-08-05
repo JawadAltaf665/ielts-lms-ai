@@ -145,6 +145,7 @@ try
     api.MapPromptEndpoints();
     api.MapReadingEndpoints();
     api.MapListeningEndpoints();
+    api.MapQuestionVariantEndpoints();
     api.MapWritingEndpoints();
     api.MapSpeakingEndpoints();
     api.MapMockExamEndpoints();

@@ -2,6 +2,8 @@ using System.Security.Claims;
 using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.Api.Contracts;
 using IELTSLms.Api.Extensions;
+using IELTSLms.Application.AI.QuestionVariants.Commands.GenerateQuestionVariants;
+using IELTSLms.Application.AI.ReadingCoaching.Queries.GetReadingAttemptCoaching;
 using IELTSLms.Application.Reading.AddReadingQuestion;
 using IELTSLms.Application.Reading.CreateReadingPassage;
 using IELTSLms.Application.Reading.GetReadingAttempt;
@@ -11,6 +13,7 @@ using IELTSLms.Application.Reading.StartReadingAttempt;
 using IELTSLms.Application.Reading.SubmitReadingAttempt;
 using IELTSLms.Application.Reading.UpdateReadingPassage;
 using IELTSLms.Common.Pagination;
+using IELTSLms.Domain.AI;
 using IELTSLms.Domain.Reading;
 using IELTSLms.SharedKernel.Results;
 using MediatR;
@@ -73,6 +76,22 @@ internal static class ReadingEndpoints
             .WithTags("Reading")
             .WithName("GetReadingAttempt")
             .WithSummary("Gets one of the caller's own past attempts and its result.");
+
+        builder.MapGet("/reading-attempts/{id:guid}/coaching", GetReadingAttemptCoachingAsync)
+            .RequireAuthorization()
+            .WithTags("Reading")
+            .WithName("GetReadingAttemptCoaching")
+            .WithSummary(
+                "AI-generated explanations for the wrong answers on a past attempt (reading.attempt), " +
+                "reusing the Reading Coach capability. Returns 202 + an operation resource.");
+
+        builder.MapPost("/reading-passages/{id:guid}/question-variants", GenerateReadingQuestionVariantsAsync)
+            .RequireAuthorization()
+            .WithTags("Reading")
+            .WithName("GenerateReadingQuestionVariants")
+            .WithSummary(
+                "Generates a draft, AI-adjusted variant of an existing question on this passage (content.manage). " +
+                "Returns 202 + an operation resource; the draft, once generated, shares the operation's id.");
 
         return builder;
     }
@@ -243,6 +262,65 @@ internal static class ReadingEndpoints
 
         var result = await sender.Send(new GetReadingAttemptQuery(tenantId, userId, id), cancellationToken);
         return result.IsSuccess ? Results.Ok(ApiResponse.From(result.Value, httpContext)) : result.ToProblem(httpContext);
+    }
+
+    private static async Task<IResult> GetReadingAttemptCoachingAsync(
+        Guid id, ISender sender, ITenantContext tenantContext, HttpContext httpContext, CancellationToken cancellationToken)
+    {
+        if (!TryGetTenantId(tenantContext, out var tenantId))
+        {
+            return TenantNotResolved.ToProblem(httpContext);
+        }
+
+        if (!TryGetUserId(httpContext, out var userId))
+        {
+            return UserNotResolved.ToProblem(httpContext);
+        }
+
+        var result = await sender.Send(new GetReadingAttemptCoachingQuery(tenantId, userId, id), cancellationToken);
+        if (result.IsFailure)
+        {
+            return ToProblemWithRetryAfter(result.Error, httpContext);
+        }
+
+        return Results.Accepted($"/api/v1/operations/{result.Value.Id}", ApiResponse.From(result.Value, httpContext));
+    }
+
+    private static async Task<IResult> GenerateReadingQuestionVariantsAsync(
+        Guid id, GenerateQuestionVariantRequest request, ISender sender, ITenantContext tenantContext, HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetTenantId(tenantContext, out var tenantId))
+        {
+            return TenantNotResolved.ToProblem(httpContext);
+        }
+
+        if (!TryGetUserId(httpContext, out var userId))
+        {
+            return UserNotResolved.ToProblem(httpContext);
+        }
+
+        var command = new GenerateQuestionVariantsCommand(
+            tenantId, userId, QuestionVariantSourceType.Reading, id, request.SourceQuestionId, request.DifficultyDelta);
+        var result = await sender.Send(command, cancellationToken);
+        return result.IsSuccess
+            ? Results.Accepted($"/api/v1/operations/{result.Value.Id}", ApiResponse.From(result.Value, httpContext))
+            : result.ToProblem(httpContext);
+    }
+
+    /// <summary>Sets <c>Retry-After</c> on a quota-exceeded response (API Design Standards §9.2) —
+    /// mirrors <c>AiEndpoints</c>'s own helper for the same rule.</summary>
+    private static IResult ToProblemWithRetryAfter(Error error, HttpContext httpContext)
+    {
+        if (error.Type == ErrorType.RateLimited)
+        {
+            var now = DateTimeOffset.UtcNow;
+            var nextMidnightUtc = now.Date.AddDays(1);
+            var retryAfterSeconds = (int)Math.Ceiling((nextMidnightUtc - now).TotalSeconds);
+            httpContext.Response.Headers["Retry-After"] = retryAfterSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        return error.ToProblem(httpContext);
     }
 
     private static bool TryGetTenantId(ITenantContext tenantContext, out Guid tenantId)

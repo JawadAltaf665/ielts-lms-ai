@@ -352,6 +352,8 @@ Legend: ✅ full · 🟡 scoped/limited · ➖ none.
 | `analytics.view.self` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | `ai.grammar-coach.use` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ |
 | `ai.vocabulary-coach.use` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ |
+| `ai.reading-coach.use` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ |
+| `ai.listening-coach.use` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ |
 | `ai.usage-summary.view` | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
 | `ai.prompt.manage` | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ |
 | `ai.conversation.view` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
@@ -402,6 +404,14 @@ Legend: ✅ full · 🟡 scoped/limited · ➖ none.
 > gap as Sprint 4's Teacher row above), so only the owner path is enforced. Every key here is declared via
 > `RequiredPermissions` for documentation, same not-yet-a-second-code-path caveat as every `ai.*`/`grammar.*`
 > permission key above (`AuthorizationPipelineBehavior` only enforces `RequiredRoles` today).
+>
+> **Phase 7 Sprint 8 reconciliation:** `ai.reading-coach.use`/`ai.listening-coach.use` mirror
+> `ai.grammar-coach.use`'s row exactly — one capability serving both attempt-grounded auto-explanation
+> (`GET .../coaching`, gated by `reading.attempt`/`listening.attempt`, own-attempt only) and on-demand
+> strategy guidance (`POST /ai/reading-coach`/`POST /ai/listening-coach`, gated by the `ai.*.use` key
+> itself). The question-variant/difficulty-adaptation endpoints (`POST .../question-variants`,
+> `GET/POST /question-variants/{id}*`) need no new key — `content.manage` already covers them, same as
+> every other AI-assisted content-authoring tool in this catalog (`ai.prompt.manage`'s row above).
 
 ---
 

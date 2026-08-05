@@ -328,6 +328,16 @@ Each capability is delivered via the gateway with a versioned prompt, structured
 > ([Agentic §12.4](./18_Agentic_AI_Architecture.md#124-role--operations-agents)). Don't conflate them.
 >
 > Capabilities respect [RBAC/permissions](./11_Authentication_Authorization.md#11-roles--permission-matrix) and [plan entitlements](./13_Subscription_Billing.md#2-subscription-plans--feature-matrix); e.g., Teacher/Admin AI require the corresponding roles.
+>
+> **Phase 7 Sprint 8 reconciliation:** "Reading Coach"/"Listening Coach" move from catalog-only to
+> implemented — auto-explanation of wrong answers (grounded in the passage/transcript, attempt-review
+> endpoint) plus on-demand strategy guidance (ad-hoc endpoint), same one-capability-two-entry-points
+> shape as Grammar Coach. "Question Generation" is implemented for Reading/Listening specifically (not
+> the other skills yet): a `content.manage`-gated draft-variant capability that rephrases an existing
+> question at an adjusted difficulty — output is always a `Pending` draft, never auto-published; a human
+> content-manager approval promotes it into a real question through the existing content-authoring
+> commands (this project's "AI outputs are drafts until validated" posture for content, distinct from
+> the HITL-on-disputed-*results* posture scoring capabilities use).
 
 ---
 
