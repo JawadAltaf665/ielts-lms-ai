@@ -27,4 +27,10 @@ internal static class ListeningErrors
 
     public static readonly Error AttemptExpired = Error.Conflict(
         "CONFLICT_LISTENING_ATTEMPT_EXPIRED", "The time allowed for this attempt has expired.");
+
+    public static readonly Error AttemptNotSubmitted = Error.Validation(
+        "VALIDATION_LISTENING_ATTEMPT_NOT_SUBMITTED", "This attempt has not been submitted yet.");
+
+    public static readonly Error NoIncorrectAnswers = Error.Validation(
+        "VALIDATION_LISTENING_ATTEMPT_NO_ERRORS", "This attempt has no incorrect answers to coach on.");
 }

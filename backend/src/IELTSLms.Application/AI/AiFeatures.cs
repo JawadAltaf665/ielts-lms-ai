@@ -116,6 +116,44 @@ internal static class AiFeatures
 
     /// <summary>Billing <c>QuotaDefinition.Code</c> metering Sentence Builder AI scaffolding calls.</summary>
     public const string SentenceBuilderAiQuota = "ai.sentence-builder.requests";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag for Reading Coach (Phase 7 Sprint 8, AI Architecture
+    /// §13 capability catalog) — one capability serving both auto-explanation of wrong answers
+    /// (<c>GetReadingAttemptCoachingQuery</c>, composing the passage + wrong answer into text) and
+    /// on-demand strategy guidance (<c>RequestReadingCoachingCommand</c>), same one-feature-two-entry-
+    /// points shape as <see cref="GrammarCoach"/>.
+    /// </summary>
+    public const string ReadingCoach = "reading-coach";
+
+    /// <summary>Billing <c>Feature.Code</c> gating access to Reading Coach.</summary>
+    public const string ReadingCoachEntitlement = "ai.reading-coach";
+
+    /// <summary>Billing <c>QuotaDefinition.Code</c> metering Reading Coach calls.</summary>
+    public const string ReadingCoachQuota = "ai.reading-coach.requests";
+
+    /// <summary><see cref="Domain.AI.AiPrompt.Feature"/> tag for Listening Coach (Phase 7 Sprint 8) —
+    /// mirrors <see cref="ReadingCoach"/> exactly, grounded in the audio's transcript instead of a
+    /// passage.</summary>
+    public const string ListeningCoach = "listening-coach";
+
+    /// <summary>Billing <c>Feature.Code</c> gating access to Listening Coach.</summary>
+    public const string ListeningCoachEntitlement = "ai.listening-coach";
+
+    /// <summary>Billing <c>QuotaDefinition.Code</c> metering Listening Coach calls.</summary>
+    public const string ListeningCoachQuota = "ai.listening-coach.requests";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag for Reading's question-variant/difficulty-adaptation
+    /// capability (Phase 7 Sprint 8 scope item 3) — a <c>content.manage</c> authoring tool, not a
+    /// directly learner-invoked capability, so (like <see cref="ConversationSummary"/>) it has no
+    /// entitlement/quota of its own; not in the sprint's reconciliation notes.
+    /// </summary>
+    public const string ReadingQuestionVariants = "reading-question-variants";
+
+    /// <summary><see cref="Domain.AI.AiPrompt.Feature"/> tag for Listening's question-variant capability
+    /// — mirrors <see cref="ReadingQuestionVariants"/> exactly.</summary>
+    public const string ListeningQuestionVariants = "listening-question-variants";
 }
 
 /// <summary>
