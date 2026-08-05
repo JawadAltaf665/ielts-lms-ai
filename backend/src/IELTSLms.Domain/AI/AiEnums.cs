@@ -36,3 +36,22 @@ public enum BandPredictionStatus
     Ready = 2,
     Failed = 3,
 }
+
+/// <summary>Which bounded context's question a <see cref="QuestionVariantDraft.SourceQuestionId"/>
+/// polymorphically points at (Sprint 8) — the discriminator side of that reference, same pattern as
+/// <see cref="AiResponse.RequestingEntityType"/>.</summary>
+public enum QuestionVariantSourceType
+{
+    Reading = 1,
+    Listening = 2,
+}
+
+/// <summary>Human-review lifecycle of a <see cref="QuestionVariantDraft"/> (Sprint 8, AI Architecture
+/// §13 "generation assists, humans approve"): a draft is inert until a <c>content.manage</c> actor
+/// explicitly approves it; a rejected draft is retained (status, not hard-deleted) for audit.</summary>
+public enum QuestionVariantStatus
+{
+    Pending = 1,
+    Approved = 2,
+    Rejected = 3,
+}

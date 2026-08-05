@@ -941,6 +941,102 @@ namespace IELTSLms.Persistence.Migrations
                     b.ToTable("lesson_sessions", (string)null);
                 });
 
+            modelBuilder.Entity("IELTSLms.Domain.AI.QuestionVariantDraft", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AiResponseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ai_response_id");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<int>("DifficultyDelta")
+                        .HasColumnType("integer")
+                        .HasColumnName("difficulty_delta");
+
+                    b.Property<string>("DraftContent")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("draft_content");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<DateTimeOffset?>("RestoredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("restored_at_utc");
+
+                    b.Property<Guid?>("RestoredBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restored_by");
+
+                    b.Property<Guid>("SourceQuestionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_question_id");
+
+                    b.Property<string>("SourceType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("source_type");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_question_variant_drafts");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_question_variant_drafts_tenant_id");
+
+                    b.HasIndex("SourceType", "SourceQuestionId")
+                        .HasDatabaseName("ix_question_variant_drafts_source");
+
+                    b.HasIndex("TenantId", "Status")
+                        .HasDatabaseName("ix_question_variant_drafts_tenant_status");
+
+                    b.ToTable("question_variant_drafts", (string)null);
+                });
+
             modelBuilder.Entity("IELTSLms.Domain.Assessment.MockExamResult", b =>
                 {
                     b.Property<Guid>("Id")

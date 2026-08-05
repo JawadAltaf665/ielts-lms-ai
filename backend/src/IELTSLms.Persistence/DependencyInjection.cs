@@ -157,6 +157,9 @@ public static class DependencyInjection
         services.AddScoped<IAiResponseRepository, AiResponseRepository>();
         services.AddScoped<IAiOperationRepository, AiOperationRepository>();
 
+        // Phase 7 Sprint 8 - Reading AI + Listening AI question-variant drafts
+        services.AddScoped<IQuestionVariantDraftRepository, QuestionVariantDraftRepository>();
+
         // Phase 6 Sprint 4 - Reading
         services.AddScoped<IReadingPassageRepository, ReadingPassageRepository>();
         services.AddScoped<IReadingQuestionRepository, ReadingQuestionRepository>();
