@@ -40,4 +40,26 @@ internal sealed class FakeAiResponseRepository : IAiResponseRepository
 
         return Task.FromResult<IReadOnlyList<AiUsageSummaryRow>>(rows);
     }
+
+    public Task<IReadOnlyList<AiUsageSummaryRow>> GetUsageTrendsAsync(
+        Guid tenantId, DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken = default) =>
+        GetUsageSummaryAsync(tenantId, fromUtc, toUtc, cancellationToken);
+
+    public Task<IReadOnlyList<AiQualityTrendRow>> GetQualityTrendsAsync(
+        Guid tenantId, DateTimeOffset fromUtc, DateTimeOffset toUtc, CancellationToken cancellationToken = default)
+    {
+        var rows = _responses
+            .Where(r => r.TenantId == tenantId && r.CreatedAtUtc >= fromUtc && r.CreatedAtUtc < toUtc && _usageMeta.ContainsKey(r.Id))
+            .GroupBy(r => (_usageMeta[r.Id].Capability, Day: DateOnly.FromDateTime(r.CreatedAtUtc.UtcDateTime)))
+            .Select(g =>
+            {
+                var total = g.Count();
+                var failed = g.Count(r => r.Status == AiResponseStatus.Failed || r.Status == AiResponseStatus.Invalid);
+                var failureRate = total > 0 ? (decimal)failed / total : (decimal?)null;
+                return new AiQualityTrendRow(g.Key.Capability, g.Key.Day, total, failed, failureRate, 0, 0m);
+            })
+            .ToList();
+
+        return Task.FromResult<IReadOnlyList<AiQualityTrendRow>>(rows);
+    }
 }
