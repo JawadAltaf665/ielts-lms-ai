@@ -405,6 +405,16 @@ Legend: ✅ full · 🟡 scoped/limited · ➖ none.
 > `RequiredPermissions` for documentation, same not-yet-a-second-code-path caveat as every `ai.*`/`grammar.*`
 > permission key above (`AuthorizationPipelineBehavior` only enforces `RequiredRoles` today).
 >
+> **Phase 7 Sprint 9 reconciliation:** The weakness-profile/recommendations/daily-plan endpoints reuse
+> `analytics.view.self`/`analytics.view.cohort` as-is (matrix rows above) — no new permission key was
+> needed, confirming the sprint's own open question. Self/cohort access is enforced the same
+> not-yet-a-permission-pipeline way as `BandPredictionEndpoints`/`AnalyticsEndpoints`: an inline
+> self-or-`Teacher`-role check in the endpoint, not a `RequiredPermissions` declaration.
+> `POST .../weakness-profile/refresh`, `POST .../recommendations/{id}/dismiss`, and
+> `POST .../daily-plans/today/items/{itemId}/complete` are self-only mutations (no cohort variant) —
+> rate-limiting for the refresh endpoint is the existing AI quota (`ai.daily-learning-workflow.requests`),
+> not a distinct permission key.
+>
 > **Phase 7 Sprint 8 reconciliation:** `ai.reading-coach.use`/`ai.listening-coach.use` mirror
 > `ai.grammar-coach.use`'s row exactly — one capability serving both attempt-grounded auto-explanation
 > (`GET .../coaching`, gated by `reading.attempt`/`listening.attempt`, own-attempt only) and on-demand

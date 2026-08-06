@@ -423,6 +423,15 @@ graph LR
     TASKS --> NOTIFY[Notify learner]
 ```
 
+> **Phase 7 Sprint 9 implementation note:** Implemented as a plain Application-layer pipeline
+> (`DailyLearningWorkflowRunner`), not yet the full multi-agent runtime orchestrator (that's Sprint 10)
+> — same explicit simplification Phase 6 Sprints 6-7 used for Writing/Speaking. `START` is
+> `DailyLearningWorkflowJob`, a Hangfire recurring sweep (Backend Architecture §12) over entitled
+> tenants' active-learner cohorts; a lazy-fallback `GET .../daily-plans/today` covers a learner who
+> studies before the sweep has run that day. `NOTIFY` (raising `DailyPlanGenerated`, DDD §13.4) is
+> implemented as the event hand-off point only — actual notification delivery is out of this sprint's
+> scope (Notifications, ENT-044, is an existing context this sprint doesn't build into).
+
 ### 13.4 Weekly Assessment Workflow
 
 Progress Analysis (week) → Weakness update → Band Predictor (interim) → Recommendation → report to learner/teacher.
@@ -438,6 +447,12 @@ Gather history → Progress Analysis → Band Predictor → confidence check →
 ### 13.7 Learning Recommendation Workflow
 
 Weakness profile + progress → Recommendation Agent ranks actions → Study Planner integrates → surface to learner.
+
+> **Phase 7 Sprint 9 implementation note:** Implemented — `GET /api/v1/users/{userId}/recommendations`
+> surfaces the learner's current `Active` ranked set (up to 5 items, `{skill, title, rationale,
+> priority}`); `POST .../recommendations/{id}/dismiss` records a learner rejection (`Dismissed`, not
+> deleted), which the next generation's prompt context uses to avoid immediately re-suggesting the same
+> topic (business rule). Same plain-pipeline caveat as §13.3.
 
 ### 13.8 Student Dashboard Workflow
 

@@ -338,6 +338,15 @@ Each capability is delivered via the gateway with a versioned prompt, structured
 > content-manager approval promotes it into a real question through the existing content-authoring
 > commands (this project's "AI outputs are drafts until validated" posture for content, distinct from
 > the HITL-on-disputed-*results* posture scoring capabilities use).
+>
+> **Phase 7 Sprint 9 reconciliation:** "Study Planner", "Learning Recommendations", and "Weakness
+> Detection" move from catalog-only to implemented (Agentic §12.2 Progress Analysis Agent, §12.3 Study
+> Planner/Learning Recommendation Agents). Weakness Detection gates on a minimum-data threshold (≥5
+> activities across ≥2 of Grammar/Vocabulary/Reading/Listening/Writing/Speaking) — below it, reads
+> return a clear "insufficient data" status instead of a low-confidence guess, mirroring Band
+> Prediction's low-confidence handling. All three share one Billing entitlement/quota
+> (`ai.daily-learning-workflow`), same "single entitlement for a multi-call workflow" shape as Writing
+> Evaluation's three-call workflow.
 
 ---
 

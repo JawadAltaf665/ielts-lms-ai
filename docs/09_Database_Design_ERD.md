@@ -377,6 +377,9 @@ Entities are grouped by domain. Each entity defines: **Purpose, Description, Pri
 - **Unique Constraints:** One active path per user (partial).
 - **Check Constraints:** Target date future.
 - **Retention:** With user.
+- **Implementation status (as of Phase 7 Sprint 9):** Still catalog-only — no code in any sprint has
+  implemented this entity yet. `DailyPlans.LearningPathId` (ENT-034) references it as a nullable soft
+  identifier and stays `null` until a sprint builds it.
 - **Archiving:** With user.
 - **Data Type:** Master/Transactional.
 
@@ -736,6 +739,13 @@ Entities are grouped by domain. Each entity defines: **Purpose, Description, Pri
 - **Indexes:** (`TenantId`, `UserId`, PlanDate).
 - **Unique Constraints:** (`UserId`, PlanDate).
 - **Check Constraints:** PlanDate valid.
+- **Phase 7 Sprint 9 note:** Generation logic implemented (Study Planner Agent, Agentic §13.3) —
+  Progress Analysis → Learning Recommendation → Study Planner produces `PlanItems` (skill, title,
+  description, duration, completion state); the scheduled `DailyLearningWorkflowJob` sweep and a
+  lazy-fallback `GET .../daily-plans/today` both write through the same generator, race-safe on the
+  `(UserId, PlanDate)` unique constraint. `LearningPathId` stays `null` for now — ENT-012
+  `LearningPaths` has no implementation yet in any sprint; this is a **documented gap**, not a
+  Sprint 9 omission (Sprint 9's acceptance criteria don't include building `LearningPath`).
 - **Retention:** Rolling window then archive. **Archiving:** Summarize older plans.
 - **Data Type:** Transactional/Derived.
 
@@ -1372,6 +1382,34 @@ webhook dead-lettering). `Coupons` (ENT-043) gains a redemption-tracking child; 
 - **Indexes:** (`TenantId`, `UserId`), skill.
 - **Unique Constraints:** (`UserId`, Skill) for per-skill rows.
 - **Check Constraints:** Values ∈ valid ranges.
+- **Retention:** With user. **Archiving:** With user.
+- **Data Type:** Transactional/Derived.
+
+#### ENT-055A — WeaknessProfile *(Phase 7 Sprint 9)*
+- **Purpose:** Learner's current cross-skill weakness profile (AI Architecture §13 "Weakness Detection"; Agentic §12.2 Progress Analysis Agent).
+- **Description:** Per-skill weakness scores (Grammar/Vocabulary/Reading/Listening/Writing/Speaking), each 0-100 (higher = weaker), derived from cross-skill `ProgressTracking` + skill attempt history via a versioned `progress-analysis` AI Gateway call.
+- **Primary Key:** `WeaknessProfileId`.
+- **Foreign Keys:** `TenantId`, `UserId`, `AiResponseId` (nullable — set when AI-assisted; left null for a future purely-statistical recompute path).
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** *..1 User; soft reference to `AiResponse`.
+- **Business Rules:** One row per (`TenantId`, `UserId`) — recomputed in place (`Recompute`), not a growing history table, mirroring `ProgressTracking`'s idempotent/eventual-consistency posture. Requires a minimum-data threshold (≥5 total activities across ≥2 of the six relevant skills) before a row is produced at all; below threshold, no row exists and reads return an "insufficient data" status instead.
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`TenantId`, `UserId`).
+- **Unique Constraints:** (`TenantId`, `UserId`).
+- **Retention:** With user. **Archiving:** With user.
+- **Data Type:** Transactional/Derived.
+
+#### ENT-055B — LearningRecommendation *(Phase 7 Sprint 9)*
+- **Purpose:** Ranked "next action" suggestions for a learner (AI Architecture §13 "Learning Recommendations"; Agentic §12.3 Learning Recommendation Agent).
+- **Description:** Up to 5 ranked items (`{skill, title, rationale, priority}`), generated from the learner's `WeaknessProfile` via a versioned `learning-recommendation` AI Gateway call.
+- **Primary Key:** `LearningRecommendationId`.
+- **Foreign Keys:** `TenantId`, `UserId`, `AiResponseId` (nullable).
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** *..1 User; soft reference to `AiResponse`.
+- **Business Rules:** Status ∈ {Active, Superseded, Dismissed}; a newer generation supersedes the previous Active row (kept, not deleted, for history/analytics — Sprint 10); a learner-dismissed set feeds the next generation's "don't immediately re-recommend this" context.
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`TenantId`, `UserId`), (`TenantId`, `UserId`, GeneratedAt).
+- **Unique Constraints:** (`TenantId`, `UserId`) partial, `WHERE Status = 'Active'` — at most one Active set per learner.
 - **Retention:** With user. **Archiving:** With user.
 - **Data Type:** Transactional/Derived.
 
