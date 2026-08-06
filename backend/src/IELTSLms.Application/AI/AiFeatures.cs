@@ -154,6 +154,32 @@ internal static class AiFeatures
     /// <summary><see cref="Domain.AI.AiPrompt.Feature"/> tag for Listening's question-variant capability
     /// — mirrors <see cref="ReadingQuestionVariants"/> exactly.</summary>
     public const string ListeningQuestionVariants = "listening-question-variants";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag for the Progress Analysis Agent step (Phase 7
+    /// Sprint 9, Agentic AI Architecture §12.2/§13.3) — computes a <see cref="Domain.Learning.WeaknessProfile"/>
+    /// from cross-skill history.
+    /// </summary>
+    public const string ProgressAnalysis = "progress-analysis";
+
+    /// <summary><see cref="Domain.AI.AiPrompt.Feature"/> tag for the Learning Recommendation Agent step
+    /// (Phase 7 Sprint 9, Agentic AI Architecture §12.3/§13.7) — ranks next actions from a
+    /// <see cref="Domain.Learning.WeaknessProfile"/>.</summary>
+    public const string LearningRecommendation = "learning-recommendation";
+
+    /// <summary><see cref="Domain.AI.AiPrompt.Feature"/> tag for the Study Planner Agent step (Phase 7
+    /// Sprint 9, Agentic AI Architecture §12.3/§13.3) — turns ranked recommendations into today's
+    /// <see cref="Domain.Learning.DailyPlan"/>.</summary>
+    public const string StudyPlanner = "study-planner";
+
+    /// <summary>Billing <c>Feature.Code</c> gating the whole Daily Learning Workflow (all three AI
+    /// calls above) as a single entitlement — same "one entitlement per multi-step workflow" shape as
+    /// <see cref="WritingEvaluationEntitlement"/>, not gated per sub-step.</summary>
+    public const string DailyLearningWorkflowEntitlement = "ai.daily-learning-workflow";
+
+    /// <summary>Billing <c>QuotaDefinition.Code</c> metering Daily Learning Workflow invocations (the
+    /// learner-triggered weakness-profile refresh, and one unit per learner per scheduled/lazy-fallback run).</summary>
+    public const string DailyLearningWorkflowQuota = "ai.daily-learning-workflow.requests";
 }
 
 /// <summary>

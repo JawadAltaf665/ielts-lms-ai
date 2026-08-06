@@ -9,6 +9,8 @@ using IELTSLms.Application.AI.Prompts;
 using IELTSLms.Application.AI.SimilarityCheck;
 using IELTSLms.Application.Billing.Services;
 using IELTSLms.Application.Learning;
+using IELTSLms.Application.Learning.StudyPlanner;
+using IELTSLms.Application.Learning.WeaknessDetection;
 using IELTSLms.Application.Speaking;
 using IELTSLms.Application.Writing;
 using MediatR;
@@ -69,6 +71,13 @@ public static class DependencyInjection
         services.AddScoped<ISimilarityCheckProvider, SimilarityCheckProvider>();
         services.AddScoped<IWritingCalibrationHarness, WritingCalibrationHarness>();
         services.AddScoped<IPromptActivationValidator, WritingExaminerPromptActivationValidator>();
+
+        // Phase 7 Sprint 9 - Study Planner, Weakness Detection, Learning Recommendations: the Progress
+        // Analysis step (shared by the force-refresh job and the daily workflow runner) and the
+        // Daily Learning Workflow's per-user pipeline (shared by the recurring sweep and the
+        // lazy-fallback query handler).
+        services.AddScoped<ProgressAnalysisService>();
+        services.AddScoped<DailyLearningWorkflowRunner>();
 
         return services;
     }
