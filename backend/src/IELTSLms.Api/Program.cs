@@ -9,6 +9,7 @@ using IELTSLms.Application;
 using IELTSLms.Application.Vocabulary;
 using IELTSLms.BackgroundJobs;
 using IELTSLms.BackgroundJobs.Billing;
+using IELTSLms.BackgroundJobs.Learning;
 using IELTSLms.Infrastructure;
 using IELTSLms.Infrastructure.Performance;
 using IELTSLms.Persistence;
@@ -151,6 +152,7 @@ try
     api.MapMockExamEndpoints();
     api.MapAnalyticsEndpoints();
     api.MapBandPredictionEndpoints();
+    api.MapLearningEndpoints();
     api.MapCertificatesEndpoints();
     api.MapConversationEndpoints();
     api.MapTutorEndpoints();
@@ -203,6 +205,12 @@ try
             "billing-stripe-reconciliation", job => job.ExecuteAsync(CancellationToken.None), "0 */6 * * *");
         recurringJobs.AddOrUpdate<DeadLetterWebhookRetryJob>(
             "billing-dead-letter-webhook-retry", job => job.ExecuteAsync(CancellationToken.None), "*/15 * * * *");
+
+        // Phase 7 Sprint 9 - Daily Learning Workflow (Agentic AI Architecture §13.3): runs early morning,
+        // ahead of learners' typical study time; the lazy-fallback endpoint covers anyone who studies
+        // before this has run.
+        recurringJobs.AddOrUpdate<DailyLearningWorkflowJob>(
+            "learning-daily-workflow-sweep", job => job.ExecuteAsync(CancellationToken.None), "0 5 * * *");
     }
 
     // Graceful shutdown: wait for in-flight requests to complete.
