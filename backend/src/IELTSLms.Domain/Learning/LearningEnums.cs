@@ -20,3 +20,14 @@ public enum LearningSkill
     /// <c>LessonSession</c> completes, alongside the human-authored skill modules above.</summary>
     AiTeacher = 8,
 }
+
+/// <summary>Lifecycle of a <see cref="LearningRecommendation"/> set (Sprint 9, Agentic AI Architecture
+/// §13.7): a freshly generated set is <see cref="Active"/> until either a newer set is generated
+/// (<see cref="Superseded"/>) or the learner dismisses it (<see cref="Dismissed"/>) — both keep the row
+/// for audit/history rather than deleting it.</summary>
+public enum LearningRecommendationStatus
+{
+    Active = 1,
+    Superseded = 2,
+    Dismissed = 3,
+}
