@@ -99,3 +99,8 @@ temp/
 # Claude agent memory (local research cache — not shared via git)
 # ---------------------------------------------------------------------------
 .claude/
+
+# ---------------------------------------------------------------------------
+# Local implementation prompts (not part of the docs/ source of truth)
+# ---------------------------------------------------------------------------
+docs/Implementation-prompts/

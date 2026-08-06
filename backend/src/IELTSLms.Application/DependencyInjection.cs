@@ -11,6 +11,7 @@ using IELTSLms.Application.Billing.Services;
 using IELTSLms.Application.Learning;
 using IELTSLms.Application.Learning.StudyPlanner;
 using IELTSLms.Application.Learning.WeaknessDetection;
+using IELTSLms.Application.AI.Orchestration;
 using IELTSLms.Application.Speaking;
 using IELTSLms.Application.Writing;
 using MediatR;
@@ -78,6 +79,10 @@ public static class DependencyInjection
         // lazy-fallback query handler).
         services.AddScoped<ProgressAnalysisService>();
         services.AddScoped<DailyLearningWorkflowRunner>();
+
+        // Phase 7 Sprint 10 - Agent Registry and Workflow Engine
+        services.AddScoped<IAgentRegistry, AgentRegistry>();
+        services.AddScoped<IWorkflowEngine, WorkflowEngine>();
 
         return services;
     }

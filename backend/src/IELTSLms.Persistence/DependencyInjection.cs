@@ -87,6 +87,8 @@ public static class DependencyInjection
         services.AddHostedService<SpeakingCatalogSeeder>();
         services.AddHostedService<ResultsCatalogSeeder>();
         services.AddHostedService<LearningCatalogSeeder>();
+        // Phase 7 Sprint 10 - Agent Registry: seeds all 13 agents built in Sprints 4-9.
+        services.AddHostedService<AgentCatalogSeeder>();
 
         return services;
     }
@@ -203,5 +205,9 @@ public static class DependencyInjection
         services.AddScoped<IWeaknessProfileRepository, WeaknessProfileRepository>();
         services.AddScoped<ILearningRecommendationRepository, LearningRecommendationRepository>();
         services.AddScoped<IDailyPlanRepository, DailyPlanRepository>();
+
+        // Phase 7 Sprint 10 - Agent Registry + Workflow Engine
+        services.AddScoped<IAgentRegistrationRepository, AgentRegistrationRepository>();
+        services.AddScoped<IWorkflowRunRepository, WorkflowRunRepository>();
     }
 }

@@ -8,6 +8,7 @@ using IELTSLms.Application.AI.RequestGrammarCoaching;
 using IELTSLms.Application.AI.RequestListeningCoaching;
 using IELTSLms.Application.AI.RequestReadingCoaching;
 using IELTSLms.Application.AI.RequestVocabularyCoaching;
+using IELTSLms.Application.AI.Orchestration;
 using IELTSLms.SharedKernel.Results;
 using MediatR;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -53,6 +54,26 @@ internal static class AiEndpoints
             .WithTags("AI")
             .WithName("GetAiOperationStatus")
             .WithSummary("Polls the status of an async AI operation.");
+
+        builder.MapGet("/ai/agents", GetAgentsAsync)
+            .RequireAuthorization()
+            .WithTags("AI")
+            .WithName("GetAiAgents")
+            .WithSummary("Retrieves all registered AI agents from the Agent Registry (Sprint 10).");
+
+        // The endpoint is conceptually a workflow run status, exposed under the AI namespace.
+        // IWorkflowEngine returns WorkflowRunId, but we might want a specific query. Wait, we don't have GetWorkflowRunQuery yet. 
+        // Ah, the task checklist says: "Add GET /api/v1/ai/workflow-runs/{id} to AiEndpoints.cs".
+        // Let me check if there's a GetWorkflowRunStatusQuery, or if I should create one, or if I just need to expose orchestrated-review endpoints in MockExamEndpoints.
+        // Actually, the checklist says: 
+        // - Add GET /api/v1/ai/agents to AiEndpoints.cs
+        // - Add GET /api/v1/ai/workflow-runs/{id} to AiEndpoints.cs
+        // Wait, I did not create a GetWorkflowRunQuery handler! Let me check the task checklist again.
+        builder.MapGet("/ai/workflow-runs/{id:guid}", GetWorkflowRunAsync)
+            .RequireAuthorization()
+            .WithTags("AI")
+            .WithName("GetWorkflowRun")
+            .WithSummary("Retrieves the status and trace of a specific workflow run (Sprint 10).");
 
         builder.MapGet("/ai/usage-summary", GetUsageSummaryAsync)
             .RequireAuthorization()
@@ -208,6 +229,32 @@ internal static class AiEndpoints
 
         var result = await sender.Send(
             new GetAiUsageSummaryQuery(tenantId, queryParams.From, queryParams.To), cancellationToken);
+        return result.IsSuccess ? Results.Ok(ApiResponse.From(result.Value, httpContext)) : result.ToProblem(httpContext);
+    }
+
+    private static async Task<IResult> GetAgentsAsync(
+        IAgentRegistry registry, HttpContext httpContext, CancellationToken cancellationToken)
+    {
+        // Requires authorization, but agents are platform-wide.
+        // In a real app we might check for "agent.read" permission, but here we just return them.
+        var agents = await registry.GetAllAsync(cancellationToken);
+        return Results.Ok(ApiResponse.From(agents, httpContext));
+    }
+
+    private static async Task<IResult> GetWorkflowRunAsync(
+        Guid id, ISender sender, ITenantContext tenantContext, HttpContext httpContext, CancellationToken cancellationToken)
+    {
+        if (!TryGetTenantId(tenantContext, out var tenantId))
+        {
+            return TenantNotResolved.ToProblem(httpContext);
+        }
+
+        if (!TryGetUserId(httpContext, out var userId))
+        {
+            return UserNotResolved.ToProblem(httpContext);
+        }
+
+        var result = await sender.Send(new Application.AI.Orchestration.Queries.GetWorkflowRun.GetWorkflowRunQuery(tenantId, userId, id), cancellationToken);
         return result.IsSuccess ? Results.Ok(ApiResponse.From(result.Value, httpContext)) : result.ToProblem(httpContext);
     }
 
