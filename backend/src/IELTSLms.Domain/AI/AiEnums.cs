@@ -55,3 +55,24 @@ public enum QuestionVariantStatus
     Approved = 2,
     Rejected = 3,
 }
+
+/// <summary>Lifecycle of an <see cref="AgentRegistration"/> entry in the Agent Registry (Sprint 10,
+/// Agentic AI Architecture §4). Deprecated agents remain queryable for governance/audit but are not
+/// selected by the Workflow Engine for new invocations.</summary>
+public enum AgentStatus
+{
+    Enabled = 1,
+    Deprecated = 2,
+}
+
+/// <summary>Lifecycle of a <see cref="WorkflowRun"/> (Sprint 10, Agentic AI Architecture §6).
+/// <see cref="Compensated"/> is a sub-state of partial failure where saga-style cleanup callbacks
+/// ran successfully after a step error — the run is still "failed" from a business perspective but
+/// compensation ran cleanly, so the distinction matters for observability.</summary>
+public enum WorkflowRunStatus
+{
+    Running = 1,
+    Completed = 2,
+    Failed = 3,
+    Compensated = 4,
+}
