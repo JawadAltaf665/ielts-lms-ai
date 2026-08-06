@@ -86,6 +86,7 @@ public static class DependencyInjection
         services.AddHostedService<WritingCatalogSeeder>();
         services.AddHostedService<SpeakingCatalogSeeder>();
         services.AddHostedService<ResultsCatalogSeeder>();
+        services.AddHostedService<LearningCatalogSeeder>();
 
         return services;
     }
@@ -197,5 +198,10 @@ public static class DependencyInjection
 
         // Phase 7 Sprint 4 - AI Tutor + AI Teacher
         services.AddScoped<ILessonSessionRepository, LessonSessionRepository>();
+
+        // Phase 7 Sprint 9 - Study Planner, Weakness Detection, Learning Recommendations
+        services.AddScoped<IWeaknessProfileRepository, WeaknessProfileRepository>();
+        services.AddScoped<ILearningRecommendationRepository, LearningRecommendationRepository>();
+        services.AddScoped<IDailyPlanRepository, DailyPlanRepository>();
     }
 }

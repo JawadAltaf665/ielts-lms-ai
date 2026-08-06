@@ -4913,6 +4913,188 @@ namespace IELTSLms.Persistence.Migrations
                     b.ToTable("user_sessions", (string)null);
                 });
 
+            modelBuilder.Entity("IELTSLms.Domain.Learning.DailyPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AiResponseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ai_response_id");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<DateTimeOffset>("GeneratedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("generated_at_utc");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<Guid?>("LearningPathId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("learning_path_id");
+
+                    b.Property<DateOnly>("PlanDate")
+                        .HasColumnType("date")
+                        .HasColumnName("plan_date");
+
+                    b.Property<string>("PlanItemsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("plan_items_json");
+
+                    b.Property<DateTimeOffset?>("RestoredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("restored_at_utc");
+
+                    b.Property<Guid?>("RestoredBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restored_by");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_daily_plans");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_daily_plans_tenant_id");
+
+                    b.HasIndex("TenantId", "UserId", "PlanDate")
+                        .IsUnique()
+                        .HasDatabaseName("ix_daily_plans_tenant_user_date_unique");
+
+                    b.ToTable("daily_plans", (string)null);
+                });
+
+            modelBuilder.Entity("IELTSLms.Domain.Learning.LearningRecommendation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AiResponseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ai_response_id");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<DateTimeOffset>("GeneratedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("generated_at_utc");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("RankedItemsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("ranked_items_json");
+
+                    b.Property<DateTimeOffset?>("RestoredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("restored_at_utc");
+
+                    b.Property<Guid?>("RestoredBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restored_by");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_learning_recommendations");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_learning_recommendations_tenant_id");
+
+                    b.HasIndex("TenantId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_learning_recommendations_tenant_user_active_unique")
+                        .HasFilter("\"status\" = 'Active'");
+
+                    b.HasIndex("TenantId", "UserId", "GeneratedAtUtc")
+                        .HasDatabaseName("ix_learning_recommendations_tenant_user_generated");
+
+                    b.ToTable("learning_recommendations", (string)null);
+                });
+
             modelBuilder.Entity("IELTSLms.Domain.Learning.ProgressTracking", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4994,6 +5176,88 @@ namespace IELTSLms.Persistence.Migrations
                         .HasDatabaseName("ix_progress_tracking_tenant_user_skill_unique");
 
                     b.ToTable("progress_tracking", (string)null);
+                });
+
+            modelBuilder.Entity("IELTSLms.Domain.Learning.WeaknessProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AiResponseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ai_response_id");
+
+                    b.Property<DateTimeOffset>("ComputedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("computed_at_utc");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at_utc");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
+
+                    b.Property<DateTimeOffset?>("RestoredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("restored_at_utc");
+
+                    b.Property<Guid?>("RestoredBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("restored_by");
+
+                    b.Property<string>("SkillScoresJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("skill_scores_json");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_weakness_profiles");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_weakness_profiles_tenant_id");
+
+                    b.HasIndex("TenantId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_weakness_profiles_tenant_user_unique");
+
+                    b.ToTable("weakness_profiles", (string)null);
                 });
 
             modelBuilder.Entity("IELTSLms.Domain.Listening.ListeningAttempt", b =>
