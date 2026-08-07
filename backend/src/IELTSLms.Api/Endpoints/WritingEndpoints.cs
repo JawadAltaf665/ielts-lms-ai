@@ -4,8 +4,10 @@ using IELTSLms.Api.Contracts;
 using IELTSLms.Api.Extensions;
 using IELTSLms.Application.Writing.Commands.CreateWritingTask;
 using IELTSLms.Application.Writing.Commands.OverrideWritingEvaluation;
+using IELTSLms.Application.Writing.Commands.ResolveWritingEvaluationReview;
 using IELTSLms.Application.Writing.Commands.SubmitWriting;
 using IELTSLms.Application.Writing.Queries.GetWritingEvaluation;
+using IELTSLms.Application.Writing.Queries.GetWritingReviewQueue;
 using IELTSLms.Application.Writing.Queries.GetWritingSubmission;
 using IELTSLms.Application.Writing.Queries.GetWritingTask;
 using IELTSLms.Application.Writing.Queries.GetWritingTasks;
@@ -71,6 +73,21 @@ internal static class WritingEndpoints
             .WithTags("Writing")
             .WithName("OverrideWritingEvaluation")
             .WithSummary("Teacher override of the AI-produced scores (writing.evaluate); audited, original AI scores retained.");
+
+        builder.MapGet("/writing-evaluations/review-queue", GetWritingReviewQueueAsync)
+            .RequireAuthorization()
+            .WithTags("Writing")
+            .WithName("GetWritingReviewQueue")
+            .WithSummary(
+                "Lists flagged/low-confidence/high-similarity evaluations awaiting human review (writing.evaluate), cursor-paginated.");
+
+        builder.MapPost("/writing-evaluations/{id:guid}/resolve-review", ResolveWritingEvaluationReviewAsync)
+            .RequireAuthorization()
+            .WithTags("Writing")
+            .WithName("ResolveWritingEvaluationReview")
+            .WithSummary(
+                "Teacher marks a flagged evaluation reviewed, with or without a score override (writing.evaluate); " +
+                "audited (actor, timestamp, decision), distinct from PATCH.");
 
         return builder;
     }
@@ -215,6 +232,39 @@ internal static class WritingEndpoints
         var command = new OverrideWritingEvaluationCommand(
             tenantId, userId, id, request.TaskResponse, request.CoherenceCohesion, request.LexicalResource,
             request.GrammaticalRangeAccuracy, request.Reason);
+        var result = await sender.Send(command, cancellationToken);
+        return result.IsSuccess ? Results.Ok(ApiResponse.From(result.Value, httpContext)) : result.ToProblem(httpContext);
+    }
+
+    private static async Task<IResult> GetWritingReviewQueueAsync(
+        [AsParameters] GetWritingReviewQueueQueryParams queryParams, ISender sender, ITenantContext tenantContext,
+        HttpContext httpContext, CancellationToken cancellationToken)
+    {
+        if (!TryGetTenantId(tenantContext, out var tenantId))
+        {
+            return TenantNotResolved.ToProblem(httpContext);
+        }
+
+        var limit = PaginationDefaults.NormalizePageSize(queryParams.Limit ?? PaginationDefaults.DefaultPageSize);
+        var result = await sender.Send(new GetWritingReviewQueueQuery(tenantId, queryParams.Cursor, limit), cancellationToken);
+        return result.IsSuccess ? Results.Ok(ApiResponse.From(result.Value, httpContext)) : result.ToProblem(httpContext);
+    }
+
+    private static async Task<IResult> ResolveWritingEvaluationReviewAsync(
+        Guid id, ResolveWritingEvaluationReviewRequest request, ISender sender, ITenantContext tenantContext, HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetTenantId(tenantContext, out var tenantId))
+        {
+            return TenantNotResolved.ToProblem(httpContext);
+        }
+
+        if (!TryGetUserId(httpContext, out var userId))
+        {
+            return UserNotResolved.ToProblem(httpContext);
+        }
+
+        var command = new ResolveWritingEvaluationReviewCommand(tenantId, userId, id, request.Decision);
         var result = await sender.Send(command, cancellationToken);
         return result.IsSuccess ? Results.Ok(ApiResponse.From(result.Value, httpContext)) : result.ToProblem(httpContext);
     }

@@ -18,4 +18,7 @@ internal static class MockExamErrors
 
     public static readonly Error SectionsIncomplete = Error.Conflict(
         "BUSINESS_MOCK_EXAM_SECTIONS_INCOMPLETE", "Not all sections have been evaluated yet.");
+
+    public static readonly Error OrchestratedReviewNotFound = Error.NotFound(
+        "NOT_FOUND_ORCHESTRATED_REVIEW", "No orchestrated review was found for this mock exam.");
 }

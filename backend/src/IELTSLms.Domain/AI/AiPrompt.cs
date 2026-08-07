@@ -11,6 +11,12 @@ namespace IELTSLms.Domain.AI;
 /// <c>Version</c> to avoid colliding with <see cref="AuditableEntity{TId}.Version"/>, the unrelated
 /// optimistic-concurrency token inherited from the base class. <see cref="TenantId"/> nullable mirrors
 /// <see cref="AiProvider"/>'s global-vs-tenant split — not <see cref="ITenantScoped"/>.
+/// <para>
+/// Phase 7 Sprint 2 (Prompt Library &amp; Versioning): a newly created version is a <b>draft</b> — it
+/// does not go live until a separate <see cref="Activate"/> call promotes it (the admin rollout/A-B
+/// slot-assignment point). This keeps authoring and rollout as two governed, independently-audited
+/// steps rather than one.
+/// </para>
 /// </summary>
 public sealed class AiPrompt : AuditableEntity<AiPromptId>
 {
@@ -25,7 +31,7 @@ public sealed class AiPrompt : AuditableEntity<AiPromptId>
         PromptVersion = version;
         Scope = scope;
         SystemTemplate = systemTemplate;
-        IsActive = true;
+        IsActive = false;
         CreatedAtUtc = nowUtc;
     }
 
@@ -77,9 +83,30 @@ public sealed class AiPrompt : AuditableEntity<AiPromptId>
             systemTemplate, nowUtc));
     }
 
+    /// <summary>Promotes this version to live for its (TenantId, Feature, Scope) slot. Callers are
+    /// responsible for deactivating whatever else was active in the same slot — this method only
+    /// flips this row (mirrors <see cref="Deactivate"/>, kept symmetric and side-effect-free).</summary>
+    public void Activate(DateTimeOffset nowUtc)
+    {
+        IsActive = true;
+        UpdatedAtUtc = nowUtc;
+    }
+
     public void Deactivate(DateTimeOffset nowUtc)
     {
         IsActive = false;
+        UpdatedAtUtc = nowUtc;
+    }
+
+    public void SoftDelete(DateTimeOffset nowUtc)
+    {
+        if (IsDeleted)
+        {
+            return;
+        }
+
+        IsDeleted = true;
+        DeletedAtUtc = nowUtc;
         UpdatedAtUtc = nowUtc;
     }
 }

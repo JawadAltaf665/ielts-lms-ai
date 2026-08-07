@@ -377,6 +377,9 @@ Entities are grouped by domain. Each entity defines: **Purpose, Description, Pri
 - **Unique Constraints:** One active path per user (partial).
 - **Check Constraints:** Target date future.
 - **Retention:** With user.
+- **Implementation status (as of Phase 7 Sprint 9):** Still catalog-only — no code in any sprint has
+  implemented this entity yet. `DailyPlans.LearningPathId` (ENT-034) references it as a nullable soft
+  identifier and stays `null` until a sprint builds it.
 - **Archiving:** With user.
 - **Data Type:** Master/Transactional.
 
@@ -513,6 +516,16 @@ Entities are grouped by domain. Each entity defines: **Purpose, Description, Pri
 - **Retention:** With user. **Archiving:** With user.
 - **Data Type:** Transactional.
 
+> **Implementation note (Phase 7 Sprint 7):** ENT-019/ENT-020 were cataloged here but had no
+> Implementation-prompts sprint until Phase 7 Sprint 7 shipped them as the minimal non-AI base a
+> Sentence Builder AI capability needed to attach to (YAGNI — see that sprint's own gap note). The
+> shipped shape is deliberately narrower than this catalog entry: `SentenceExercises` has `Prompt`
+> and `TargetPattern` (a JSON array of required tokens, deterministically pattern-matched — no `Title`/
+> `Track`/`CategoryId`, no title-uniqueness constraint); `SentenceAttempts` adds `AiResponseId`
+> (nullable) and `Feedback` (nullable), populated asynchronously by the AI scaffolding job after the
+> synchronous `Score` (0-100, not DB-constrained to a range — validated in the deterministic scorer).
+> Widen to the full catalog shape only if a future sprint's admin tooling actually needs it.
+
 ### 6.3 Skills: Reading, Listening, Writing, Speaking
 
 #### ENT-021 — ReadingPassages
@@ -637,16 +650,16 @@ Entities are grouped by domain. Each entity defines: **Purpose, Description, Pri
 
 #### ENT-029 — WritingEvaluations
 - **Purpose:** Rubric-aligned evaluation of a writing submission.
-- **Description:** Per-criterion scores, estimated band, feedback, confidence, provider reference.
+- **Description:** Per-criterion scores, estimated band, feedback, confidence, similarity-check score, provider reference.
 - **Primary Key:** `WritingEvaluationId`.
 - **Foreign Keys:** `TenantId`, `WritingSubmissionId`, `AIResponseId` (nullable), `AIProviderId` (nullable).
 - **Tenant Isolation:** `TenantId` required.
 - **Relationships:** 1..1 WritingSubmission.
-- **Business Rules:** Criteria aligned to official descriptors; AI-labeled; low-confidence flagged; teacher override allowed ([FR-AIWE-001](./04_Functional_Requirements.md)).
+- **Business Rules:** Criteria aligned to official descriptors; AI-labeled; low-confidence **or** high-similarity flagged for human review ([FR-AIWE-001](./04_Functional_Requirements.md); Phase 7 Sprint 6 added `SimilarityScore` and the similarity-threshold check alongside the pre-existing confidence check, mirroring Phase 7 Sprint 5's Speaking criterion-spread addition). Teacher override allowed. Review resolution is itself audited: `ReviewedBy`/`ReviewedAtUtc`/`ReviewDecision` (Phase 7 Sprint 6, distinct from the pre-existing `Overridden*` score-override audit trail — either clears the evaluation from the review queue), same shape as `SpeakingEvaluations` (ENT-032).
 - **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
-- **Indexes:** (`WritingSubmissionId`), band.
+- **Indexes:** (`WritingSubmissionId`), band, (`TenantId`, `RequiresHumanReview`, `CreatedAtUtc`) — review queue.
 - **Unique Constraints:** (`WritingSubmissionId`) latest/active.
-- **Check Constraints:** Criterion bands 0–9 (0.5 steps).
+- **Check Constraints:** Criterion bands 0–9 (0.5 steps); `SimilarityScore` null or 0–1.
 - **Retention:** With submission. **Archiving:** With submission.
 - **Data Type:** Transactional/Derived.
 
@@ -687,9 +700,9 @@ Entities are grouped by domain. Each entity defines: **Purpose, Description, Pri
 - **Foreign Keys:** `TenantId`, `SpeakingAttemptId`, `AIResponseId` (nullable), `AIProviderId` (nullable).
 - **Tenant Isolation:** `TenantId` required.
 - **Relationships:** 1..1 SpeakingAttempt.
-- **Business Rules:** Criteria aligned to official descriptors; AI-labeled; low-confidence flagged ([FR-AISE-001](./04_Functional_Requirements.md)).
+- **Business Rules:** Criteria aligned to official descriptors; AI-labeled; low-confidence **or** criterion-spread-inconsistency flagged for human review ([FR-AISE-001](./04_Functional_Requirements.md); Phase 7 Sprint 5 added the spread check alongside the pre-existing confidence check). Review resolution is itself audited: `ReviewedBy`/`ReviewedAtUtc`/`ReviewDecision` (Phase 7 Sprint 5, distinct from the pre-existing `Overridden*` score-override audit trail — either clears the evaluation from the review queue).
 - **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
-- **Indexes:** (`SpeakingAttemptId`), band.
+- **Indexes:** (`SpeakingAttemptId`), band, (`TenantId`, `RequiresHumanReview`, `CreatedAtUtc`) — review queue.
 - **Unique Constraints:** (`SpeakingAttemptId`) latest/active.
 - **Check Constraints:** Criterion bands 0–9 (0.5 steps).
 - **Retention:** With attempt. **Archiving:** With attempt.
@@ -726,6 +739,13 @@ Entities are grouped by domain. Each entity defines: **Purpose, Description, Pri
 - **Indexes:** (`TenantId`, `UserId`, PlanDate).
 - **Unique Constraints:** (`UserId`, PlanDate).
 - **Check Constraints:** PlanDate valid.
+- **Phase 7 Sprint 9 note:** Generation logic implemented (Study Planner Agent, Agentic §13.3) —
+  Progress Analysis → Learning Recommendation → Study Planner produces `PlanItems` (skill, title,
+  description, duration, completion state); the scheduled `DailyLearningWorkflowJob` sweep and a
+  lazy-fallback `GET .../daily-plans/today` both write through the same generator, race-safe on the
+  `(UserId, PlanDate)` unique constraint. `LearningPathId` stays `null` for now — ENT-012
+  `LearningPaths` has no implementation yet in any sprint; this is a **documented gap**, not a
+  Sprint 9 omission (Sprint 9's acceptance criteria don't include building `LearningPath`).
 - **Retention:** Rolling window then archive. **Archiving:** Summarize older plans.
 - **Data Type:** Transactional/Derived.
 
@@ -1203,6 +1223,15 @@ webhook dead-lettering). `Coupons` (ENT-043) gains a redemption-tracking child; 
 - **Check Constraints:** —
 - **Retention:** Retain for reproducibility. **Archiving:** Versioned.
 - **Data Type:** Reference Data.
+- **Phase 7 Sprint 2 reconciliation (Prompt Library & Versioning):** no schema change was needed.
+  `Scope` (already part of the unique key) doubles as the A/B-slot discriminator — e.g.
+  `Scope = "control"` / `Scope = "variant-b"` for the same `Feature` — each independently active per
+  `(TenantId, Feature, Scope)`. `IsActive` (added Phase 6 Sprint 3, not previously documented here)
+  is the "which version is active" marker per slot; a newly authored version starts as a draft
+  (`IsActive = false`) until an explicit activation promotes it, and activation deactivates whatever
+  else was active in the same slot (never across scopes). Rollback/activation history is not a new
+  column — it is derived from existing rows (the most recently deactivated version in a slot) and
+  audited via the existing `AuditLog` mechanism, not a new logging table.
 
 #### ENT-052 — AIResponses
 - **Purpose:** Recorded AI provider responses for traceability/cost.
@@ -1219,6 +1248,21 @@ webhook dead-lettering). `Coupons` (ENT-043) gains a redemption-tracking child; 
 - **Retention:** Time-boxed per policy. **Archiving:** Cold storage then purge.
 - **Data Type:** Transactional (log).
 
+#### ENT-050A — AIOperations
+- **Purpose:** The reusable async-operation resource backing `GET /api/v1/operations/{id}` (API Design Standards §14.2) for any AI capability invocation.
+- **Description:** Tracks the lifecycle (queued → processing → succeeded/failed) of one asynchronous gateway invocation on behalf of a user; carries the raw learner input and, once resolved, a reference to the recorded `AIResponse`. Built in Phase 6 Sprint 3 alongside the AI Gateway; documented here at Phase 7 Sprint 1 reconciliation.
+- **Primary Key:** `AIOperationId`.
+- **Foreign Keys:** `TenantId`, `UserId`, `AIResponseId` (nullable, set on success).
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** *..1 User; 0..1 AIResponse.
+- **Business Rules:** `Kind` is the capability tag (e.g. `grammar-coach`), matching `AIPrompts.Feature`; terminal states (`Succeeded`/`Failed`) are not reprocessed (idempotency guard against background-job retry).
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`TenantId`, `UserId`, createdAt).
+- **Unique Constraints:** —
+- **Check Constraints:** Status ∈ {Queued, Processing, Succeeded, Failed}.
+- **Retention:** Time-boxed per policy, mirrors AIResponses. **Archiving:** Cold storage then purge.
+- **Data Type:** Transactional (log).
+
 #### ENT-053 — BandPredictions
 - **Purpose:** AI-estimated IELTS band prediction for a learner.
 - **Description:** Predicted overall/section bands with confidence and inputs snapshot.
@@ -1233,6 +1277,81 @@ webhook dead-lettering). `Coupons` (ENT-043) gains a redemption-tracking child; 
 - **Check Constraints:** Bands 0–9 (0.5 steps); confidence ∈ [0,1].
 - **Retention:** With user. **Archiving:** With user.
 - **Data Type:** Transactional/Derived.
+
+#### ENT-050B — Conversations
+- **Purpose:** A bounded dialog thread between a learner and an AI capability (short-term conversational memory tier).
+- **Description:** Phase 7 Sprint 3 (Memory & Conversation History, [AI Architecture §6](./17_AI_Architecture.md#6-context-management--memory), [Agentic AI Architecture §5](./18_Agentic_AI_Architecture.md#5-agent-memory)). One learner may have multiple conversations per `Feature` (e.g. one per lesson topic).
+- **Primary Key:** `ConversationId`.
+- **Foreign Keys:** `TenantId`, `UserId`.
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** *..1 User; 1..* ConversationMessages; 1..* ConversationSummaries.
+- **Business Rules:** `Feature` (e.g. `ai-tutor`, `ai-teacher`, mirrors `AIPrompts.Feature`) is immutable after creation — a conversation cannot switch capabilities mid-thread. No `(UserId, Feature)` uniqueness, index only.
+- **Soft Delete:** Yes (archive). **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`TenantId`, `UserId`, `Feature`), (`TenantId`, `UserId`, `LastMessageAt`).
+- **Unique Constraints:** —
+- **Check Constraints:** Status ∈ {Active, Archived}.
+- **Retention:** Retention policy applies; archive is soft-delete, not a hard purge. **Archiving:** Learner-initiated soft-delete.
+- **Data Type:** Transactional.
+
+#### ENT-050C — ConversationMessages
+- **Purpose:** One turn (user/assistant/system) in a Conversation.
+- **Description:** Append-only/immutable once written — mirrors `ActivityLogs`' (ENT-047) partition-candidate posture; a correction is always a new message, never an edit. `TokenCount` is captured at write time for context-budget accounting.
+- **Primary Key:** `ConversationMessageId`.
+- **Foreign Keys:** `TenantId`, `ConversationId`, `AIResponseId` (nullable — links an assistant turn back to the gateway call that produced it).
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** *..1 Conversation; 0..1 AIResponse.
+- **Business Rules:** `Sequence` is 1-based, monotonically increasing per `ConversationId` — the natural ordering key for both context assembly and pagination.
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`TenantId`, `ConversationId`, `Sequence`) — leading index, partition candidate (not partitioned yet, per [ERD §10.2](#102-partitioning)).
+- **Unique Constraints:** (`TenantId`, `ConversationId`, `Sequence`).
+- **Check Constraints:** Role ∈ {User, Assistant, System}.
+- **Retention:** Time-boxed per policy, mirrors AIResponses. **Archiving:** Cold storage then purge.
+- **Data Type:** Transactional (log).
+
+#### ENT-050D — ConversationSummaries
+- **Purpose:** The compaction artifact for long-running conversations.
+- **Description:** Replaces raw ConversationMessage rows up to `CoversUpToSequence` in context assembly; context assembly always reads the latest summary + messages after it, never re-summarizes on every call. Produced by one bounded AI Gateway call, not a bespoke text-compression routine.
+- **Primary Key:** `ConversationSummaryId`.
+- **Foreign Keys:** `TenantId`, `ConversationId`.
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** *..1 Conversation.
+- **Business Rules:** Write-once/immutable — a re-summarization persists a new row with a higher `CoversUpToSequence`, never edits a prior one. Summarization never drops the most recent N raw messages (recency floor), even under aggressive compaction.
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`TenantId`, `ConversationId`, `CoversUpToSequence`).
+- **Unique Constraints:** —
+- **Check Constraints:** —
+- **Retention:** Retained with the conversation. **Archiving:** With conversation.
+- **Data Type:** Transactional (log)/Derived.
+
+#### ENT-050E — LessonSessions
+- **Purpose:** AI Teacher's step-state machine for one learner/lesson pairing (structured lesson delivery, distinct from the reactive AI Tutor conversation).
+- **Description:** Phase 7 Sprint 4 (AI Tutor + AI Teacher, [Agentic AI Architecture §12.1](./18_Agentic_AI_Architecture.md#121-learning--coaching-agents) — new "Teacher Agent" entry, distinct from §12.4's human-teacher-facing "Teacher Assistant Agent"). Backs one `Conversation` (`Feature = "ai-teacher"`) scoped to a single lesson, tracking a fixed step sequence: Explain → CheckUnderstanding → Practice → Recap → Completed.
+- **Primary Key:** `LessonSessionId`.
+- **Foreign Keys:** `TenantId`, `UserId`, `ConversationId`. `LessonId` is **not** a foreign key — the Course/Module/Lesson content model (ENT-014 `Lessons`) does not exist in the implementation yet; `LessonId` is carried as a bare id, mirroring the documented "column now, FK later" precedent (`CLAUDE.md` Sprint 2 identity tables). Reconcile to a real FK once Lessons ships.
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** *..1 User; 1..1 Conversation.
+- **Business Rules:** One active (non-`Completed`) session per (`UserId`, `LessonId`) — mirrors ENT-036 MonthlyMockExams' single-active-session pattern. `CurrentStep` only advances unconditionally for Explain/Practice/Recap; the `CheckUnderstanding` step advances only on a passed check, and repeats (bounded by a retry cap, then force-advances) on a failed one — never loops forever. Raises `LessonSessionCompleted` exactly once, on reaching `Completed`, routed through the existing `ProgressTracking` (ENT-055) write path, not a parallel one.
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`TenantId`, `UserId`, `LessonId`), `ConversationId`.
+- **Unique Constraints:** (`TenantId`, `UserId`, `LessonId`) active (partial, `CurrentStep <> 'Completed'`).
+- **Check Constraints:** CurrentStep ∈ {Explain, CheckUnderstanding, Practice, Recap, Completed}.
+- **Retention:** With user. **Archiving:** With user.
+- **Data Type:** Transactional.
+
+#### ENT-050F — QuestionVariantDrafts
+- **Purpose:** The output of the Reading/Listening difficulty-adaptation capability, pending human review.
+- **Description:** Phase 7 Sprint 8 (Reading AI + Listening AI, [AI Architecture §13](./17_AI_Architecture.md#13-ai-capability-catalog)) — "generation assists, humans approve": a draft, AI-adjusted variant of an existing `ReadingQuestions`/`ListeningQuestions` (ENT-022/ENT-025) row, inert until a `content.manage` actor approves it. `SourceQuestionId` is a polymorphic reference (`SourceType` picks which of the two question tables it points at, same discriminator shape as `AIResponses.RequestingEntityType`/`RequestingEntityId`) — no FK constraint, resolved in application code. `DraftContent` is structured JSON, the same `{ type, prompt, answerKey }` shape a question is authored with.
+- **Primary Key:** `QuestionVariantDraftId`.
+- **Foreign Keys:** `TenantId`, `AIResponseId`. `SourceQuestionId` is a bare id (polymorphic, see above).
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** *..1 AIResponse.
+- **Business Rules:** Approval promotes the draft into a real question through the *existing* Reading/Listening content-authoring commands (`AddReadingQuestionCommand`/`AddListeningQuestionCommand`) — never a second, parallel content-creation path. A rejected draft keeps its row (`Status` flips, no hard delete) for audit, same posture as evaluation-override decisions elsewhere in the platform. Never auto-published.
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`SourceType`, `SourceQuestionId`), (`TenantId`, `Status`).
+- **Unique Constraints:** —
+- **Check Constraints:** SourceType ∈ {Reading, Listening}; Status ∈ {Pending, Approved, Rejected}.
+- **Retention:** With tenant content. **Archiving:** With tenant content.
+- **Data Type:** Transactional (content-authoring draft).
 
 ### 6.9 Progress, Engagement & Support
 
@@ -1263,6 +1382,34 @@ webhook dead-lettering). `Coupons` (ENT-043) gains a redemption-tracking child; 
 - **Indexes:** (`TenantId`, `UserId`), skill.
 - **Unique Constraints:** (`UserId`, Skill) for per-skill rows.
 - **Check Constraints:** Values ∈ valid ranges.
+- **Retention:** With user. **Archiving:** With user.
+- **Data Type:** Transactional/Derived.
+
+#### ENT-055A — WeaknessProfile *(Phase 7 Sprint 9)*
+- **Purpose:** Learner's current cross-skill weakness profile (AI Architecture §13 "Weakness Detection"; Agentic §12.2 Progress Analysis Agent).
+- **Description:** Per-skill weakness scores (Grammar/Vocabulary/Reading/Listening/Writing/Speaking), each 0-100 (higher = weaker), derived from cross-skill `ProgressTracking` + skill attempt history via a versioned `progress-analysis` AI Gateway call.
+- **Primary Key:** `WeaknessProfileId`.
+- **Foreign Keys:** `TenantId`, `UserId`, `AiResponseId` (nullable — set when AI-assisted; left null for a future purely-statistical recompute path).
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** *..1 User; soft reference to `AiResponse`.
+- **Business Rules:** One row per (`TenantId`, `UserId`) — recomputed in place (`Recompute`), not a growing history table, mirroring `ProgressTracking`'s idempotent/eventual-consistency posture. Requires a minimum-data threshold (≥5 total activities across ≥2 of the six relevant skills) before a row is produced at all; below threshold, no row exists and reads return an "insufficient data" status instead.
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`TenantId`, `UserId`).
+- **Unique Constraints:** (`TenantId`, `UserId`).
+- **Retention:** With user. **Archiving:** With user.
+- **Data Type:** Transactional/Derived.
+
+#### ENT-055B — LearningRecommendation *(Phase 7 Sprint 9)*
+- **Purpose:** Ranked "next action" suggestions for a learner (AI Architecture §13 "Learning Recommendations"; Agentic §12.3 Learning Recommendation Agent).
+- **Description:** Up to 5 ranked items (`{skill, title, rationale, priority}`), generated from the learner's `WeaknessProfile` via a versioned `learning-recommendation` AI Gateway call.
+- **Primary Key:** `LearningRecommendationId`.
+- **Foreign Keys:** `TenantId`, `UserId`, `AiResponseId` (nullable).
+- **Tenant Isolation:** `TenantId` required.
+- **Relationships:** *..1 User; soft reference to `AiResponse`.
+- **Business Rules:** Status ∈ {Active, Superseded, Dismissed}; a newer generation supersedes the previous Active row (kept, not deleted, for history/analytics — Sprint 10); a learner-dismissed set feeds the next generation's "don't immediately re-recommend this" context.
+- **Soft Delete:** Yes. **Audit Fields:** Yes. **Concurrency:** `Version`.
+- **Indexes:** (`TenantId`, `UserId`), (`TenantId`, `UserId`, GeneratedAt).
+- **Unique Constraints:** (`TenantId`, `UserId`) partial, `WHERE Status = 'Active'` — at most one Active set per learner.
 - **Retention:** With user. **Archiving:** With user.
 - **Data Type:** Transactional/Derived.
 

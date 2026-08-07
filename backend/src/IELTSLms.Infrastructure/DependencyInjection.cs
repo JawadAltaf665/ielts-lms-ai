@@ -14,6 +14,7 @@ using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.Abstractions.Time;
 using IELTSLms.Infrastructure.AI;
 using IELTSLms.Infrastructure.AI.Claude;
+using IELTSLms.Infrastructure.AI.OpenAi;
 using IELTSLms.Infrastructure.AI.Whisper;
 using IELTSLms.Infrastructure.Billing;
 using IELTSLms.Infrastructure.Caching;
@@ -147,7 +148,7 @@ public static class DependencyInjection
         // prevent the whole API from starting in local dev or CI.
         services.AddOptions<ClaudeOptions>().Bind(configuration.GetSection(ClaudeOptions.SectionName));
 
-        services.AddHttpClient<IAiChatProvider, ClaudeChatProvider>((sp, client) =>
+        services.AddHttpClient<ClaudeChatProvider>((sp, client) =>
             {
                 var claudeOptions = sp.GetRequiredService<IOptions<ClaudeOptions>>().Value;
                 client.BaseAddress = new Uri(claudeOptions.BaseUrl);
@@ -158,7 +159,27 @@ public static class DependencyInjection
                     context.ServiceProvider.GetRequiredService<IConfiguration>());
                 ResilienceRegistration.ConfigureHttpPipeline(builder, resilienceOptions);
             });
+        services.AddScoped<IAiChatProvider>(sp => sp.GetRequiredService<ClaudeChatProvider>());
 
+        // Not ValidateOnStart (mirrors ClaudeOptions above): a blank OpenAI API key must not prevent
+        // the whole API from starting in local dev or CI.
+        services.AddOptions<OpenAiOptions>().Bind(configuration.GetSection(OpenAiOptions.SectionName));
+
+        services.AddHttpClient<OpenAiChatProvider>((sp, client) =>
+            {
+                var openAiOptions = sp.GetRequiredService<IOptions<OpenAiOptions>>().Value;
+                client.BaseAddress = new Uri(openAiOptions.BaseUrl);
+            })
+            .AddResilienceHandler("ai-openai", (builder, context) =>
+            {
+                var resilienceOptions = ResilienceRegistration.ReadOptions(
+                    context.ServiceProvider.GetRequiredService<IConfiguration>());
+                ResilienceRegistration.ConfigureHttpPipeline(builder, resilienceOptions);
+            });
+        services.AddScoped<IAiChatProvider>(sp => sp.GetRequiredService<OpenAiChatProvider>());
+
+        // IAiGateway resolves the IAiChatProvider matching AiGatewayRequest.ProviderKind out of both
+        // registrations above (IEnumerable<IAiChatProvider>) — adding a vendor never touches this line.
         services.AddScoped<IAiGateway, AiGateway>();
 
         // Not ValidateOnStart (mirrors ClaudeOptions above): a blank Whisper API key must not prevent

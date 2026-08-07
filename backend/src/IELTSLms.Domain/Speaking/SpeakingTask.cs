@@ -77,4 +77,10 @@ internal static class SpeakingDomainErrors
 
     public static readonly Error ConfidenceOutOfRange = Error.Validation(
         "VALIDATION_SPEAKING_CONFIDENCE_OUT_OF_RANGE", "Confidence must be between 0 and 1.");
+
+    public static readonly Error ReviewDecisionRequired = Error.Validation(
+        "VALIDATION_SPEAKING_REVIEW_DECISION_REQUIRED", "A review decision is required.");
+
+    public static readonly Error EvaluationNotFlaggedForReview = Error.Conflict(
+        "CONFLICT_SPEAKING_EVALUATION_NOT_FLAGGED_FOR_REVIEW", "This evaluation is not flagged for human review.");
 }

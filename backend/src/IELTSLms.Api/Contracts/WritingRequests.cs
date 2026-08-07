@@ -11,3 +11,7 @@ public sealed record SubmitWritingRequest(Guid WritingTaskId, string ResponseTex
 
 public sealed record OverrideWritingEvaluationRequest(
     decimal TaskResponse, decimal CoherenceCohesion, decimal LexicalResource, decimal GrammaticalRangeAccuracy, string Reason);
+
+public sealed record GetWritingReviewQueueQueryParams(string? Cursor, int? Limit);
+
+public sealed record ResolveWritingEvaluationReviewRequest(string Decision);

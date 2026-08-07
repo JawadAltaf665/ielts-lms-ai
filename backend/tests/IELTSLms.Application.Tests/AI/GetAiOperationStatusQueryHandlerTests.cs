@@ -50,7 +50,7 @@ public sealed class GetAiOperationStatusQueryHandlerTests
         Assert.True(result.IsSuccess);
         Assert.Equal("succeeded", result.Value.Status);
         Assert.NotNull(result.Value.Result);
-        Assert.Single(result.Value.Result!.Corrections);
+        Assert.Single(result.Value.Result!.Value.GetProperty("corrections").EnumerateArray());
     }
 
     [Fact]

@@ -345,15 +345,83 @@ Legend: ✅ full · 🟡 scoped/limited · ➖ none.
 | `assignment.create` | ➖ | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | `writing.submit` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | `writing.evaluate` | ➖ | 🟡 | 🟡 | ➖ | ✅ | ➖ | ➖ |
+| `sentence-builder.view` | ➖ | ✅ | ✅ | ✅ | ✅ | ✅ | ➖ |
+| `sentence-builder.manage` | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ |
+| `sentence-builder.attempt` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | `analytics.view.cohort` | 🟡 | ✅ | ✅ | ➖ | ✅ | ➖ | ➖ |
 | `analytics.view.self` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
 | `ai.grammar-coach.use` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ |
+| `ai.vocabulary-coach.use` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ |
+| `ai.reading-coach.use` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ |
+| `ai.listening-coach.use` | ➖ | ✅ | ✅ | ➖ | ✅ | ✅ | ➖ |
+| `ai.usage-summary.view` | ➖ | ✅ | ✅ | ➖ | ➖ | ➖ | ➖ |
+| `ai.prompt.manage` | ➖ | ✅ | ➖ | ✅ | ➖ | ➖ | ➖ |
+| `ai.conversation.view` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
+| `ai.tutor.use` | ➖ | ➖ | ➖ | ➖ | ➖ | ✅ | ➖ |
+| `ai.teacher.use` | ➖ | ➖ | ➖ | ➖ | 🟡 | ✅ | ➖ |
 | `billing.manage` | 🟡 | ✅ | ➖ | ➖ | ➖ | ➖ | ➖ |
 | `certificate.issue` | ➖ | ✅ | ✅ | ➖ | 🟡 | ➖ | ➖ |
 | `support.ticket.manage` | ✅ | ✅ | 🟡 | ➖ | ➖ | 🟡 | ✅ |
 | `audit.view` | ✅ | ✅ | 🟡 | ➖ | ➖ | ➖ | 🟡 |
 
 > Super Admin cells are 🟡 for tenant-scoped capabilities because such access is **exceptional and audited** ([§12.2](#122-cross-tenant-protection)), not routine.
+
+> **Phase 7 Sprint 1 reconciliation:** `GET /api/v1/ai/usage-summary` got its own permission key,
+> `ai.usage-summary.view`, rather than folding into `analytics.view.cohort` — AI cost/budget visibility
+> is narrower (Tenant Admin/Institute Admin only, no Teacher access) than general cohort analytics.
+> Enforced today via `RequiredRoles` (the only mechanism `AuthorizationPipelineBehavior` currently wires
+> up), same precedent as `ai.grammar-coach.use` — the permission-key column documents intent for the
+> full RBAC/ABAC pass, not yet a second enforced code path.
+>
+> **Phase 7 Sprint 2 reconciliation:** `ai.prompt.manage` gates the Prompt Library &amp; Versioning admin
+> endpoints (`/api/v1/ai/prompts*`) — Tenant Admin/Content Manager only, following the existing
+> `content.manage` pattern (an authoring/governance tool, not a learner- or Institute-Admin-facing
+> capability). Enforced today via `RequiredRoles => ["Tenant Admin", "Content Manager"]`, same
+> not-yet-a-second-code-path caveat as every other `ai.*` permission key above.
+>
+> **Phase 7 Sprint 3 reconciliation:** `ai.conversation.view` gates `/api/v1/conversations*` — declared
+> for documentation, but (unlike the rows above) enforced by **isolation, not `RequiredRoles`**: the
+> endpoints carry no role restriction, any authenticated learner may call them, and ownership
+> (`TenantId` + `UserId` match) is checked in the handler, returning `404` (not `403`) for another
+> user's conversation. A future cohort view for Teacher (mirroring `analytics.view.cohort`) is not yet
+> built — this sprint's endpoints are self-service only.
+>
+> **Phase 7 Sprint 4 reconciliation:** `ai.tutor.use` and `ai.teacher.use` gate
+> `/api/v1/ai/tutor/*`/`/api/v1/ai/teacher/*` — same isolation-not-`RequiredRoles` shape as
+> `ai.conversation.view` (self-service, `404` not `403` on cross-user access). Teacher's Student cell is
+> ✅ (learner-facing lesson delivery); the Teacher-role cell is 🟡 because the sprint file's
+> `GET .../sessions/{id}` also names a cohort-view path (`analytics.view.cohort`) for a human Teacher to
+> read a *learner's* session — not built this sprint (no teacher/cohort-membership lookup exists yet),
+> so the row reflects intent, not an implemented second access path.
+>
+> **Phase 7 Sprint 7 reconciliation:** `ai.vocabulary-coach.use` mirrors `ai.grammar-coach.use`'s row
+> exactly — same request/response shape, same entitlement/quota gating. `sentence-builder.*` follows
+> Grammar's own split: `.view` is broad catalog read access (mirrors `content.manage`'s viewer set),
+> `.manage` is Tenant Admin/Content Manager authoring (mirrors Grammar's `grammar.manage`), `.attempt`
+> is Student-only self-service submission (mirrors `writing.submit`). `GET /grammar-attempts/{id}/coaching`
+> and `GET /sentence-attempts/{id}` both document an `analytics.view.cohort` alternative in their sprint
+> file for non-owner Teacher access — not built this sprint (no cohort-membership lookup exists yet, same
+> gap as Sprint 4's Teacher row above), so only the owner path is enforced. Every key here is declared via
+> `RequiredPermissions` for documentation, same not-yet-a-second-code-path caveat as every `ai.*`/`grammar.*`
+> permission key above (`AuthorizationPipelineBehavior` only enforces `RequiredRoles` today).
+>
+> **Phase 7 Sprint 9 reconciliation:** The weakness-profile/recommendations/daily-plan endpoints reuse
+> `analytics.view.self`/`analytics.view.cohort` as-is (matrix rows above) — no new permission key was
+> needed, confirming the sprint's own open question. Self/cohort access is enforced the same
+> not-yet-a-permission-pipeline way as `BandPredictionEndpoints`/`AnalyticsEndpoints`: an inline
+> self-or-`Teacher`-role check in the endpoint, not a `RequiredPermissions` declaration.
+> `POST .../weakness-profile/refresh`, `POST .../recommendations/{id}/dismiss`, and
+> `POST .../daily-plans/today/items/{itemId}/complete` are self-only mutations (no cohort variant) —
+> rate-limiting for the refresh endpoint is the existing AI quota (`ai.daily-learning-workflow.requests`),
+> not a distinct permission key.
+>
+> **Phase 7 Sprint 8 reconciliation:** `ai.reading-coach.use`/`ai.listening-coach.use` mirror
+> `ai.grammar-coach.use`'s row exactly — one capability serving both attempt-grounded auto-explanation
+> (`GET .../coaching`, gated by `reading.attempt`/`listening.attempt`, own-attempt only) and on-demand
+> strategy guidance (`POST /ai/reading-coach`/`POST /ai/listening-coach`, gated by the `ai.*.use` key
+> itself). The question-variant/difficulty-adaptation endpoints (`POST .../question-variants`,
+> `GET/POST /question-variants/{id}*`) need no new key — `content.manage` already covers them, same as
+> every other AI-assisted content-authoring tool in this catalog (`ai.prompt.manage`'s row above).
 
 ---
 

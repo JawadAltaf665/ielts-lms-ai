@@ -4,6 +4,8 @@ using IELTSLms.Api.Contracts;
 using IELTSLms.Api.Extensions;
 using IELTSLms.Application.Analytics.Queries.GetAttemptReview;
 using IELTSLms.Application.Analytics.Queries.GetExamHistory;
+using IELTSLms.Application.AI.GetAiUsageTrends;
+using IELTSLms.Application.AI.GetAiQualityTrends;
 using IELTSLms.Common.Pagination;
 using IELTSLms.SharedKernel.Results;
 using MediatR;
@@ -32,6 +34,18 @@ internal static class AnalyticsEndpoints
             .WithSummary(
                 "Pulls one past attempt + its AI feedback for review. {type} is writing|speaking|reading|" +
                 "listening|grammar|vocabulary|mock-exam.");
+
+        builder.MapGet("/analytics/ai/usage-trends", GetAiUsageTrendsAsync)
+            .RequireAuthorization()
+            .WithTags("Analytics")
+            .WithName("GetAiUsageTrends")
+            .WithSummary("Tenant-scoped time-series view of AI usage and costs per capability.");
+
+        builder.MapGet("/analytics/ai/quality-trends", GetAiQualityTrendsAsync)
+            .RequireAuthorization()
+            .WithTags("Analytics")
+            .WithName("GetAiQualityTrends")
+            .WithSummary("Tenant-scoped time-series view of AI failure rates per capability.");
 
         return builder;
     }
@@ -77,6 +91,30 @@ internal static class AnalyticsEndpoints
         return result.IsSuccess ? Results.Ok(ApiResponse.From(result.Value, httpContext)) : result.ToProblem(httpContext);
     }
 
+    private static async Task<IResult> GetAiUsageTrendsAsync(
+        [AsParameters] AnalyticsTrendQueryParams queryParams, ISender sender, ITenantContext tenantContext, HttpContext httpContext, CancellationToken cancellationToken)
+    {
+        if (!TryGetTenantId(tenantContext, out var tenantId))
+        {
+            return TenantNotResolved.ToProblem(httpContext);
+        }
+
+        var result = await sender.Send(new GetAiUsageTrendsQuery(tenantId, queryParams.FromUtc, queryParams.ToUtc), cancellationToken);
+        return result.IsSuccess ? Results.Ok(ApiResponse.From(result.Value, httpContext)) : result.ToProblem(httpContext);
+    }
+
+    private static async Task<IResult> GetAiQualityTrendsAsync(
+        [AsParameters] AnalyticsTrendQueryParams queryParams, ISender sender, ITenantContext tenantContext, HttpContext httpContext, CancellationToken cancellationToken)
+    {
+        if (!TryGetTenantId(tenantContext, out var tenantId))
+        {
+            return TenantNotResolved.ToProblem(httpContext);
+        }
+
+        var result = await sender.Send(new GetAiQualityTrendsQuery(tenantId, queryParams.FromUtc, queryParams.ToUtc), cancellationToken);
+        return result.IsSuccess ? Results.Ok(ApiResponse.From(result.Value, httpContext)) : result.ToProblem(httpContext);
+    }
+
     private static bool TryGetTenantId(ITenantContext tenantContext, out Guid tenantId)
     {
         if (tenantContext.TenantId is { } id)
@@ -101,3 +139,5 @@ internal static class AnalyticsEndpoints
     private static readonly Error Forbidden = Error.Forbidden(
         "AUTHZ_FORBIDDEN", "You do not have permission to view this learner's history.");
 }
+
+public sealed record AnalyticsTrendQueryParams(DateTimeOffset FromUtc, DateTimeOffset ToUtc);

@@ -92,4 +92,25 @@ public sealed class WritingEndpointsTests(IntegrationTestFactory factory) : ICla
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+
+    [Fact]
+    public async Task GetWritingReviewQueue_without_authentication_returns_unauthorized()
+    {
+        using var client = _factory.CreateClient();
+
+        var response = await client.GetAsync("/api/v1/writing-evaluations/review-queue");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ResolveWritingEvaluationReview_without_authentication_returns_unauthorized()
+    {
+        using var client = _factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync(
+            $"/api/v1/writing-evaluations/{Guid.NewGuid()}/resolve-review", new { decision = "Confirmed" });
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
 }

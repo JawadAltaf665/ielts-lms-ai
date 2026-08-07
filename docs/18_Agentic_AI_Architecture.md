@@ -333,16 +333,34 @@ Each agent below is defined by **Purpose, Responsibilities, Inputs, Outputs, Too
 | **Sentence Builder Agent** | Scaffold better sentences | Sentence/prompt | Rewrites, patterns | Grammar/lexicon tools | — |
 | **Reading Coach Agent** | Reading strategy + explanations | Passage, answers | Guidance, rationale | Content fetch, question analysis | — |
 | **Listening Coach Agent** | Listening strategy + explanations | Audio transcript, answers | Guidance, rationale | Transcript fetch, analysis | — |
+| **Tutor Agent** | Reactive Q&A scoped to IELTS prep (Phase 7 Sprint 4) | Learner question, conversation history | Grounded answer, or a redirect if out of scope | Conversation memory, code-level scope guard | Out-of-scope question → redirected without a model call |
+| **Teacher Agent** | Deliver a structured, sequenced lesson — student-facing; the AI *is* the teacher, no human in the loop (Phase 7 Sprint 4) | Lesson id/topic, learner response per step | Step content (explain/check/practice/recap) + completion signal | Conversation memory, lesson step-state machine | Repeated failed comprehension check → bounded retry cap, then forced advance |
+
+> **Disambiguation:** **Teacher Agent** (above, §12.1) is not **Teacher Assistant Agent** (§12.4) — the
+> former delivers lessons to a *student* with no human teacher present; the latter assists a *human
+> Teacher role user* with grading/cohort insights. They were easy to conflate before this row existed;
+> don't merge them.
 
 ### 12.2 Assessment & Prediction Agents
 
 | Agent | Purpose | Inputs | Outputs | Key Tools | Escalation |
 | --- | --- | --- | --- | --- | --- |
 | **Writing Examiner Agent** | Score writing on IELTS criteria | Essay, task type | Band per criterion + feedback | Rubric, plagiarism/similarity check | Low confidence/dispute → human review (HITL) |
-| **Speaking Examiner Agent** | Score speaking | Audio/transcript | Band per criterion + feedback | Transcription, rubric | Low confidence → human review |
+| **Speaking Examiner Agent** | Score speaking | Audio/transcript | Band per criterion + feedback | Transcription, rubric | Low confidence or criterion-spread inconsistency → human review |
 | **Band Predictor Agent** | Predict overall band | History, recent scores | Predicted band + confidence | Analytics, profile fetch | Wide interval → recommend more practice |
 | **Mock Exam Agent** | Run/review full mock exams | Exam config, responses | Section scores + review | Exam orchestration, scoring tools | Section failure → retry section |
 | **Progress Analysis Agent** | Analyze trends/weaknesses | Historical performance | Weakness profile, trends | Analytics, profile | — |
+
+> **Speaking Examiner Agent registry entry.** Phase 7 Sprint 5 filled in this row's full registry
+> record (version slots, memory, permissions, budget, escalation thresholds, calibration gate) — see
+> [AI Evaluation Architecture](./architecture/ai-evaluation.md#speaking-examiner--agent-registry-entry).
+
+> **Writing Examiner Agent registry entry.** Phase 7 Sprint 6 filled in this row's full registry record
+> the same way, and made the "plagiarism/similarity check" tool named above concrete: a within-tenant,
+> same-task corpus comparison (word-shingle Jaccard similarity) that flags — never blocks — high-similarity
+> submissions for human review. Also confirmed the Vocabulary Agent (§12.1) genuinely feeds this agent's
+> context, not a no-op placeholder. See
+> [AI Evaluation Architecture](./architecture/ai-evaluation.md#writing-examiner--agent-registry-entry).
 
 ### 12.3 Planning & Personalization Agents
 
@@ -405,6 +423,15 @@ graph LR
     TASKS --> NOTIFY[Notify learner]
 ```
 
+> **Phase 7 Sprint 9 implementation note:** Implemented as a plain Application-layer pipeline
+> (`DailyLearningWorkflowRunner`), not yet the full multi-agent runtime orchestrator (that's Sprint 10)
+> — same explicit simplification Phase 6 Sprints 6-7 used for Writing/Speaking. `START` is
+> `DailyLearningWorkflowJob`, a Hangfire recurring sweep (Backend Architecture §12) over entitled
+> tenants' active-learner cohorts; a lazy-fallback `GET .../daily-plans/today` covers a learner who
+> studies before the sweep has run that day. `NOTIFY` (raising `DailyPlanGenerated`, DDD §13.4) is
+> implemented as the event hand-off point only — actual notification delivery is out of this sprint's
+> scope (Notifications, ENT-044, is an existing context this sprint doesn't build into).
+
 ### 13.4 Weekly Assessment Workflow
 
 Progress Analysis (week) → Weakness update → Band Predictor (interim) → Recommendation → report to learner/teacher.
@@ -420,6 +447,12 @@ Gather history → Progress Analysis → Band Predictor → confidence check →
 ### 13.7 Learning Recommendation Workflow
 
 Weakness profile + progress → Recommendation Agent ranks actions → Study Planner integrates → surface to learner.
+
+> **Phase 7 Sprint 9 implementation note:** Implemented — `GET /api/v1/users/{userId}/recommendations`
+> surfaces the learner's current `Active` ranked set (up to 5 items, `{skill, title, rationale,
+> priority}`); `POST .../recommendations/{id}/dismiss` records a learner rejection (`Dismissed`, not
+> deleted), which the next generation's prompt context uses to avoid immediately re-suggesting the same
+> topic (business rule). Same plain-pipeline caveat as §13.3.
 
 ### 13.8 Student Dashboard Workflow
 

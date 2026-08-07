@@ -2,6 +2,8 @@ using System.Security.Claims;
 using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.Api.Contracts;
 using IELTSLms.Api.Extensions;
+using IELTSLms.Application.AI.ListeningCoaching.Queries.GetListeningAttemptCoaching;
+using IELTSLms.Application.AI.QuestionVariants.Commands.GenerateQuestionVariants;
 using IELTSLms.Application.Listening.AddListeningQuestion;
 using IELTSLms.Application.Listening.CreateListeningAudio;
 using IELTSLms.Application.Listening.GetListeningAttempt;
@@ -12,6 +14,7 @@ using IELTSLms.Application.Listening.RegisterListeningReplay;
 using IELTSLms.Application.Listening.StartListeningAttempt;
 using IELTSLms.Application.Listening.SubmitListeningAttempt;
 using IELTSLms.Common.Pagination;
+using IELTSLms.Domain.AI;
 using IELTSLms.Domain.Listening;
 using IELTSLms.Domain.Reading;
 using IELTSLms.SharedKernel.Results;
@@ -82,6 +85,22 @@ internal static class ListeningEndpoints
             .WithTags("Listening")
             .WithName("GetListeningAttempt")
             .WithSummary("Gets one of the caller's own past attempts and its result.");
+
+        builder.MapGet("/listening-attempts/{id:guid}/coaching", GetListeningAttemptCoachingAsync)
+            .RequireAuthorization()
+            .WithTags("Listening")
+            .WithName("GetListeningAttemptCoaching")
+            .WithSummary(
+                "AI-generated explanations for the wrong answers on a past attempt (listening.attempt), " +
+                "reusing the Listening Coach capability. Returns 202 + an operation resource.");
+
+        builder.MapPost("/listening-audios/{id:guid}/question-variants", GenerateListeningQuestionVariantsAsync)
+            .RequireAuthorization()
+            .WithTags("Listening")
+            .WithName("GenerateListeningQuestionVariants")
+            .WithSummary(
+                "Generates a draft, AI-adjusted variant of an existing question on this audio (content.manage). " +
+                "Returns 202 + an operation resource; the draft, once generated, shares the operation's id.");
 
         return builder;
     }
@@ -291,6 +310,65 @@ internal static class ListeningEndpoints
 
         var result = await sender.Send(new GetListeningAttemptQuery(tenantId, userId, id), cancellationToken);
         return result.IsSuccess ? Results.Ok(ApiResponse.From(result.Value, httpContext)) : result.ToProblem(httpContext);
+    }
+
+    private static async Task<IResult> GetListeningAttemptCoachingAsync(
+        Guid id, ISender sender, ITenantContext tenantContext, HttpContext httpContext, CancellationToken cancellationToken)
+    {
+        if (!TryGetTenantId(tenantContext, out var tenantId))
+        {
+            return TenantNotResolved.ToProblem(httpContext);
+        }
+
+        if (!TryGetUserId(httpContext, out var userId))
+        {
+            return UserNotResolved.ToProblem(httpContext);
+        }
+
+        var result = await sender.Send(new GetListeningAttemptCoachingQuery(tenantId, userId, id), cancellationToken);
+        if (result.IsFailure)
+        {
+            return ToProblemWithRetryAfter(result.Error, httpContext);
+        }
+
+        return Results.Accepted($"/api/v1/operations/{result.Value.Id}", ApiResponse.From(result.Value, httpContext));
+    }
+
+    private static async Task<IResult> GenerateListeningQuestionVariantsAsync(
+        Guid id, GenerateQuestionVariantRequest request, ISender sender, ITenantContext tenantContext, HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetTenantId(tenantContext, out var tenantId))
+        {
+            return TenantNotResolved.ToProblem(httpContext);
+        }
+
+        if (!TryGetUserId(httpContext, out var userId))
+        {
+            return UserNotResolved.ToProblem(httpContext);
+        }
+
+        var command = new GenerateQuestionVariantsCommand(
+            tenantId, userId, QuestionVariantSourceType.Listening, id, request.SourceQuestionId, request.DifficultyDelta);
+        var result = await sender.Send(command, cancellationToken);
+        return result.IsSuccess
+            ? Results.Accepted($"/api/v1/operations/{result.Value.Id}", ApiResponse.From(result.Value, httpContext))
+            : result.ToProblem(httpContext);
+    }
+
+    /// <summary>Sets <c>Retry-After</c> on a quota-exceeded response (API Design Standards §9.2) —
+    /// mirrors <c>AiEndpoints</c>'s own helper for the same rule.</summary>
+    private static IResult ToProblemWithRetryAfter(Error error, HttpContext httpContext)
+    {
+        if (error.Type == ErrorType.RateLimited)
+        {
+            var now = DateTimeOffset.UtcNow;
+            var nextMidnightUtc = now.Date.AddDays(1);
+            var retryAfterSeconds = (int)Math.Ceiling((nextMidnightUtc - now).TotalSeconds);
+            httpContext.Response.Headers["Retry-After"] = retryAfterSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        return error.ToProblem(httpContext);
     }
 
     private static bool TryGetTenantId(ITenantContext tenantContext, out Guid tenantId)

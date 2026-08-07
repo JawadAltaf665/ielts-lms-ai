@@ -454,6 +454,7 @@ classDiagram
 | EVT-AI-02 | `SpeakingEvaluated` | AI |
 | EVT-ASM-01 | `MockExamCompleted` | Assessment |
 | EVT-AI-03 | `BandPredicted` | AI |
+| EVT-AI-04 | `LessonSessionCompleted` | AI |
 | EVT-ANL-01 | `ProgressRecalculated` | Analytics |
 | EVT-CRT-01 | `CertificateIssued` | Certificates |
 | EVT-NOT-01 | `NotificationDispatched` | Notifications |
@@ -687,10 +688,25 @@ Each context defines: **Purpose, Responsibilities, Owned Entities, Events, Servi
 - **Responsibilities:** Rubric-aligned evaluation, band prediction, tutor interactions, prompt governance; isolate external LLM providers.
 - **Owned Entities:** `Evaluation` (writing/speaking), `BandPrediction`, `AIPrompt`, `AIResponse`, `AIProvider`.
 - **Events:** `WritingEvaluated`, `SpeakingEvaluated`, `BandPredicted`, `TutorInteractionCompleted`.
-- **Services:** `EvaluationService`, `BandPredictionService`, `TutoringService`, `WeaknessDetectionService`.
+- **Services:** `EvaluationService`, `BandPredictionService`, `TutoringService`, `WeaknessDetectionService`,
+  `IPromptCompositionService` (app; Phase 7 Sprint 1) — the single path every capability handler binds an
+  `AIPrompt.SystemTemplate` + typed variables + user content into the final system/user message pair
+  through; enforces "no unescaped user text in the system portion" structurally (user content never
+  participates in template substitution) and rejects (not truncates) variable values that themselves
+  contain template syntax.
 - **Relationships:** Supplier to Writing, Speaking, Assessment, Learning, Analytics.
 - **Dependencies:** External LLM providers via **ACL**; prompt governance.
 - **External Interfaces:** LLM/AI provider APIs (ACL-wrapped). See [AI Architecture](./16_AI_Architecture.md).
+- **Prompt governance (Phase 7 Sprint 2):** `AIPrompt` versions are authored as drafts and promoted via
+  an explicit activation step scoped to `(TenantId, Feature, Scope)` — activation deactivates whatever
+  else was active in that exact slot, never a different `Scope` (the A/B-slot mechanic: two scopes for
+  one feature can each carry their own independently active version). Rollback restores the version
+  active immediately before the current one, derived from existing rows rather than a new history
+  table, and records actor/timestamp/reason via the existing `AuditLog` mechanism (action `"Rollback"`)
+  rather than a second audit path. A version referenced by any `AIResponse` is never mutated or
+  hard-deleted — retiring only soft-deletes, and is rejected while the version is still active for its
+  slot. Actual A/B traffic-split assignment (which scope a given call resolves to) remains a
+  composition-engine concern for whenever real experiment routing is built — out of this sprint's scope.
 
 ### 13.15 Analytics (BC-15)
 

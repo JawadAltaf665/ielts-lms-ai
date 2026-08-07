@@ -83,13 +83,23 @@ public sealed class SpeakingEvaluation : TenantAuditableEntity<SpeakingEvaluatio
 
     public bool IsOverridden => OverriddenAtUtc is not null;
 
+    public Guid? ReviewedBy { get; private set; }
+
+    public DateTimeOffset? ReviewedAtUtc { get; private set; }
+
+    /// <summary>The teacher's decision when resolving a flagged review (e.g. "Confirmed", "Escalated") — distinct from <see cref="Override"/>, which records a score change.</summary>
+    public string? ReviewDecision { get; private set; }
+
+    public bool IsReviewed => ReviewedAtUtc is not null;
+
     public static Result<SpeakingEvaluation> Create(
         SpeakingEvaluationId id, Guid tenantId, SpeakingAttemptId speakingAttemptId, decimal fluencyCoherence,
         decimal lexicalResource, decimal grammaticalRangeAccuracy, decimal pronunciation, decimal confidence,
-        string feedbackText, decimal lowConfidenceThreshold, AiResponseId? aiResponseId, AiProviderId? aiProviderId,
-        DateTimeOffset nowUtc)
+        string feedbackText, decimal lowConfidenceThreshold, decimal maxCriterionSpread, AiResponseId? aiResponseId,
+        AiProviderId? aiProviderId, DateTimeOffset nowUtc)
     {
-        foreach (var score in new[] { fluencyCoherence, lexicalResource, grammaticalRangeAccuracy, pronunciation })
+        var criteria = new[] { fluencyCoherence, lexicalResource, grammaticalRangeAccuracy, pronunciation };
+        foreach (var score in criteria)
         {
             if (!IsValidCriterionScore(score))
             {
@@ -103,11 +113,42 @@ public sealed class SpeakingEvaluation : TenantAuditableEntity<SpeakingEvaluatio
         }
 
         var estimatedBand = SpeakingBandCalculator.ToBand(fluencyCoherence, lexicalResource, grammaticalRangeAccuracy, pronunciation);
-        var requiresHumanReview = confidence < lowConfidenceThreshold;
+
+        // Escalation policy (Agentic AI Architecture §10): low confidence OR internally-inconsistent
+        // criteria (e.g. Pronunciation wildly divergent from Fluency without rationale) both flag for
+        // human review — checked here in code after the model responds, never left to the model itself.
+        var criterionSpread = criteria.Max() - criteria.Min();
+        var requiresHumanReview = confidence < lowConfidenceThreshold || criterionSpread > maxCriterionSpread;
 
         return Result.Success(new SpeakingEvaluation(
             id, tenantId, speakingAttemptId, fluencyCoherence, lexicalResource, grammaticalRangeAccuracy, pronunciation,
             estimatedBand, confidence, feedbackText, requiresHumanReview, aiResponseId, aiProviderId, nowUtc));
+    }
+
+    /// <summary>
+    /// Records a teacher's review decision on a flagged evaluation (audited: actor, timestamp, decision)
+    /// — distinct from <see cref="Override"/>, which additionally changes the scores. A teacher may call
+    /// either, or both (override first, then resolve, or vice versa); the review queue excludes an
+    /// evaluation once it has been reviewed or overridden, whichever happens first.
+    /// </summary>
+    public Result MarkReviewed(string decision, Guid reviewedBy, DateTimeOffset nowUtc)
+    {
+        if (string.IsNullOrWhiteSpace(decision))
+        {
+            return Result.Failure(SpeakingDomainErrors.ReviewDecisionRequired);
+        }
+
+        if (!RequiresHumanReview)
+        {
+            return Result.Failure(SpeakingDomainErrors.EvaluationNotFlaggedForReview);
+        }
+
+        ReviewDecision = decision;
+        ReviewedBy = reviewedBy;
+        ReviewedAtUtc = nowUtc;
+        UpdatedAtUtc = nowUtc;
+
+        return Result.Success();
     }
 
     /// <summary>

@@ -1,7 +1,6 @@
 using System.Text.Json;
 using IELTSLms.Abstractions.Persistence.AI;
 using IELTSLms.Application.Abstractions.Messaging;
-using IELTSLms.Application.AI.GrammarCoach;
 using IELTSLms.Domain.AI;
 using IELTSLms.SharedKernel.Results;
 
@@ -20,13 +19,13 @@ public sealed class GetAiOperationStatusQueryHandler(IAiOperationRepository oper
             return Result.Failure<AiOperationStatusResponse>(AiErrors.OperationNotFound);
         }
 
-        GrammarCoachOutput? result = null;
+        JsonElement? result = null;
         if (operation.Status == AiOperationStatus.Succeeded && operation.AiResponseId is { } aiResponseId)
         {
             var aiResponse = await responses.GetByIdAsync(aiResponseId, cancellationToken).ConfigureAwait(false);
             if (aiResponse?.OutputJson is not null)
             {
-                result = JsonSerializer.Deserialize<GrammarCoachOutput>(aiResponse.OutputJson, JsonSerializerOptions.Web);
+                result = JsonSerializer.Deserialize<JsonElement>(aiResponse.OutputJson, JsonSerializerOptions.Web);
             }
         }
 

@@ -70,6 +70,9 @@ public static class DependencyInjection
         // Phase 5 Sprint 2 - Billing Operations (ADR-032)
         services.AddScoped<DeadLetterWebhookRetryJob>();
 
+        // Phase 7 Sprint 9 - Study Planner, Weakness Detection, Learning Recommendations
+        services.AddScoped<Learning.DailyLearningWorkflowJob>();
+
         return services;
     }
 }

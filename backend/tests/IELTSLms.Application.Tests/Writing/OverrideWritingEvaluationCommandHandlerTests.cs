@@ -12,7 +12,7 @@ public sealed class OverrideWritingEvaluationCommandHandlerTests
     {
         var evaluation = WritingEvaluation.Create(
             WritingEvaluationId.From(Guid.NewGuid()), tenantId, WritingSubmissionId.From(Guid.NewGuid()), 7.0m, 6.5m, 7.0m, 6.5m, 0.9m,
-            "feedback", 0.7m, null, null, Now).Value;
+            "feedback", 0.7m, null, 0.6m, null, null, Now).Value;
         evaluations.Seed(evaluation);
         return evaluation;
     }

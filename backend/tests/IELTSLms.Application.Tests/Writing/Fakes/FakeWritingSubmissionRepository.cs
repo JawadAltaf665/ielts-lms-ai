@@ -24,4 +24,12 @@ internal sealed class FakeWritingSubmissionRepository : IWritingSubmissionReposi
             .Where(s => s.TenantId == tenantId && s.UserId == userId && s.Status != WritingSubmissionStatus.Draft)
             .OrderByDescending(s => s.CreatedAtUtc)
             .ToList());
+
+    public Task<IReadOnlyList<WritingSubmission>> ListSubmittedByTaskAsync(
+        Guid tenantId, WritingTaskId taskId, WritingSubmissionId excludingSubmissionId, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<WritingSubmission>>(_submissions
+            .Where(s =>
+                s.TenantId == tenantId && s.WritingTaskId == taskId && s.Id != excludingSubmissionId
+                && s.Status != WritingSubmissionStatus.Draft)
+            .ToList());
 }

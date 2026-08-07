@@ -9,6 +9,7 @@ using IELTSLms.Abstractions.Persistence.Grammar;
 using IELTSLms.Abstractions.Persistence.Learning;
 using IELTSLms.Abstractions.Persistence.Listening;
 using IELTSLms.Abstractions.Persistence.Reading;
+using IELTSLms.Abstractions.Persistence.SentenceBuilder;
 using IELTSLms.Abstractions.Persistence.Speaking;
 using IELTSLms.Abstractions.Persistence.Vocabulary;
 using IELTSLms.Abstractions.Persistence.Writing;
@@ -24,6 +25,7 @@ using IELTSLms.Persistence.Repositories.Grammar;
 using IELTSLms.Persistence.Repositories.Learning;
 using IELTSLms.Persistence.Repositories.Listening;
 using IELTSLms.Persistence.Repositories.Reading;
+using IELTSLms.Persistence.Repositories.SentenceBuilder;
 using IELTSLms.Persistence.Repositories.Speaking;
 using IELTSLms.Persistence.Repositories.Vocabulary;
 using IELTSLms.Persistence.Repositories.Writing;
@@ -84,6 +86,9 @@ public static class DependencyInjection
         services.AddHostedService<WritingCatalogSeeder>();
         services.AddHostedService<SpeakingCatalogSeeder>();
         services.AddHostedService<ResultsCatalogSeeder>();
+        services.AddHostedService<LearningCatalogSeeder>();
+        // Phase 7 Sprint 10 - Agent Registry: seeds all 13 agents built in Sprints 4-9.
+        services.AddHostedService<AgentCatalogSeeder>();
 
         return services;
     }
@@ -145,11 +150,18 @@ public static class DependencyInjection
         services.AddScoped<IVocabularyWordRepository, VocabularyWordRepository>();
         services.AddScoped<IVocabularyProgressRepository, VocabularyProgressRepository>();
 
+        // Phase 7 Sprint 7 - Sentence Builder base module
+        services.AddScoped<ISentenceExerciseRepository, SentenceExerciseRepository>();
+        services.AddScoped<ISentenceAttemptRepository, SentenceAttemptRepository>();
+
         // Phase 6 Sprint 3 - AI Gateway
         services.AddScoped<IAiProviderRepository, AiProviderRepository>();
         services.AddScoped<IAiPromptRepository, AiPromptRepository>();
         services.AddScoped<IAiResponseRepository, AiResponseRepository>();
         services.AddScoped<IAiOperationRepository, AiOperationRepository>();
+
+        // Phase 7 Sprint 8 - Reading AI + Listening AI question-variant drafts
+        services.AddScoped<IQuestionVariantDraftRepository, QuestionVariantDraftRepository>();
 
         // Phase 6 Sprint 4 - Reading
         services.AddScoped<IReadingPassageRepository, ReadingPassageRepository>();
@@ -180,5 +192,22 @@ public static class DependencyInjection
         services.AddScoped<IBandPredictionRepository, BandPredictionRepository>();
         services.AddScoped<ICertificateRepository, CertificateRepository>();
         services.AddScoped<IAchievementRepository, AchievementRepository>();
+
+        // Phase 7 Sprint 3 - Memory & Conversation History
+        services.AddScoped<IConversationRepository, ConversationRepository>();
+        services.AddScoped<IConversationMessageRepository, ConversationMessageRepository>();
+        services.AddScoped<IConversationSummaryRepository, ConversationSummaryRepository>();
+
+        // Phase 7 Sprint 4 - AI Tutor + AI Teacher
+        services.AddScoped<ILessonSessionRepository, LessonSessionRepository>();
+
+        // Phase 7 Sprint 9 - Study Planner, Weakness Detection, Learning Recommendations
+        services.AddScoped<IWeaknessProfileRepository, WeaknessProfileRepository>();
+        services.AddScoped<ILearningRecommendationRepository, LearningRecommendationRepository>();
+        services.AddScoped<IDailyPlanRepository, DailyPlanRepository>();
+
+        // Phase 7 Sprint 10 - Agent Registry + Workflow Engine
+        services.AddScoped<IAgentRegistrationRepository, AgentRegistrationRepository>();
+        services.AddScoped<IWorkflowRunRepository, WorkflowRunRepository>();
     }
 }

@@ -20,4 +20,13 @@ internal sealed class FakeWritingEvaluationRepository : IWritingEvaluationReposi
 
     public Task<WritingEvaluation?> GetBySubmissionIdAsync(WritingSubmissionId submissionId, CancellationToken cancellationToken = default) =>
         Task.FromResult(_evaluations.FirstOrDefault(e => e.WritingSubmissionId == submissionId));
+
+    public Task<IReadOnlyList<WritingEvaluation>> ListPendingReviewAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<WritingEvaluation> pending = _evaluations
+            .Where(e => e.TenantId == tenantId && e.RequiresHumanReview && e.ReviewedAtUtc is null && e.OverriddenAtUtc is null)
+            .OrderByDescending(e => e.CreatedAtUtc).ThenByDescending(e => e.Id.Value)
+            .ToList();
+        return Task.FromResult(pending);
+    }
 }

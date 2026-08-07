@@ -24,4 +24,7 @@ internal static class GrammarErrors
 
     public static readonly Error NoQuestionsToGrade = Error.Validation(
         "VALIDATION_GRAMMAR_EXERCISE_EMPTY", "This exercise has no questions to grade.");
+
+    public static readonly Error NoIncorrectAnswers = Error.Validation(
+        "VALIDATION_GRAMMAR_ATTEMPT_NO_ERRORS", "This attempt has no incorrect answers to coach on.");
 }

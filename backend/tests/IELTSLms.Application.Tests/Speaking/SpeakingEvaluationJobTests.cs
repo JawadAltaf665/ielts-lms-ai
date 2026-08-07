@@ -1,4 +1,5 @@
 using IELTSLms.Abstractions.AI;
+using IELTSLms.Application.AI;
 using IELTSLms.Application.AI.Jobs;
 using IELTSLms.Application.Tests.AI.Fakes;
 using IELTSLms.Application.Tests.Speaking.Fakes;
@@ -31,7 +32,7 @@ public sealed class SpeakingEvaluationJobTests
         FakeTenantContextAccessor TenantContextAccessor, SpeakingEvaluationJob Job, Guid TenantId, AiOperation Operation,
         SpeakingAttempt Attempt);
 
-    private static Fixture CreateFixture(bool seedPrompts = true)
+    private static Fixture CreateFixture(bool seedPrompts = true, bool seedRubricPrompt = true)
     {
         var tenantId = Guid.NewGuid();
         var operations = new FakeAiOperationRepository();
@@ -55,7 +56,18 @@ public sealed class SpeakingEvaluationJobTests
 
         if (seedPrompts)
         {
-            prompts.Seed(AiPrompt.Create(AiPromptId.From(Guid.NewGuid()), null, provider.Id, "speaking-examiner", 1, "default", "sys", Now).Value);
+            var prompt = AiPrompt.Create(
+                AiPromptId.From(Guid.NewGuid()), null, provider.Id, "speaking-examiner", 1, "default", "sys {{rubric}}", Now).Value;
+            prompt.Activate(Now);
+            prompts.Seed(prompt);
+        }
+
+        if (seedRubricPrompt)
+        {
+            var rubricPrompt = AiPrompt.Create(
+                AiPromptId.From(Guid.NewGuid()), null, provider.Id, "speaking-examiner", 1, "rubric", "score each criterion", Now).Value;
+            rubricPrompt.Activate(Now);
+            prompts.Seed(rubricPrompt);
         }
 
         var task = SpeakingTask.Create(
@@ -77,7 +89,7 @@ public sealed class SpeakingEvaluationJobTests
 
         var job = new SpeakingEvaluationJob(
             operations, providers, prompts, responses, attempts, tasks, evaluations, files, fileStorage, speechToText, unitOfWork, gateway,
-            tenantContextAccessor, clock, new FakeGuidProvider(), NullLogger<SpeakingEvaluationJob>.Instance);
+            new PromptCompositionService(), tenantContextAccessor, clock, new FakeGuidProvider(), NullLogger<SpeakingEvaluationJob>.Instance);
 
         return new Fixture(
             operations, providers, prompts, responses, attempts, tasks, evaluations, files, fileStorage, speechToText, unitOfWork, gateway,
@@ -157,6 +169,20 @@ public sealed class SpeakingEvaluationJobTests
     public async Task Missing_prompt_configuration_fails_gracefully_without_calling_STT_or_the_gateway()
     {
         var fixture = CreateFixture(seedPrompts: false);
+
+        await fixture.Job.ExecuteAsync(fixture.TenantId, fixture.Operation.Id.Value, fixture.Attempt.Id.Value, CancellationToken.None);
+
+        Assert.Equal(AiOperationStatus.Failed, fixture.Operation.Status);
+        Assert.Equal("DEPENDENCY_AI_PROMPT_NOT_CONFIGURED", fixture.Operation.ErrorCode);
+        Assert.Equal(SpeakingAttemptStatus.Failed, fixture.Attempt.Status);
+        Assert.Equal(0, fixture.SpeechToText.TranscribeCallCount);
+        Assert.Equal(0, fixture.Gateway.InvokeCallCount);
+    }
+
+    [Fact]
+    public async Task Missing_rubric_configuration_fails_gracefully_without_calling_STT_or_the_gateway()
+    {
+        var fixture = CreateFixture(seedRubricPrompt: false);
 
         await fixture.Job.ExecuteAsync(fixture.TenantId, fixture.Operation.Id.Value, fixture.Attempt.Id.Value, CancellationToken.None);
 

@@ -34,7 +34,8 @@ public sealed class GetWritingEvaluationQueryHandler(
     internal static WritingEvaluationResponse ToResponse(WritingEvaluation evaluation) => new(
         evaluation.Id.Value, evaluation.WritingSubmissionId.Value, evaluation.TaskResponse, evaluation.CoherenceCohesion,
         evaluation.LexicalResource, evaluation.GrammaticalRangeAccuracy, evaluation.EstimatedBand, evaluation.Confidence,
-        evaluation.FeedbackText, evaluation.RequiresHumanReview, evaluation.IsOverridden, evaluation.OverriddenTaskResponse,
-        evaluation.OverriddenCoherenceCohesion, evaluation.OverriddenLexicalResource, evaluation.OverriddenGrammaticalRangeAccuracy,
-        evaluation.OverriddenBand, evaluation.OverriddenBy, evaluation.OverriddenAtUtc, evaluation.OverrideReason);
+        evaluation.FeedbackText, evaluation.SimilarityScore, evaluation.RequiresHumanReview, evaluation.IsOverridden,
+        evaluation.OverriddenTaskResponse, evaluation.OverriddenCoherenceCohesion, evaluation.OverriddenLexicalResource,
+        evaluation.OverriddenGrammaticalRangeAccuracy, evaluation.OverriddenBand, evaluation.OverriddenBy, evaluation.OverriddenAtUtc,
+        evaluation.OverrideReason, evaluation.IsReviewed, evaluation.ReviewedBy, evaluation.ReviewedAtUtc, evaluation.ReviewDecision);
 }

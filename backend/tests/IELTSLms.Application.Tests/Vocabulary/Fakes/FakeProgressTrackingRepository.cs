@@ -19,4 +19,15 @@ internal sealed class FakeProgressTrackingRepository : IProgressTrackingReposito
     public Task<ProgressTracking?> GetByUserAndSkillAsync(
         Guid tenantId, Guid userId, LearningSkill skill, CancellationToken cancellationToken = default) =>
         Task.FromResult(_rows.FirstOrDefault(r => r.TenantId == tenantId && r.UserId == userId && r.Skill == skill));
+
+    public Task<IReadOnlyList<ProgressTracking>> ListByUserAsync(
+        Guid tenantId, Guid userId, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<ProgressTracking>>(
+            _rows.Where(r => r.TenantId == tenantId && r.UserId == userId).ToList());
+
+    public Task<IReadOnlyList<Guid>> ListActiveUserIdsAsync(
+        Guid tenantId, DateTimeOffset activeSinceUtc, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<Guid>>(
+            _rows.Where(r => r.TenantId == tenantId && r.LastActivityAtUtc >= activeSinceUtc)
+                .Select(r => r.UserId).Distinct().ToList());
 }

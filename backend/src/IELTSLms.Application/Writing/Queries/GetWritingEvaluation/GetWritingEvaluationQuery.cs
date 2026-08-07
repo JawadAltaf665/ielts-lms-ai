@@ -14,7 +14,8 @@ public sealed record GetWritingEvaluationQuery(Guid TenantId, Guid UserId, Guid 
 
 public sealed record WritingEvaluationResponse(
     Guid Id, Guid WritingSubmissionId, decimal TaskResponse, decimal CoherenceCohesion, decimal LexicalResource,
-    decimal GrammaticalRangeAccuracy, decimal EstimatedBand, decimal Confidence, string FeedbackText, bool RequiresHumanReview,
-    bool IsOverridden, decimal? OverriddenTaskResponse, decimal? OverriddenCoherenceCohesion, decimal? OverriddenLexicalResource,
-    decimal? OverriddenGrammaticalRangeAccuracy, decimal? OverriddenBand, Guid? OverriddenBy, DateTimeOffset? OverriddenAtUtc,
-    string? OverrideReason);
+    decimal GrammaticalRangeAccuracy, decimal EstimatedBand, decimal Confidence, string FeedbackText, decimal? SimilarityScore,
+    bool RequiresHumanReview, bool IsOverridden, decimal? OverriddenTaskResponse, decimal? OverriddenCoherenceCohesion,
+    decimal? OverriddenLexicalResource, decimal? OverriddenGrammaticalRangeAccuracy, decimal? OverriddenBand, Guid? OverriddenBy,
+    DateTimeOffset? OverriddenAtUtc, string? OverrideReason, bool IsReviewed, Guid? ReviewedBy, DateTimeOffset? ReviewedAtUtc,
+    string? ReviewDecision);

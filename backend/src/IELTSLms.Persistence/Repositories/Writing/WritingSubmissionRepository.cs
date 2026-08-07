@@ -14,4 +14,13 @@ internal sealed class WritingSubmissionRepository(ApplicationDbContext dbContext
             .OrderByDescending(s => s.CreatedAtUtc)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<WritingSubmission>> ListSubmittedByTaskAsync(
+        Guid tenantId, WritingTaskId taskId, WritingSubmissionId excludingSubmissionId, CancellationToken cancellationToken = default) =>
+        await Set
+            .Where(s =>
+                s.TenantId == tenantId && s.WritingTaskId == taskId && s.Id != excludingSubmissionId
+                && s.Status != WritingSubmissionStatus.Draft)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
 }

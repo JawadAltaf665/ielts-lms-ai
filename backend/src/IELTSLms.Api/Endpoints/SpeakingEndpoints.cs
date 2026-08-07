@@ -5,9 +5,11 @@ using IELTSLms.Api.Extensions;
 using IELTSLms.Application.Speaking.Commands.CreateSpeakingAttempt;
 using IELTSLms.Application.Speaking.Commands.CreateSpeakingTask;
 using IELTSLms.Application.Speaking.Commands.OverrideSpeakingEvaluation;
+using IELTSLms.Application.Speaking.Commands.ResolveSpeakingEvaluationReview;
 using IELTSLms.Application.Speaking.Commands.SubmitSpeakingAttempt;
 using IELTSLms.Application.Speaking.Queries.GetSpeakingAttempt;
 using IELTSLms.Application.Speaking.Queries.GetSpeakingEvaluation;
+using IELTSLms.Application.Speaking.Queries.GetSpeakingReviewQueue;
 using IELTSLms.Application.Speaking.Queries.GetSpeakingTask;
 using IELTSLms.Application.Speaking.Queries.GetSpeakingTasks;
 using IELTSLms.Common.Pagination;
@@ -78,6 +80,20 @@ internal static class SpeakingEndpoints
             .WithTags("Speaking")
             .WithName("OverrideSpeakingEvaluation")
             .WithSummary("Teacher override of the AI-produced scores (speaking.evaluate); audited, original AI scores retained.");
+
+        builder.MapGet("/speaking-evaluations/review-queue", GetSpeakingReviewQueueAsync)
+            .RequireAuthorization()
+            .WithTags("Speaking")
+            .WithName("GetSpeakingReviewQueue")
+            .WithSummary("Lists flagged/low-confidence evaluations awaiting human review (speaking.evaluate), cursor-paginated.");
+
+        builder.MapPost("/speaking-evaluations/{id:guid}/resolve-review", ResolveSpeakingEvaluationReviewAsync)
+            .RequireAuthorization()
+            .WithTags("Speaking")
+            .WithName("ResolveSpeakingEvaluationReview")
+            .WithSummary(
+                "Teacher marks a flagged evaluation reviewed, with or without a score override (speaking.evaluate); " +
+                "audited (actor, timestamp, decision), distinct from PATCH.");
 
         return builder;
     }
@@ -262,6 +278,39 @@ internal static class SpeakingEndpoints
         var command = new OverrideSpeakingEvaluationCommand(
             tenantId, userId, id, request.FluencyCoherence, request.LexicalResource, request.GrammaticalRangeAccuracy,
             request.Pronunciation, request.Reason);
+        var result = await sender.Send(command, cancellationToken);
+        return result.IsSuccess ? Results.Ok(ApiResponse.From(result.Value, httpContext)) : result.ToProblem(httpContext);
+    }
+
+    private static async Task<IResult> GetSpeakingReviewQueueAsync(
+        [AsParameters] GetSpeakingReviewQueueQueryParams queryParams, ISender sender, ITenantContext tenantContext,
+        HttpContext httpContext, CancellationToken cancellationToken)
+    {
+        if (!TryGetTenantId(tenantContext, out var tenantId))
+        {
+            return TenantNotResolved.ToProblem(httpContext);
+        }
+
+        var limit = PaginationDefaults.NormalizePageSize(queryParams.Limit ?? PaginationDefaults.DefaultPageSize);
+        var result = await sender.Send(new GetSpeakingReviewQueueQuery(tenantId, queryParams.Cursor, limit), cancellationToken);
+        return result.IsSuccess ? Results.Ok(ApiResponse.From(result.Value, httpContext)) : result.ToProblem(httpContext);
+    }
+
+    private static async Task<IResult> ResolveSpeakingEvaluationReviewAsync(
+        Guid id, ResolveSpeakingEvaluationReviewRequest request, ISender sender, ITenantContext tenantContext, HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetTenantId(tenantContext, out var tenantId))
+        {
+            return TenantNotResolved.ToProblem(httpContext);
+        }
+
+        if (!TryGetUserId(httpContext, out var userId))
+        {
+            return UserNotResolved.ToProblem(httpContext);
+        }
+
+        var command = new ResolveSpeakingEvaluationReviewCommand(tenantId, userId, id, request.Decision);
         var result = await sender.Send(command, cancellationToken);
         return result.IsSuccess ? Results.Ok(ApiResponse.From(result.Value, httpContext)) : result.ToProblem(httpContext);
     }

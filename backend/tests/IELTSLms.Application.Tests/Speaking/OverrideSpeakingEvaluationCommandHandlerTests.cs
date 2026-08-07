@@ -12,7 +12,7 @@ public sealed class OverrideSpeakingEvaluationCommandHandlerTests
     {
         var evaluation = SpeakingEvaluation.Create(
             SpeakingEvaluationId.From(Guid.NewGuid()), tenantId, SpeakingAttemptId.From(Guid.NewGuid()), 7.0m, 6.5m, 7.0m, 6.5m, 0.9m,
-            "feedback", 0.7m, null, null, Now).Value;
+            "feedback", 0.7m, 3.0m, null, null, Now).Value;
         evaluations.Seed(evaluation);
         return evaluation;
     }

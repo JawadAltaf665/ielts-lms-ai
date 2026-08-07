@@ -379,6 +379,7 @@ graph LR
 | **AI post-processing** | Long-running evaluation orchestration, retries on provider failure. |
 | **Notifications** | Email dispatch, reminders. |
 | **Maintenance** | Archiving, log/retention sweeps, projection rebuilds. |
+| **Learning workflows** | `DailyLearningWorkflowJob` (Phase 7 Sprint 9, first genuinely recurring, entitlement-aware AI job) — daily `05:00 UTC` sweep of entitled tenants' active-learner cohorts (activity within 30 days), running Progress Analysis → Learning Recommendation → Study Planner per learner and writing today's `DailyPlan` (Agentic AI Architecture §13.3). Entitlement-filtered per tenant, quota-checked per learner; a learner outside quota/entitlement still gets a default-tasks plan rather than nothing. |
 
 - Jobs are **tenant-aware**: tenant context is serialized into the payload and reconstructed on execution.
 - **Idempotent + retriable** with backoff; poison jobs routed to a dead-letter/inspection queue.

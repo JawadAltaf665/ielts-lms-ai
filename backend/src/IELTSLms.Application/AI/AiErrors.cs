@@ -21,4 +21,52 @@ internal static class AiErrors
 
     public static readonly Error PromptNotConfigured = Error.ServiceUnavailable(
         "DEPENDENCY_AI_PROMPT_NOT_CONFIGURED", "This AI capability is not yet configured.");
+
+    public static readonly Error PromptVariableMissing = Error.Validation(
+        "VALIDATION_AI_PROMPT_VARIABLE_MISSING", "The prompt template references a variable that was not supplied.");
+
+    public static readonly Error PromptVariableInjectionRejected = Error.Validation(
+        "VALIDATION_AI_PROMPT_VARIABLE_INJECTION_REJECTED",
+        "A supplied prompt variable was rejected because it contained template syntax.");
+
+    public static readonly Error UsageSummaryInvalidRange = Error.Validation(
+        "VALIDATION_AI_USAGE_SUMMARY_INVALID_RANGE", "The 'from' date must not be after the 'to' date.");
+
+    public static readonly Error PromptNotFound = Error.NotFound(
+        "NOT_FOUND_AI_PROMPT", "Prompt version not found.");
+
+    public static readonly Error PromptVersionMismatch = Error.Conflict(
+        "CONFLICT_AI_PROMPT_VERSION_MISMATCH", "The prompt was modified by someone else since you loaded it. Reload and try again.");
+
+    public static readonly Error PromptNotActive = Error.Validation(
+        "BUSINESS_AI_PROMPT_NOT_ACTIVE", "Only the currently active version for its feature/scope can be rolled back.");
+
+    public static readonly Error PromptNoPriorVersion = Error.Validation(
+        "BUSINESS_AI_PROMPT_NO_PRIOR_VERSION", "There is no prior version to roll back to for this feature/scope.");
+
+    public static readonly Error PromptActiveCannotRetire = Error.Validation(
+        "BUSINESS_AI_PROMPT_ACTIVE_CANNOT_RETIRE",
+        "This prompt version is currently active. Activate a replacement before retiring it.");
+
+    public static readonly Error ConversationNotFound = Error.NotFound(
+        "NOT_FOUND_CONVERSATION", "Conversation not found.");
+
+    public static readonly Error ConversationSummaryPromptNotConfigured = Error.ServiceUnavailable(
+        "DEPENDENCY_AI_CONVERSATION_SUMMARY_PROMPT_NOT_CONFIGURED", "Conversation summarization is not yet configured.");
+
+    public static readonly Error LessonSessionNotFound = Error.NotFound(
+        "NOT_FOUND_LESSON_SESSION", "Lesson session not found.");
+
+    public static readonly Error ActiveLessonSessionExists = Error.Conflict(
+        "CONFLICT_LESSON_SESSION_ACTIVE_EXISTS", "You already have an active session for this lesson.");
+
+    public static readonly Error LessonSessionCompleted = Error.Validation(
+        "BUSINESS_LESSON_SESSION_COMPLETED", "This lesson session has already been completed.");
+
+    public static readonly Error TeacherStepPromptNotConfigured = Error.ServiceUnavailable(
+        "DEPENDENCY_AI_TEACHER_STEP_PROMPT_NOT_CONFIGURED", "This lesson step is not yet configured.");
+
+    public static readonly Error PromptCalibrationFailed = Error.Validation(
+        "BUSINESS_AI_PROMPT_CALIBRATION_FAILED",
+        "This prompt version did not meet the calibration tolerance against the expert-rated sample set.");
 }

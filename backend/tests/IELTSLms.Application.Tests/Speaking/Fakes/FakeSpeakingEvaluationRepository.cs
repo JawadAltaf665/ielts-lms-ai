@@ -20,4 +20,13 @@ internal sealed class FakeSpeakingEvaluationRepository : ISpeakingEvaluationRepo
 
     public Task<SpeakingEvaluation?> GetByAttemptIdAsync(SpeakingAttemptId attemptId, CancellationToken cancellationToken = default) =>
         Task.FromResult(_evaluations.FirstOrDefault(e => e.SpeakingAttemptId == attemptId));
+
+    public Task<IReadOnlyList<SpeakingEvaluation>> ListPendingReviewAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<SpeakingEvaluation> pending = _evaluations
+            .Where(e => e.TenantId == tenantId && e.RequiresHumanReview && e.ReviewedAtUtc is null && e.OverriddenAtUtc is null)
+            .OrderByDescending(e => e.CreatedAtUtc).ThenByDescending(e => e.Id.Value)
+            .ToList();
+        return Task.FromResult(pending);
+    }
 }

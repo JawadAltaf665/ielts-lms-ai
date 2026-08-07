@@ -176,6 +176,17 @@ graph LR
 - **Domain grounding:** context is drawn from tenant-scoped domain data ([ERD](./09_Database_Design_ERD.md)), never cross-tenant.
 - **Memory tiers:** ephemeral (request) → session (conversation) → durable (learner insights/[ProgressTracking](./09_Database_Design_ERD.md#64-ai--insights)); long-term vector memory is [future](#7-rag--knowledge-base-readiness).
 
+> **Phase 7 Sprint 3 reconciliation (Memory & Conversation History):** the "conversation memory" and
+> "context assembly" behavior above is now concretely implemented, not just described. `Conversation` /
+> `ConversationMessage` / `ConversationSummary` ([ERD ENT-050B–D](./09_Database_Design_ERD.md#68-ai--intelligence))
+> are the session memory tier; `IConversationContextService` (`IELTSLms.Application/AI/`) is the context
+> assembly service — it composes the system prompt via the Sprint 1/2 `IPromptCompositionService`, adds
+> the latest `ConversationSummary` (if any) and the raw messages since it, and triggers summarization
+> (one more bounded call through the same `IAiGateway` port, not a bespoke compression routine) once the
+> raw tail exceeds its token budget, subject to a recency floor that never compacts away the most recent
+> few raw messages. Durable/long-term memory (`ProgressTracking`) is read-only from this service's
+> perspective — it is not owned or duplicated here.
+
 ---
 
 ## 7. RAG & Knowledge Base Readiness
@@ -303,13 +314,39 @@ Each capability is delivered via the gateway with a versioned prompt, structured
 | **Mock Test Review** | Explain mock results | Item-level review |
 | **Feedback Generation** | Rich formative feedback | Narrative + structured tips |
 | **Personalized Learning** | Tailor content/path | Personalized sequence |
+| **AI Tutor** | Reactive Q&A scoped to IELTS prep | Grounded answer, redirect if out of scope |
+| **AI Teacher (Lesson Delivery)** | Deliver a structured, sequenced lesson — the AI acts as the teacher, no human teacher in the loop | Step content (explain/check/practice/recap) + completion signal |
 | **Certificate Insights** | Summarize achievement | Insight summary |
 | **Admin AI** | Ops assistance (config, insights) | Actions/summaries (guarded) |
-| **Teacher AI** | Grading assist, cohort insights | Suggestions/summaries |
+| **Teacher AI (Grading Assist)** | Grading assist, cohort insights *for a human Teacher role user* | Suggestions/summaries |
 | **Support AI** | Answer support queries | Answers + escalation |
 | **Analytics AI** | Natural-language analytics | Charts/summaries |
 
+> **Phase 7 Sprint 4 disambiguation:** "AI Teacher (Lesson Delivery)" and "Teacher AI (Grading Assist)"
+> are two different capabilities that happened to share a name before this row was split out — the
+> former is student-facing (the AI *is* the teacher), the latter is a human-Teacher-facing grading aid
+> ([Agentic §12.4](./18_Agentic_AI_Architecture.md#124-role--operations-agents)). Don't conflate them.
+>
 > Capabilities respect [RBAC/permissions](./11_Authentication_Authorization.md#11-roles--permission-matrix) and [plan entitlements](./13_Subscription_Billing.md#2-subscription-plans--feature-matrix); e.g., Teacher/Admin AI require the corresponding roles.
+>
+> **Phase 7 Sprint 8 reconciliation:** "Reading Coach"/"Listening Coach" move from catalog-only to
+> implemented — auto-explanation of wrong answers (grounded in the passage/transcript, attempt-review
+> endpoint) plus on-demand strategy guidance (ad-hoc endpoint), same one-capability-two-entry-points
+> shape as Grammar Coach. "Question Generation" is implemented for Reading/Listening specifically (not
+> the other skills yet): a `content.manage`-gated draft-variant capability that rephrases an existing
+> question at an adjusted difficulty — output is always a `Pending` draft, never auto-published; a human
+> content-manager approval promotes it into a real question through the existing content-authoring
+> commands (this project's "AI outputs are drafts until validated" posture for content, distinct from
+> the HITL-on-disputed-*results* posture scoring capabilities use).
+>
+> **Phase 7 Sprint 9 reconciliation:** "Study Planner", "Learning Recommendations", and "Weakness
+> Detection" move from catalog-only to implemented (Agentic §12.2 Progress Analysis Agent, §12.3 Study
+> Planner/Learning Recommendation Agents). Weakness Detection gates on a minimum-data threshold (≥5
+> activities across ≥2 of Grammar/Vocabulary/Reading/Listening/Writing/Speaking) — below it, reads
+> return a clear "insufficient data" status instead of a low-confidence guess, mirroring Band
+> Prediction's low-confidence handling. All three share one Billing entitlement/quota
+> (`ai.daily-learning-workflow`), same "single entitlement for a multi-call workflow" shape as Writing
+> Evaluation's three-call workflow.
 
 ---
 

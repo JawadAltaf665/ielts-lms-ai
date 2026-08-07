@@ -8,6 +8,7 @@ using IELTSLms.Application.Assessment.Commands.StartMockExamSection;
 using IELTSLms.Application.Assessment.Commands.SubmitMockExam;
 using IELTSLms.Application.Assessment.Queries.GetMockExam;
 using IELTSLms.Application.Assessment.Queries.GetMockExamResult;
+using IELTSLms.Application.Assessment.Queries.GetOrchestratedReview;
 using IELTSLms.Domain.Assessment;
 using IELTSLms.SharedKernel.Results;
 using MediatR;
@@ -58,6 +59,12 @@ internal static class MockExamEndpoints
             .WithTags("MockExams")
             .WithName("AbandonMockExam")
             .WithSummary("Abandons an in-progress session, releasing the single-active-session lock (mock-exam.attempt).");
+
+        builder.MapGet("/mock-exams/{id:guid}/orchestrated-review", GetOrchestratedReviewAsync)
+            .RequireAuthorization()
+            .WithTags("MockExams")
+            .WithName("GetOrchestratedReview")
+            .WithSummary("Retrieves the status of the Monthly Mock Exam Workflow review (Sprint 10).");
 
         return builder;
     }
@@ -170,6 +177,23 @@ internal static class MockExamEndpoints
         }
 
         var result = await sender.Send(new AbandonMockExamCommand(tenantId, userId, id), cancellationToken);
+        return result.IsSuccess ? Results.Ok(ApiResponse.From(result.Value, httpContext)) : result.ToProblem(httpContext);
+    }
+
+    private static async Task<IResult> GetOrchestratedReviewAsync(
+        Guid id, ISender sender, ITenantContext tenantContext, HttpContext httpContext, CancellationToken cancellationToken)
+    {
+        if (!TryGetTenantId(tenantContext, out var tenantId))
+        {
+            return TenantNotResolved.ToProblem(httpContext);
+        }
+
+        if (!TryGetUserId(httpContext, out var userId))
+        {
+            return UserNotResolved.ToProblem(httpContext);
+        }
+
+        var result = await sender.Send(new GetOrchestratedReviewQuery(tenantId, userId, id), cancellationToken);
         return result.IsSuccess ? Results.Ok(ApiResponse.From(result.Value, httpContext)) : result.ToProblem(httpContext);
     }
 

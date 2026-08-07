@@ -38,3 +38,24 @@ public readonly record struct BandPredictionId(Guid Value)
     public static BandPredictionId From(Guid value) => new(value);
     public override string ToString() => Value.ToString();
 }
+
+/// <summary>Strongly-typed identifier for a <see cref="QuestionVariantDraft"/>.</summary>
+public readonly record struct QuestionVariantDraftId(Guid Value)
+{
+    public static QuestionVariantDraftId From(Guid value) => new(value);
+    public override string ToString() => Value.ToString();
+}
+
+/// <summary>Strongly-typed identifier for an <see cref="AgentRegistration"/> (Sprint 10 Agent Registry).</summary>
+public readonly record struct AgentRegistrationId(Guid Value)
+{
+    public static AgentRegistrationId From(Guid value) => new(value);
+    public override string ToString() => Value.ToString();
+}
+
+/// <summary>Strongly-typed identifier for a <see cref="WorkflowRun"/> (Sprint 10 Workflow Engine).</summary>
+public readonly record struct WorkflowRunId(Guid Value)
+{
+    public static WorkflowRunId From(Guid value) => new(value);
+    public override string ToString() => Value.ToString();
+}

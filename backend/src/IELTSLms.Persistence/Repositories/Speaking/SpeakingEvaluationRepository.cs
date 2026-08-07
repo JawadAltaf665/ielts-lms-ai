@@ -9,4 +9,11 @@ internal sealed class SpeakingEvaluationRepository(ApplicationDbContext dbContex
 {
     public async Task<SpeakingEvaluation?> GetByAttemptIdAsync(SpeakingAttemptId attemptId, CancellationToken cancellationToken = default) =>
         await Set.FirstOrDefaultAsync(e => e.SpeakingAttemptId == attemptId, cancellationToken).ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<SpeakingEvaluation>> ListPendingReviewAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+        await Set
+            .Where(e => e.TenantId == tenantId && e.RequiresHumanReview && e.ReviewedAtUtc == null && e.OverriddenAtUtc == null)
+            .OrderByDescending(e => e.CreatedAtUtc).ThenByDescending(e => e.Id)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
 }

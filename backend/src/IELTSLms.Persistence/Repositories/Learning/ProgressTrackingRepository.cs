@@ -12,4 +12,18 @@ internal sealed class ProgressTrackingRepository(ApplicationDbContext dbContext)
         await Set.FirstOrDefaultAsync(
             p => p.TenantId == tenantId && p.UserId == userId && p.Skill == skill, cancellationToken)
             .ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<ProgressTracking>> ListByUserAsync(
+        Guid tenantId, Guid userId, CancellationToken cancellationToken = default) =>
+        await Set.Where(p => p.TenantId == tenantId && p.UserId == userId)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+    public async Task<IReadOnlyList<Guid>> ListActiveUserIdsAsync(
+        Guid tenantId, DateTimeOffset activeSinceUtc, CancellationToken cancellationToken = default) =>
+        await Set.Where(p => p.TenantId == tenantId && p.LastActivityAtUtc >= activeSinceUtc)
+            .Select(p => p.UserId)
+            .Distinct()
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
 }

@@ -128,7 +128,7 @@ public sealed class DependencyRuleTests
     {
         // AI Architecture §2/§3 (ACL pattern): "no feature calls a provider directly" — Application
         // depends on IAiChatProvider (Abstractions/AI), but only Infrastructure/AI may implement it
-        // (the Claude adapter). No new NuGet SDK was added for this sprint (a hand-rolled HttpClient
+        // (Claude, OpenAI). No new NuGet SDK was added for either adapter (a hand-rolled HttpClient
         // call replaces one), so the meaningful guard is on the port's implementers, not a package name.
         var applicationResult = Types.InAssembly(Layers.Application)
             .That()
@@ -144,14 +144,14 @@ public sealed class DependencyRuleTests
 
         Assert.Empty(domainResult);
 
-        var infrastructureResult = Types.InAssembly(Layers.Infrastructure)
+        var implementers = Types.InAssembly(Layers.Infrastructure)
             .That()
             .ImplementInterface(typeof(IAiChatProvider))
-            .Should()
-            .ResideInNamespace("IELTSLms.Infrastructure.AI.Claude")
-            .GetResult();
+            .GetTypes();
 
-        AssertNoViolations(infrastructureResult);
+        Assert.All(implementers, type => Assert.True(
+            type.Namespace is "IELTSLms.Infrastructure.AI.Claude" or "IELTSLms.Infrastructure.AI.OpenAi",
+            $"{type.FullName} must live in an Infrastructure/AI/<Vendor> namespace."));
     }
 
     [Fact]

@@ -5,6 +5,7 @@ namespace IELTSLms.Domain.AI;
 public enum AiProviderKind
 {
     Claude = 1,
+    OpenAi = 2,
 }
 
 /// <summary>Outcome of a recorded <see cref="AiResponse"/> (AI Architecture §8).</summary>
@@ -34,4 +35,44 @@ public enum BandPredictionStatus
     Pending = 1,
     Ready = 2,
     Failed = 3,
+}
+
+/// <summary>Which bounded context's question a <see cref="QuestionVariantDraft.SourceQuestionId"/>
+/// polymorphically points at (Sprint 8) — the discriminator side of that reference, same pattern as
+/// <see cref="AiResponse.RequestingEntityType"/>.</summary>
+public enum QuestionVariantSourceType
+{
+    Reading = 1,
+    Listening = 2,
+}
+
+/// <summary>Human-review lifecycle of a <see cref="QuestionVariantDraft"/> (Sprint 8, AI Architecture
+/// §13 "generation assists, humans approve"): a draft is inert until a <c>content.manage</c> actor
+/// explicitly approves it; a rejected draft is retained (status, not hard-deleted) for audit.</summary>
+public enum QuestionVariantStatus
+{
+    Pending = 1,
+    Approved = 2,
+    Rejected = 3,
+}
+
+/// <summary>Lifecycle of an <see cref="AgentRegistration"/> entry in the Agent Registry (Sprint 10,
+/// Agentic AI Architecture §4). Deprecated agents remain queryable for governance/audit but are not
+/// selected by the Workflow Engine for new invocations.</summary>
+public enum AgentStatus
+{
+    Enabled = 1,
+    Deprecated = 2,
+}
+
+/// <summary>Lifecycle of a <see cref="WorkflowRun"/> (Sprint 10, Agentic AI Architecture §6).
+/// <see cref="Compensated"/> is a sub-state of partial failure where saga-style cleanup callbacks
+/// ran successfully after a step error — the run is still "failed" from a business perspective but
+/// compensation ran cleanly, so the distinction matters for observability.</summary>
+public enum WorkflowRunStatus
+{
+    Running = 1,
+    Completed = 2,
+    Failed = 3,
+    Compensated = 4,
 }

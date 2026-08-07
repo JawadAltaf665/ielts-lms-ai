@@ -3,13 +3,13 @@
 > Production-grade, AI-powered, multi-tenant SaaS Learning Management System for IELTS preparation.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![Status](https://img.shields.io/badge/status-planning-blue.svg)](#development-phases)
+[![Status](https://img.shields.io/badge/status-active-success.svg)](#current-status-backend-completed)
 
 ---
 
 ## Project Overview
 
-**IELTS LMS AI** is an enterprise SaaS platform that helps global students, teachers, coaching institutes, universities, and organizations prepare for the IELTS examination. It is **not** a personal preparation app — it is a multi-tenant, role-based, AI-powered Learning Management System built for scale.
+**IELTS LMS AI** is an enterprise SaaS platform that helps global students, teachers, coaching institutes, universities, and organizations prepare for the IELTS examination. Built on a clean architecture .NET Web API and EF Core (PostgreSQL), it is a multi-tenant, role-based, AI-powered Learning Management System built for scale.
 
 The platform combines structured IELTS curriculum delivery with AI-driven evaluation, personalized tutoring, and rich analytics, all under a tenant-isolated architecture suitable for organizations of any size.
 
@@ -17,103 +17,50 @@ The platform combines structured IELTS curriculum delivery with AI-driven evalua
 
 To become the leading global infrastructure for IELTS preparation — where any institution or organization can deliver world-class, AI-assisted IELTS training to their learners without building the underlying technology themselves.
 
-## Goals
-
-- Deliver a **multi-tenant** SaaS platform with strong tenant isolation and data security.
-- Provide **AI-powered evaluation** for Writing and Speaking, aligned with IELTS band descriptors.
-- Offer a complete IELTS curriculum: Academic and General Training.
-- Enable **role-based access control** (RBAC) across students, teachers, institute admins, and platform operators.
-- Support **subscription billing** and flexible commercial models for organizations.
-- Provide deep **progress tracking and analytics** for learners and administrators.
-- Achieve **enterprise scalability, reliability, and observability**.
-
-## Platform Capabilities (Planned)
+## Platform Capabilities
 
 | Domain | Capabilities |
 | --- | --- |
 | Test types | Academic IELTS, General Training IELTS |
 | Skills | Reading, Writing, Listening, Speaking |
-| Learning | AI Tutor, Daily Learning, Grammar, Vocabulary, Sentence Builder |
-| Assessment | Mock Tests, AI-powered evaluation, band scoring |
-| Insights | Progress Tracking, Analytics, Reporting |
-| Commercial | Subscription Billing, Multi-Tenant Architecture |
-| Platform | Role-Based Access Control, Enterprise scalability |
+| Learning | AI Tutor, AI Teacher, Grammar, Vocabulary, Sentence Builder, Daily Learning Workflow |
+| Assessment | Mock Tests, Orchestrated Reviews, AI-powered evaluation, Band Prediction |
+| Insights | Progress Tracking, Analytics (Usage & Quality Trends), Reporting |
+| Commercial | Stripe Subscription Billing, Multi-Tenant Architecture, Quota Management |
+| Platform | Role-Based Access Control, Enterprise scalability, Agentic AI Orchestration |
 
-## Repository Structure
+## Architecture & Technology Stack
 
-```
-ielts-lms-ai/
-├── frontend/          # Web client application (planned)
-├── backend/           # API and application services (planned)
-├── database/          # Schema, seeds, and data design (planned)
-├── docs/              # Architecture and project documentation
-├── docker/            # Container definitions and compose files
-├── scripts/           # Automation and developer tooling
-├── tests/             # Cross-cutting and end-to-end test assets
-├── infrastructure/    # Infrastructure-as-code and cloud config
-├── assets/            # Shared static assets (logos, media, design)
-├── prompts/           # AI prompt templates and evaluation prompts
-├── .github/           # GitHub workflows, templates, and automation
-├── README.md
-├── LICENSE
-├── CONTRIBUTING.md
-├── CODE_OF_CONDUCT.md
-├── SECURITY.md
-├── CHANGELOG.md
-├── .gitignore
-├── .editorconfig
-├── .gitattributes
-└── .env.example
-```
+The backend uses a clean, modular monolith architecture applying DDD, CQRS, and Event-Driven principles.
 
-Each top-level folder contains its own `README.md` describing its purpose in detail.
+| Layer | Technology |
+| --- | --- |
+| Backend API | .NET 10 (C#) |
+| Persistence | PostgreSQL with Entity Framework Core |
+| Caching | Redis |
+| Orchestration | Hangfire for Background Jobs, Custom Agentic AI Workflow Engine |
+| AI | Large Language Model (LLM) Integration with dynamic Prompt/Agent Catalog |
+| Architecture | CQRS (MediatR), Domain-Driven Design (DDD), Clean Architecture |
+| Security | JWT, Role-Based Access Control, Multi-Tenant Isolation (Entity Filters) |
 
-## Documentation Index
+## Current Status (Backend Completed)
 
-Full documentation lives in [`/docs`](./docs/README.md). The following documents are planned and currently exist as placeholders:
-
-- Architecture Overview
-- System Context & High-Level Design
-- Multi-Tenancy Strategy
-- Data Architecture & Database Design
-- API Design Guidelines
-- Security & Compliance
-- AI Evaluation Architecture
-- Deployment & Infrastructure
-- Observability & Operations
-- Architecture Decision Records (ADRs)
-
-> The documentation is being written incrementally. See [`docs/README.md`](./docs/README.md) for the live index.
-
-## Development Phases
+The backend implementation for all 7 primary phases is **Complete**. The system features a fully implemented enterprise API, comprehensive testing suite (Domain, Application, Integration), and database schema supporting multi-tenancy.
 
 | Phase | Name | Description | Status |
 | --- | --- | --- | --- |
-| 0 | Architecture & Planning | Repository structure, documentation scaffolding, architecture design | 🟢 In progress |
-| 1 | Foundations | Tenancy model, auth, RBAC, core data model | ⚪ Planned |
-| 2 | Core Learning | Reading, Listening content delivery, progress tracking | ⚪ Planned |
-| 3 | AI Evaluation | Writing & Speaking AI scoring, AI Tutor | ⚪ Planned |
-| 4 | Assessment | Mock tests, band scoring, analytics | ⚪ Planned |
-| 5 | Commercial | Subscription billing, tenant management | ⚪ Planned |
-| 6 | Scale & Hardening | Performance, observability, compliance | ⚪ Planned |
+| 1 | Foundations | Infrastructure, Architecture, API structure | 🟢 Complete |
+| 2 & 3 | Security & Tenancy | Authentication, RBAC, tenant isolation | 🟢 Complete |
+| 4 | Enterprise Identity | Organizations, device management, invitations | 🟢 Complete |
+| 5 | Commercial & Billing | Stripe subscriptions, product catalogs, quotas | 🟢 Complete |
+| 6 | Core Assessment & Skills | Grammar, Vocab, Reading, Listening, Writing, Speaking, Mock Exams | 🟢 Complete |
+| 7 | Agentic AI & Analytics | AI Tutor, Teacher, Planners, Agent Registry, Workflow Engine, Telemetry | 🟢 Complete |
 
-## Technology Stack
+**Next Steps**: Frontend Application (Angular/React) integration, end-to-end client testing, and production infrastructure deployment.
 
-> The stack below reflects the current planned direction and may evolve during the Architecture & Planning phase.
+## Documentation
 
-| Layer | Technology (Planned) |
-| --- | --- |
-| Frontend | React (TypeScript) |
-| Backend | .NET (C#) |
-| Database | Relational database (PostgreSQL / SQL Server) |
-| AI | Large Language Model integration for evaluation & tutoring |
-| Containerization | Docker |
-| Orchestration & IaC | Infrastructure-as-code (cloud provider TBD) |
-| CI/CD | GitHub Actions |
-
-## Status
-
-This project is in the **Architecture & Planning** phase. No application code has been implemented yet. This repository currently establishes the professional structure and documentation scaffolding for the work ahead.
+Full documentation lives in [`/docs`](./docs/README.md). It contains Architecture Decision Records (ADRs), Implementation Prompts, System Context, and Sprint specifications used during development.
 
 ## License
 

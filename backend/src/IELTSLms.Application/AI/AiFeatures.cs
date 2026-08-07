@@ -1,3 +1,5 @@
+using IELTSLms.Domain.AI;
+
 namespace IELTSLms.Application.AI;
 
 /// <summary>Well-known codes tying the AI capability catalog together: the <c>AiPrompt.Feature</c> tag,
@@ -57,4 +59,174 @@ internal static class AiFeatures
 
     /// <summary>Billing <c>QuotaDefinition.Code</c> metering Band Prediction requests (one unit per request).</summary>
     public const string BandPredictorQuota = "ai.band-predictor.requests";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag for conversation-history compaction (Phase 7 Sprint 3,
+    /// AI Architecture §6). Triggered internally by <c>IConversationContextService</c> when a
+    /// conversation's raw tail exceeds its token budget — not a directly learner-invoked capability, so
+    /// unlike the entries above it has no entitlement/quota gating of its own.
+    /// </summary>
+    public const string ConversationSummary = "conversation-summary";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag, <see cref="Domain.AI.Conversation.Feature"/> tag,
+    /// and <see cref="Domain.AI.AiOperation.Kind"/> value for AI Tutor (Phase 7 Sprint 4,
+    /// Agentic AI Architecture §12.1). Same literal also names the gating Billing
+    /// <c>Feature.Code</c> — reconciliation notes flag this single-tag convention as new (Grammar's
+    /// entitlement code carries an <c>"ai."</c> prefix its capability tag doesn't).
+    /// </summary>
+    public const string AiTutor = "ai-tutor";
+
+    /// <summary>Billing <c>QuotaDefinition.Code</c> metering AI Tutor "ask" turns.</summary>
+    public const string AiTutorQuota = "ai-tutor.requests";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag, <see cref="Domain.AI.Conversation.Feature"/> tag,
+    /// and <see cref="Domain.AI.AiOperation.Kind"/> value for AI Teacher (Phase 7 Sprint 4). Also the
+    /// gating Billing <c>Feature.Code</c> — see <see cref="AiTutor"/>'s remarks. Per-lesson-step prompt
+    /// variants live under this one feature via <see cref="Domain.AI.AiPrompt.Scope"/>
+    /// (see <see cref="LessonStepScopes"/>), not four separate feature tags.
+    /// </summary>
+    public const string AiTeacher = "ai-teacher";
+
+    /// <summary>Billing <c>QuotaDefinition.Code</c> metering AI Teacher turns (session start + each respond).</summary>
+    public const string AiTeacherQuota = "ai-teacher.requests";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag for Vocabulary Coach (Phase 7 Sprint 7, AI
+    /// Architecture §13 capability catalog) — same request/response shape as <see cref="GrammarCoach"/>.
+    /// </summary>
+    public const string VocabularyCoach = "vocabulary-coach";
+
+    /// <summary>Billing <c>Feature.Code</c> gating access to Vocabulary Coach.</summary>
+    public const string VocabularyCoachEntitlement = "ai.vocabulary-coach";
+
+    /// <summary>Billing <c>QuotaDefinition.Code</c> metering Vocabulary Coach calls.</summary>
+    public const string VocabularyCoachQuota = "ai.vocabulary-coach.requests";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag for the Sentence Builder AI scaffolding/validation
+    /// capability (Phase 7 Sprint 7) — enriches a <see cref="Domain.SentenceBuilder.SentenceAttempt"/>
+    /// asynchronously after its synchronous deterministic score.
+    /// </summary>
+    public const string SentenceBuilderAi = "sentence-builder-ai";
+
+    /// <summary>Billing <c>Feature.Code</c> gating access to Sentence Builder AI scaffolding.</summary>
+    public const string SentenceBuilderAiEntitlement = "ai.sentence-builder";
+
+    /// <summary>Billing <c>QuotaDefinition.Code</c> metering Sentence Builder AI scaffolding calls.</summary>
+    public const string SentenceBuilderAiQuota = "ai.sentence-builder.requests";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag for Reading Coach (Phase 7 Sprint 8, AI Architecture
+    /// §13 capability catalog) — one capability serving both auto-explanation of wrong answers
+    /// (<c>GetReadingAttemptCoachingQuery</c>, composing the passage + wrong answer into text) and
+    /// on-demand strategy guidance (<c>RequestReadingCoachingCommand</c>), same one-feature-two-entry-
+    /// points shape as <see cref="GrammarCoach"/>.
+    /// </summary>
+    public const string ReadingCoach = "reading-coach";
+
+    /// <summary>Billing <c>Feature.Code</c> gating access to Reading Coach.</summary>
+    public const string ReadingCoachEntitlement = "ai.reading-coach";
+
+    /// <summary>Billing <c>QuotaDefinition.Code</c> metering Reading Coach calls.</summary>
+    public const string ReadingCoachQuota = "ai.reading-coach.requests";
+
+    /// <summary><see cref="Domain.AI.AiPrompt.Feature"/> tag for Listening Coach (Phase 7 Sprint 8) —
+    /// mirrors <see cref="ReadingCoach"/> exactly, grounded in the audio's transcript instead of a
+    /// passage.</summary>
+    public const string ListeningCoach = "listening-coach";
+
+    /// <summary>Billing <c>Feature.Code</c> gating access to Listening Coach.</summary>
+    public const string ListeningCoachEntitlement = "ai.listening-coach";
+
+    /// <summary>Billing <c>QuotaDefinition.Code</c> metering Listening Coach calls.</summary>
+    public const string ListeningCoachQuota = "ai.listening-coach.requests";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag for Reading's question-variant/difficulty-adaptation
+    /// capability (Phase 7 Sprint 8 scope item 3) — a <c>content.manage</c> authoring tool, not a
+    /// directly learner-invoked capability, so (like <see cref="ConversationSummary"/>) it has no
+    /// entitlement/quota of its own; not in the sprint's reconciliation notes.
+    /// </summary>
+    public const string ReadingQuestionVariants = "reading-question-variants";
+
+    /// <summary><see cref="Domain.AI.AiPrompt.Feature"/> tag for Listening's question-variant capability
+    /// — mirrors <see cref="ReadingQuestionVariants"/> exactly.</summary>
+    public const string ListeningQuestionVariants = "listening-question-variants";
+
+    /// <summary>
+    /// <see cref="Domain.AI.AiPrompt.Feature"/> tag for the Progress Analysis Agent step (Phase 7
+    /// Sprint 9, Agentic AI Architecture §12.2/§13.3) — computes a <see cref="Domain.Learning.WeaknessProfile"/>
+    /// from cross-skill history.
+    /// </summary>
+    public const string ProgressAnalysis = "progress-analysis";
+
+    /// <summary><see cref="Domain.AI.AiPrompt.Feature"/> tag for the Learning Recommendation Agent step
+    /// (Phase 7 Sprint 9, Agentic AI Architecture §12.3/§13.7) — ranks next actions from a
+    /// <see cref="Domain.Learning.WeaknessProfile"/>.</summary>
+    public const string LearningRecommendation = "learning-recommendation";
+
+    /// <summary><see cref="Domain.AI.AiPrompt.Feature"/> tag for the Study Planner Agent step (Phase 7
+    /// Sprint 9, Agentic AI Architecture §12.3/§13.3) — turns ranked recommendations into today's
+    /// <see cref="Domain.Learning.DailyPlan"/>.</summary>
+    public const string StudyPlanner = "study-planner";
+
+    /// <summary>Billing <c>Feature.Code</c> gating the whole Daily Learning Workflow (all three AI
+    /// calls above) as a single entitlement — same "one entitlement per multi-step workflow" shape as
+    /// <see cref="WritingEvaluationEntitlement"/>, not gated per sub-step.</summary>
+    public const string DailyLearningWorkflowEntitlement = "ai.daily-learning-workflow";
+
+    /// <summary>Billing <c>QuotaDefinition.Code</c> metering Daily Learning Workflow invocations (the
+    /// learner-triggered weakness-profile refresh, and one unit per learner per scheduled/lazy-fallback run).</summary>
+    public const string DailyLearningWorkflowQuota = "ai.daily-learning-workflow.requests";
+}
+
+/// <summary>
+/// <see cref="Domain.AI.AiPrompt.Scope"/> values for the <see cref="AiFeatures.SpeakingExaminer"/>
+/// feature (Phase 7 Sprint 5): the examiner system template lives in <see cref="Default"/> as before,
+/// while <see cref="Rubric"/> is the four-criteria band rubric fetched as its own versioned artifact and
+/// composed into the template's <c>{{rubric}}</c> placeholder — a rubric update is then a new "rubric"
+/// version, not a full examiner-prompt rewrite. Same per-feature multi-slot mechanic as
+/// <see cref="LessonStepScopes"/>.
+/// </summary>
+internal static class SpeakingExaminerScopes
+{
+    public const string Default = "default";
+    public const string Rubric = "rubric";
+}
+
+/// <summary>
+/// <see cref="Domain.AI.AiPrompt.Scope"/> values for the <see cref="AiFeatures.WritingExaminer"/>
+/// feature (Phase 7 Sprint 6): same "rubric fetched as its own versioned artifact" shape as
+/// <see cref="SpeakingExaminerScopes"/> — the four-criteria band rubric composes into the examiner
+/// template's <c>{{rubric}}</c> placeholder rather than being baked in as literal prompt text.
+/// </summary>
+internal static class WritingExaminerScopes
+{
+    public const string Default = "default";
+    public const string Rubric = "rubric";
+}
+
+/// <summary>
+/// <see cref="Domain.AI.AiPrompt.Scope"/> values for the <see cref="AiFeatures.AiTeacher"/> feature —
+/// one active prompt per <see cref="Domain.AI.LessonStep"/>, resolved by the step-state-machine rather
+/// than a single fixed template (this sprint's whole reason for using the Scope slot per-feature —
+/// see AiPrompt's own doc comment on "(TenantId, Feature, Scope) slot").
+/// </summary>
+internal static class LessonStepScopes
+{
+    public const string Explain = "explain";
+    public const string CheckUnderstanding = "check-understanding";
+    public const string Practice = "practice";
+    public const string Recap = "recap";
+
+    public static string ForStep(LessonStep step) => step switch
+    {
+        LessonStep.Explain => Explain,
+        LessonStep.CheckUnderstanding => CheckUnderstanding,
+        LessonStep.Practice => Practice,
+        LessonStep.Recap => Recap,
+        _ => throw new ArgumentOutOfRangeException(nameof(step), step, "Completed has no prompt scope."),
+    };
 }
