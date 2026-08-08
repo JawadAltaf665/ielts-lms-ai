@@ -1,6 +1,7 @@
 using System.Reflection;
 using FluentValidation;
 using IELTSLms.Abstractions.Billing;
+using IELTSLms.Application.Abstractions.Authorization;
 using IELTSLms.Application.Abstractions.Behaviors;
 using IELTSLms.Application.AI;
 using IELTSLms.Application.AI.Evaluation;
@@ -48,6 +49,7 @@ public static class DependencyInjection
 
         services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);
 
+        services.AddScoped<IPermissionResolver, PermissionResolver>();
         services.AddScoped<IEntitlementService, EntitlementService>();
         services.AddScoped<IQuotaService, QuotaService>();
         services.AddScoped<IProgressTrackingService, ProgressTrackingService>();

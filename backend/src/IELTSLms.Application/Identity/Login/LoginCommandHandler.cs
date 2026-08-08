@@ -21,6 +21,7 @@ public sealed partial class LoginCommandHandler(
     IUserSessionRepository sessions,
     IRefreshTokenRepository refreshTokens,
     ILoginHistoryRepository loginHistory,
+    IUserRoleRepository userRoles,
     IPasswordHasher passwordHasher,
     ISecureTokenGenerator tokenGenerator,
     IAccessTokenService accessTokenService,
@@ -113,12 +114,16 @@ public sealed partial class LoginCommandHandler(
         await RecordAttemptAsync(tenantId, user.Id, normalizedEmail, LoginOutcome.Succeeded, request, now, cancellationToken)
             .ConfigureAwait(false);
 
+        var roles = await userRoles.GetRoleNamesForUserAsync(user.Id.Value, user.TenantId, cancellationToken)
+            .ConfigureAwait(false);
+
         var accessToken = accessTokenService.CreateToken(new AccessTokenRequest(
             user.Id.Value,
             user.TenantId,
             session.Id.Value,
             user.Email.Value,
-            [IdentityDefaults.PasswordAuthenticationMethod]));
+            [IdentityDefaults.PasswordAuthenticationMethod],
+            roles));
 
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

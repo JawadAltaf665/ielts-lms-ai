@@ -33,8 +33,12 @@ internal static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentContext, HttpCurrentContext>();
 
-        // Tenant-resolution strategy chain.
+        // Tenant-resolution strategy chain (Multi-Tenant Architecture §5.1): JWT claim (authoritative)
+        // → host/subdomain (primary browser mechanism) → header (server-to-server/admin/dev fallback).
+        services.AddOptions<TenantResolutionOptions>()
+            .Bind(configuration.GetSection(TenantResolutionOptions.SectionName));
         services.AddSingleton<ITenantResolutionStrategy, JwtClaimTenantResolutionStrategy>();
+        services.AddScoped<ITenantResolutionStrategy, HostTenantResolutionStrategy>();
         services.AddSingleton<ITenantResolutionStrategy, HeaderTenantResolutionStrategy>();
 
         // RFC 7807 Problem Details for framework-generated errors.

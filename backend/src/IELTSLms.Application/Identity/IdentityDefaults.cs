@@ -13,4 +13,11 @@ public static class IdentityDefaults
 
     /// <summary>The <c>amr</c> claim value for a password login (Auth §9.1).</summary>
     public const string PasswordAuthenticationMethod = "pwd";
+
+    /// <summary>
+    /// The JWT claim type carrying an assigned role name (Auth §9.1). A short custom claim, matching
+    /// the token's other claims (<c>sub</c>, <c>tenantId</c>, <c>sid</c>, <c>amr</c>) rather than the
+    /// verbose <see cref="System.Security.Claims.ClaimTypes.Role"/> URI.
+    /// </summary>
+    public const string RoleClaimType = "role";
 }

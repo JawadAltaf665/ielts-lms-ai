@@ -17,12 +17,17 @@ public interface IAccessTokenService
 /// <param name="SessionId">Device session (<c>sid</c>) linking the token to a session.</param>
 /// <param name="Email">The user's email, included for convenience (non-sensitive display claim).</param>
 /// <param name="AuthenticationMethods">Auth methods (<c>amr</c>), e.g. <c>pwd</c> (MFA-ready).</param>
+/// <param name="Roles">
+/// Assigned role names (<c>role</c>, coarse-grained — Auth §9.1). Permissions are deliberately not
+/// embedded; they're resolved server-side from roles on each request (§9.2, least privilege).
+/// </param>
 public readonly record struct AccessTokenRequest(
     Guid UserId,
     Guid TenantId,
     Guid SessionId,
     string Email,
-    IReadOnlyList<string> AuthenticationMethods);
+    IReadOnlyList<string> AuthenticationMethods,
+    IReadOnlyList<string> Roles);
 
 /// <summary>A minted access token and the instant it expires.</summary>
 /// <param name="Value">The compact-serialized, signed JWT.</param>

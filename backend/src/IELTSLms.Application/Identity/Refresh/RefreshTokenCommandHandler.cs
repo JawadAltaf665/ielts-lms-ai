@@ -23,6 +23,7 @@ public sealed partial class RefreshTokenCommandHandler(
     IRefreshTokenRepository refreshTokens,
     IUserSessionRepository sessions,
     IUserRepository users,
+    IUserRoleRepository userRoles,
     ISecureTokenGenerator tokenGenerator,
     IAccessTokenService accessTokenService,
     IUnitOfWork unitOfWork,
@@ -87,12 +88,18 @@ public sealed partial class RefreshTokenCommandHandler(
 
         session.SlideExpiry(now, _options.RefreshTokenSlidingLifetime, request.IpAddress, request.UserAgent);
 
+        // Re-loaded on every refresh (not carried over from the presented token) so a role change
+        // takes effect on the next refresh rather than lingering for the token's full lifetime.
+        var roles = await userRoles.GetRoleNamesForUserAsync(user.Id.Value, user.TenantId, cancellationToken)
+            .ConfigureAwait(false);
+
         var accessToken = accessTokenService.CreateToken(new AccessTokenRequest(
             user.Id.Value,
             user.TenantId,
             session.Id.Value,
             user.Email.Value,
-            [IdentityDefaults.PasswordAuthenticationMethod]));
+            [IdentityDefaults.PasswordAuthenticationMethod],
+            roles));
 
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

@@ -52,6 +52,12 @@ public sealed partial class CreateTenantCommandHandler(
             request.DefaultLocale ?? Tenant.FallbackLocale,
             request.DefaultTimeZone ?? Tenant.FallbackTimeZone);
 
+        // No per-tenant RBAC provisioning needed here: the system roles (Role.TenantId == null) and
+        // their permission grants are global rows, seeded once (RbacCatalogSeeder) — every tenant's
+        // users resolve permissions from the same grants (Auth §9.2; see IRolePermissionRepository's
+        // remarks on why grants aren't duplicated per tenant). A tenant that wants its own custom
+        // roles (Role.TenantId == this tenant) creates and grants them explicitly (role.assign, not
+        // part of this command).
         tenants.Add(tenant);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

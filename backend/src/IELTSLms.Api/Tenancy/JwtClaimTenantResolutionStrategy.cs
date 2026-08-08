@@ -20,15 +20,15 @@ public sealed class JwtClaimTenantResolutionStrategy : ITenantResolutionStrategy
     public string Name => "jwt-claim";
 
     /// <inheritdoc />
-    public Guid? Resolve(HttpContext httpContext)
+    public Task<Guid?> Resolve(HttpContext httpContext)
     {
         var user = httpContext.User;
         if (user.Identity?.IsAuthenticated != true)
         {
-            return null;
+            return Task.FromResult<Guid?>(null);
         }
 
         var raw = user.FindFirstValue(TenantClaimType);
-        return Guid.TryParse(raw, out var tenantId) ? tenantId : null;
+        return Task.FromResult(Guid.TryParse(raw, out var tenantId) ? (Guid?)tenantId : null);
     }
 }
