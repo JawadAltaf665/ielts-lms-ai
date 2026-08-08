@@ -30,7 +30,10 @@ public sealed class JwtAccessTokenService(
         var issuedAt = clock.UtcNow;
         var expiresAt = issuedAt.Add(_authOptions.AccessTokenLifetime);
 
-        // Minimal, tenant-scoped claims only — no PII beyond the display email (Auth §9.1).
+        // Minimal, tenant-scoped claims only — no PII beyond the display email (Auth §9.1). Roles are
+        // coarse-grained (role names only); permissions are resolved server-side from them per
+        // request rather than embedded, so a permission change takes effect immediately rather than
+        // waiting for the token to expire (Auth §9.2).
         var claims = new Dictionary<string, object>
         {
             [JwtRegisteredClaimNames.Sub] = request.UserId.ToString(),
@@ -38,6 +41,7 @@ public sealed class JwtAccessTokenService(
             ["sid"] = request.SessionId.ToString(),
             [JwtRegisteredClaimNames.Email] = request.Email,
             ["amr"] = request.AuthenticationMethods,
+            [IdentityDefaults.RoleClaimType] = request.Roles,
         };
 
         var descriptor = new SecurityTokenDescriptor

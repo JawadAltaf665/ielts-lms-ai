@@ -18,6 +18,12 @@ public interface ITenantRepository : IRepository<Tenant, TenantId>
     /// <summary>Loads a tenant by its globally-unique slug, or <see langword="null"/> if none exists.</summary>
     Task<Tenant?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Loads a tenant by its custom primary domain (host-based resolution for branded domains,
+    /// Multi-Tenant Architecture §5.1, §8), or <see langword="null"/> if none is mapped to it.
+    /// </summary>
+    Task<Tenant?> GetByPrimaryDomainAsync(string domain, CancellationToken cancellationToken = default);
+
     /// <summary>Loads a tenant by its globally-unique code, or <see langword="null"/> if none exists.</summary>
     Task<Tenant?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
 

@@ -44,7 +44,7 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next, ILogger<Ten
 
         foreach (var strategy in ordered)
         {
-            var candidate = strategy.Resolve(context);
+            var candidate = await strategy.Resolve(context).ConfigureAwait(false);
             if (candidate is not { } tenantId)
             {
                 continue;

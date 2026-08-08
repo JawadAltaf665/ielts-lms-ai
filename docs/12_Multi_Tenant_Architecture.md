@@ -159,6 +159,25 @@ graph TD
 
 > **Authority rule.** When a token is present, its `tenantId` is **authoritative**; a mismatching host/header is rejected. Host/header resolution is only trusted pre-authentication or for explicitly trusted callers.
 
+> **AUTH gap-closure note (2026-08-08):** all three strategies are implemented as
+> `ITenantResolutionStrategy` (`IELTSLms.Api.Tenancy`), tried by `TenantResolutionMiddleware` in
+> `Order` order (lowest first, first non-null wins, a later disagreeing signal is rejected as
+> spoofing — exactly this section's diagram): `JwtClaimTenantResolutionStrategy` (`Order = 0`) →
+> `HostTenantResolutionStrategy` (`Order = 100`, new) → `HeaderTenantResolutionStrategy`
+> (`Order = 200`). Host resolution strips a configured root domain
+> (`Tenancy:RootDomains`, `appsettings.json`) off the request `Host` header and looks the remaining
+> single-label subdomain up as a tenant slug (`ITenantRepository.GetBySlugAsync`); a host that
+> matches no configured root domain falls back to an exact match against a tenant's custom
+> `PrimaryDomain` (`GetByPrimaryDomainAsync`) before giving up. Before this, only the JWT-claim and
+> header strategies existed, so the frontend had to send `X-Tenant-Id` unconditionally on every
+> pre-auth call (login/register/…) — the only way to reach the one tenant that existed. The frontend
+> now sends nothing by default (a real deployment's Host header resolves the tenant on its own); an
+> opt-in `VITE_DEV_TENANT_ID` env var remains as the header-based dev/admin-tooling fallback this
+> table already scopes the header to, for exercising the system tenant on a bare host (`localhost`)
+> that resolves nothing via Host. Development's `appsettings.Development.json` adds `"localhost"` to
+> `RootDomains` so `http://acme.localhost:5000` exercises real host-based resolution locally too
+> (`*.localhost` resolves to loopback in modern browsers with no hosts-file edit, RFC 6761).
+
 ### 5.2 Tenant Context
 
 Once resolved, an immutable **Tenant Context** (tenantId, tier, feature flags, locale defaults) is established and propagated through all layers ([§7](#7-tenantid-flow-through-all-layers)). No business operation runs without it.

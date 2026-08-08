@@ -4,6 +4,7 @@ using IELTSLms.Abstractions.Security;
 using IELTSLms.Abstractions.Tenancy;
 using IELTSLms.Abstractions.Time;
 using IELTSLms.Application.Abstractions.Messaging;
+using IELTSLms.Application.Identity.Authorization;
 using IELTSLms.Domain.Identity;
 using IELTSLms.SharedKernel.Results;
 using Microsoft.Extensions.Logging;
@@ -12,13 +13,15 @@ using Microsoft.Extensions.Options;
 namespace IELTSLms.Application.Identity.Register;
 
 /// <summary>
-/// Handles <see cref="RegisterCommand"/>: creates a pending account, issues a hashed
-/// email-verification token, and emails the link. Returns success uniformly even when the email is
-/// already registered so the endpoint cannot be used to enumerate accounts (Auth §5); in that case
-/// no new account is created and no email is sent.
+/// Handles <see cref="RegisterCommand"/>: creates a pending account, assigns the default
+/// self-registration role, issues a hashed email-verification token, and emails the link. Returns
+/// success uniformly even when the email is already registered so the endpoint cannot be used to
+/// enumerate accounts (Auth §5); in that case no new account is created and no email is sent.
 /// </summary>
 public sealed partial class RegisterCommandHandler(
     IUserRepository users,
+    IRoleRepository roles,
+    IUserRoleRepository userRoles,
     IEmailVerificationTokenRepository verificationTokens,
     IPasswordHasher passwordHasher,
     ISecureTokenGenerator tokenGenerator,
@@ -65,6 +68,21 @@ public sealed partial class RegisterCommandHandler(
         var user = User.Register(userId, tenantId, email, passwordHash, request.DisplayName, now);
         users.Add(user);
 
+        // Self-registration is individual/direct sign-up (an institute-invited member would instead
+        // arrive via UserInvitation with its own role) — default to the learner role (Auth §13.1,
+        // RbacCatalog.DefaultSelfRegistrationRole). Degrade gracefully rather than failing the whole
+        // registration if the RBAC catalog hasn't been seeded yet (RbacCatalogSeeder, startup).
+        var defaultRole = await roles.GetByNameAsync(null, RbacCatalog.DefaultSelfRegistrationRole, cancellationToken)
+            .ConfigureAwait(false);
+        if (defaultRole is not null)
+        {
+            userRoles.Add(UserRole.Assign(userId, defaultRole.Id, tenantId, now, createdByUserId: Guid.Empty));
+        }
+        else
+        {
+            DefaultRoleMissing(logger, RbacCatalog.DefaultSelfRegistrationRole);
+        }
+
         var secureToken = tokenGenerator.Generate();
         var verificationToken = EmailVerificationToken.Issue(
             EmailVerificationTokenId.From(guids.NewGuid()),
@@ -95,4 +113,10 @@ public sealed partial class RegisterCommandHandler(
         Level = LogLevel.Information,
         Message = "Registration attempted for an already-registered email; responding uniformly.")]
     private static partial void RegistrationForExistingEmail(ILogger logger);
+
+    [LoggerMessage(
+        EventId = 2101,
+        Level = LogLevel.Warning,
+        Message = "Default self-registration role \"{RoleName}\" not found; new account has no role assigned.")]
+    private static partial void DefaultRoleMissing(ILogger logger, string roleName);
 }

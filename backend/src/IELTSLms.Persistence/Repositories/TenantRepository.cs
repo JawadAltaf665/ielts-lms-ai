@@ -23,6 +23,11 @@ internal sealed class TenantRepository(ApplicationDbContext dbContext)
             .ConfigureAwait(false);
 
     /// <inheritdoc />
+    public async Task<Tenant?> GetByPrimaryDomainAsync(string domain, CancellationToken cancellationToken = default) =>
+        await Set.FirstOrDefaultAsync(t => t.PrimaryDomain == domain, cancellationToken)
+            .ConfigureAwait(false);
+
+    /// <inheritdoc />
     public async Task<Tenant?> GetByCodeAsync(string code, CancellationToken cancellationToken = default) =>
         await Set.FirstOrDefaultAsync(t => t.Code == TenantCode.FromTrusted(code), cancellationToken)
             .ConfigureAwait(false);

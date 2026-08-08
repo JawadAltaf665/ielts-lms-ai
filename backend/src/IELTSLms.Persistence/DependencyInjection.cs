@@ -82,6 +82,7 @@ public static class DependencyInjection
         AddRepositories(services);
 
         services.AddHostedService<SystemTenantSeeder>();
+        services.AddHostedService<RbacCatalogSeeder>();
         services.AddHostedService<AiCatalogSeeder>();
         services.AddHostedService<WritingCatalogSeeder>();
         services.AddHostedService<SpeakingCatalogSeeder>();
@@ -106,6 +107,8 @@ public static class DependencyInjection
         // Phase 4 - Identity & Tenancy
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IPermissionRepository, PermissionRepository>();
+        services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+        services.AddScoped<IRolePermissionRepository, RolePermissionRepository>();
         services.AddScoped<IUserInvitationRepository, UserInvitationRepository>();
         services.AddScoped<IKnownDeviceRepository, KnownDeviceRepository>();
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();

@@ -255,8 +255,8 @@ graph LR
 | --- | --- |
 | `sub` | User identifier (stable, opaque). |
 | `tenantId` | Tenant scope — validated on every request. |
-| `roles` | Assigned role keys (coarse-grained). |
-| `perms` (optional) | Selected permission keys, or resolved server-side to keep tokens small. |
+| `roles` | Assigned role keys (coarse-grained). Implemented as a repeated `role` claim (`JwtAccessTokenService`), matching `sid`/`amr`'s short custom-claim style rather than the `ClaimTypes.Role` URI. |
+| `perms` (optional) | Selected permission keys, or resolved server-side to keep tokens small. **Implemented as "resolved server-side"** — permissions are never embedded; `IPermissionResolver` derives them from the `role` claims on each authorized request (§10.1). |
 | `sid` | Session/device session identifier. |
 | `iss`, `aud`, `exp`, `nbf`, `iat` | Standard JWT validity claims. |
 | `amr` | Authentication methods (e.g., `pwd`, `mfa`, `passkey`). |
@@ -329,6 +329,15 @@ graph TD
 | **Student** | Self | Learns, practices, submits, views own progress. |
 | **Support Agent** | Bounded | Limited support actions; no bulk data export. |
 | **Custom Roles (future)** | Tenant | Tenant-defined permission compositions. |
+
+> **Seeded role names (`RbacCatalog.cs`, `RbacCatalogSeeder`):** every role above is seeded as a
+> global system role (`Role.TenantId == null`) with this exact `Name` string, **except** Platform
+> Super Admin, which is seeded as `"PlatformAdmin"` (no space) — matching the string two pre-existing
+> `RequiredRoles` checks already used (`GetAiUsageSummaryQuery`/Billing analytics queries) rather than
+> silently renaming what those checks compare against. New code should treat `RbacCatalog.Roles` as
+> the canonical name list. Self-registration (§13.1) assigns `"Student"` by default; other roles are
+> assigned via role management (not built as part of this reconciliation — `role.assign` remains a
+> documented, unimplemented permission key).
 
 ### 11.3 Permission Matrix (Representative)
 
@@ -422,6 +431,24 @@ Legend: ✅ full · 🟡 scoped/limited · ➖ none.
 > itself). The question-variant/difficulty-adaptation endpoints (`POST .../question-variants`,
 > `GET/POST /question-variants/{id}*`) need no new key — `content.manage` already covers them, same as
 > every other AI-assisted content-authoring tool in this catalog (`ai.prompt.manage`'s row above).
+>
+> **AUTH gap-closure reconciliation (2026-08-08):** the "not yet a second enforced code path" /
+> "`AuthorizationPipelineBehavior` only enforces `RequiredRoles` today" caveat above is now out of
+> date for every `RequiredPermissions` declaration cited in the sprint notes above.
+> `AuthorizationPipelineBehavior` (`Application/Abstractions/Behaviors/AuthorizationPipelineBehavior.cs`)
+> now checks `RequiredPermissions` too, resolving the caller's effective permissions from their JWT
+> `role` claims via `IPermissionResolver` (one role→permission lookup per authorized request; see
+> §9.1 for the claim and §11.3 below for where the grants come from). The isolation-based endpoints
+> called out in the Sprint 3/4/9 notes (`ai.conversation.view`, `ai.tutor.use`, `ai.teacher.use`,
+> `analytics.view.self`/`.cohort`) are unaffected — they still enforce via ownership/inline role
+> checks, not `RequiredPermissions`, exactly as documented; nothing about this closure changes that.
+> The built-in RBAC catalog (roles, permission keys, and the grant matrix — `RbacCatalog.cs`) is the
+> authoritative, exhaustive list; §11.3's table below remains "Representative" and may omit
+> code-only keys the catalog also seeds (`mock-exam.*`, `writing.submit`, `speaking.submit`,
+> `*.attempt`, `analytics.read`, `ai.workflow.read` — self-service/operational keys added since this
+> table was last extended). New system-role JWT claims (§9.1's `role`) and `/auth/me`'s `roles`/
+> `permissions` fields are populated end-to-end from `UserRole`→`Role`→`RolePermission`→`Permission`
+> (ENT-005–008); registration assigns the `Student` role by default (§13.1).
 
 ---
 
@@ -534,6 +561,16 @@ sequenceDiagram
     IDN->>STORE: revoke all refresh tokens
     API-->>U: 200 OK (must re-login)
 ```
+
+> **AUTH gap-closure note (2026-08-08):** the reset-password step is deliberately opaque-token-only —
+> there is no "validate this token and tell me the account" step between forgot-password and
+> reset-password, and none was added. A frontend design surfaced a desire to show the account's email
+> on the reset-password screen; that was resolved by **not** building a token-validation endpoint
+> (it would add a token-probing oracle with no counterpart in this flow) and instead having the
+> reset-password page use generic copy ("choose a new password for your account") with no email
+> shown. `PasswordResetToken` already met every requirement in §5/§14 unchanged: SHA-256-hashed at
+> rest, single-use (`Consume`), time-boxed (`PasswordResetTokenLifetime`), and a reset revokes every
+> session (`ResetPasswordCommandHandler`) — no code change was needed there.
 
 ### 13.7 Token Revocation Flow
 

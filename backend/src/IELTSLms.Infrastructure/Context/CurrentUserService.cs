@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using IELTSLms.Abstractions.Context;
+using IELTSLms.Application.Identity;
 using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.JsonWebTokens;
 
@@ -18,6 +19,9 @@ internal sealed class CurrentUserService(IHttpContextAccessor httpContextAccesso
 
     public bool IsSystem => false;
 
+    // Matches the "role" claim type JwtAccessTokenService actually emits — not ClaimTypes.Role (the
+    // long URI): MapInboundClaims is false (AuthenticationRegistration.cs), so no remapping happens
+    // and the token's own short claim types are what land on the principal.
     public IReadOnlyList<string> Roles =>
-        User?.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray() ?? [];
+        User?.FindAll(IdentityDefaults.RoleClaimType).Select(c => c.Value).ToArray() ?? [];
 }
