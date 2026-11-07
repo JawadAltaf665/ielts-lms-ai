@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Notice
         run: echo "CI is a placeholder. Build/test/lint jobs will be added in a later phase."
@@ -28,12 +28,12 @@ jobs:
   #   name: Frontend Build & Test
   #   runs-on: ubuntu-latest
   #   steps:
-  #     - uses: actions/checkout@v4
+  #     - uses: actions/checkout@v7
   #     # setup-node, install, lint, test, build
 
   # backend-build:
   #   name: Backend Build & Test
   #   runs-on: ubuntu-latest
   #   steps:
-  #     - uses: actions/checkout@v4
+  #     - uses: actions/checkout@v7
   #     # setup-dotnet, restore, build, test
